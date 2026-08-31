@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand — navy scale used for sidebar/header/primary actions */
+  --color-navy-950: #0a0f1e;
+  --color-navy-900: #0f1729;
+  --color-navy-800: #16213a;
+  --color-navy-700: #202d4d;
+  --color-navy-600: #2c3c63;
+  --color-navy-500: #3d5079;
+  --color-navy-400: #6b7fa0;
+  --color-navy-300: #9dabc4;
+  --color-navy-200: #c7d0e0;
+  --color-navy-100: #e4e9f2;
+  --color-navy-50: #f4f6fa;
+
+  /* Neutrals */
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-border: #e2e5eb;
+  --color-border-strong: #cbd1dc;
+  --color-text: #131722;
+  --color-text-muted: #5b6472;
+  --color-text-subtle: #8b93a1;
+
+  /* Semantic status colors */
+  --color-success: #157f4a;
+  --color-success-bg: #e8f7ee;
+  --color-success-border: #b7e6c9;
+  --color-warning: #a15c07;
+  --color-warning-bg: #fdf3e3;
+  --color-warning-border: #f2d9a6;
+  --color-danger: #b3261e;
+  --color-danger-bg: #fdecec;
+  --color-danger-border: #f3c3c0;
+  --color-info: #1d5fb3;
+  --color-info-bg: #eaf2fc;
+  --color-info-border: #bcd8f5;
+
+  /* Type */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
+    Helvetica, Arial, sans-serif;
+
+  /* Radius / shadow — one consistent scale for the whole app */
+  --radius-card: 0.625rem;
+  --radius-control: 0.5rem;
+  --shadow-card: 0 1px 2px rgba(15, 23, 41, 0.06), 0 1px 1px rgba(15, 23, 41, 0.04);
+  --shadow-popover: 0 12px 24px -8px rgba(15, 23, 41, 0.18), 0 4px 8px -2px rgba(15, 23, 41, 0.08);
+
+  /* Motion */
+  --animate-modal-in: modal-in 0.15s ease-out;
+  --animate-fade-in: fade-in 0.15s ease-out;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+* {
+  border-color: var(--color-border);
+}

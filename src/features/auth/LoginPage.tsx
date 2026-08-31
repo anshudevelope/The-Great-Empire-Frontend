@@ -10,6 +10,7 @@ import { ApiRequestError } from '@/api/fetchClient'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { FormField } from '@/components/ui/FormField'
 import { BuildingIcon } from '@/components/icons/icons'
 
@@ -50,10 +51,14 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-navy-950 px-4">
-      <div className="w-full max-w-sm rounded-card bg-white p-8 shadow-popover">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg px-4">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-32 left-1/2 h-112 w-md -translate-x-1/2 rounded-full bg-blue-200/50 blur-[100px]"
+      />
+      <div className="relative w-full max-w-sm rounded-card border border-border bg-white p-8 shadow-popover">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-navy-900 text-white">
+          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-blue-800 text-white shadow-xs">
             <BuildingIcon className="h-5 w-5" />
           </div>
           <h1 className="text-lg font-semibold text-text">Admin sign in</h1>
@@ -72,9 +77,8 @@ export function LoginPage() {
             />
           </FormField>
           <FormField label="Password" htmlFor="password" required error={errors.password?.message}>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               placeholder="••••••••"
               invalid={!!errors.password}

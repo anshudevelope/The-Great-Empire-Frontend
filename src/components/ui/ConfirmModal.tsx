@@ -32,7 +32,7 @@ export function ConfirmModal({
           className={
             tone === 'danger'
               ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-danger-bg text-danger'
-              : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy-50 text-navy-700'
+              : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700'
           }
         >
           <AlertTriangleIcon className="h-5 w-5" />

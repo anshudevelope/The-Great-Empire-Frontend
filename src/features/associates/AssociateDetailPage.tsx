@@ -33,7 +33,7 @@ export function AssociateDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Spinner className="h-6 w-6 text-navy-600" />
+        <Spinner className="h-6 w-6 text-blue-600" />
       </div>
     )
   }
@@ -75,7 +75,7 @@ export function AssociateDetailPage() {
               className="h-16 w-16 rounded-full border border-border object-cover"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-navy-50 text-navy-400">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-400">
               <UserCircleIcon className="h-9 w-9" />
             </div>
           )}
@@ -186,7 +186,7 @@ export function AssociateDetailPage() {
                 className="flex items-center justify-between rounded-control border border-border px-3 py-2 text-sm"
               >
                 <span className="text-text">{doc.docType}</span>
-                <a href={doc.url} target="_blank" rel="noreferrer" className="font-medium text-navy-700 hover:underline">
+                <a href={doc.url} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
                   View
                 </a>
               </li>

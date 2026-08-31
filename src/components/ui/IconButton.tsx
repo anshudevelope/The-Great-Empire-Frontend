@@ -10,7 +10,7 @@ export type IconActionTone = 'neutral' | 'info' | 'success' | 'warning' | 'dange
 // Semantic per-action color so Approve/Reject/Delete/etc. are recognizable by
 // color alone, matching the tones already used for status Badges.
 const toneClasses: Record<IconActionTone, string> = {
-  neutral: 'text-text-muted hover:bg-navy-50 hover:text-navy-700',
+  neutral: 'text-text-muted hover:bg-neutral-hover hover:text-text',
   info: 'text-text-muted hover:bg-info-bg hover:text-info',
   success: 'text-text-muted hover:bg-success-bg hover:text-success',
   warning: 'text-text-muted hover:bg-warning-bg hover:text-warning',

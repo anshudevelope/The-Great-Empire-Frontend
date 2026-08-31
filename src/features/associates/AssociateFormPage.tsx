@@ -14,6 +14,7 @@ import {
 import type { AssociateFormValues } from '@/schemas/associate.schema'
 import { useAssociate, useAssociates, useCreateAssociate, useUpdateAssociate } from './hooks'
 import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
@@ -184,7 +185,7 @@ export function AssociateFormPage() {
   if (isEdit && associateQuery.isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Spinner className="h-6 w-6 text-navy-600" />
+        <Spinner className="h-6 w-6 text-blue-600" />
       </div>
     )
   }
@@ -263,7 +264,7 @@ export function AssociateFormPage() {
             error={errors.password?.message}
             hint={isEdit ? 'Leave blank to keep the current password' : undefined}
           >
-            <Input id="password" type="password" invalid={!!errors.password} {...register('password')} />
+            <PasswordInput id="password" invalid={!!errors.password} {...register('password')} />
           </FormField>
         </Section>
 
@@ -322,7 +323,7 @@ export function AssociateFormPage() {
         <Section title="Documents">
           <div className="flex flex-col gap-3 sm:col-span-2">
             <FormField label="Profile Image" hint="PNG or JPG, shown across the admin panel">
-              <label className="flex cursor-pointer items-center gap-3 rounded-control border border-dashed border-border-strong bg-navy-50/40 px-4 py-3 text-sm text-text-muted hover:bg-navy-50">
+              <label className="flex cursor-pointer items-center gap-3 rounded-control border border-dashed border-border-strong bg-blue-50/40 px-4 py-3 text-sm text-text-muted hover:bg-blue-50">
                 <UploadIcon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{profileImageFile ? profileImageFile.name : 'Choose a profile image'}</span>
                 <input
@@ -358,7 +359,7 @@ export function AssociateFormPage() {
                     value={row.docType}
                     onChange={(event) => updateDocumentRow(row.id, { docType: event.target.value })}
                   />
-                  <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-control border border-dashed border-border-strong px-3 py-2 text-sm text-text-muted hover:bg-navy-50">
+                  <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-control border border-dashed border-border-strong px-3 py-2 text-sm text-text-muted hover:bg-blue-50">
                     <UploadIcon className="h-4 w-4 shrink-0" />
                     <span className="truncate">{row.file ? row.file.name : 'Choose file'}</span>
                     <input

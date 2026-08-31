@@ -8,7 +8,7 @@ const toneClasses: Record<BadgeTone, string> = {
   warning: 'bg-warning-bg text-warning border-warning-border',
   danger: 'bg-danger-bg text-danger border-danger-border',
   info: 'bg-info-bg text-info border-info-border',
-  neutral: 'bg-navy-50 text-text-muted border-border-strong',
+  neutral: 'bg-neutral-hover text-text-muted border-border-strong',
 }
 
 export function Badge({ tone = 'neutral', children }: { tone?: BadgeTone; children: ReactNode }) {

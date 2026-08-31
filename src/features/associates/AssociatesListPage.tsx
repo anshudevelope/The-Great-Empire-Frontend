@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAssociates, useDeleteAssociate, useUpdateAssociateStatus } from './hooks'
 import { STATUS_TONE } from './statusTone'
+import { cn } from '@/lib/cn'
 import type { Associate, AssociateStatus } from '@/types/associate'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -11,7 +12,6 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton, IconLink } from '@/components/ui/IconButton'
 import { Spinner } from '@/components/ui/Spinner'
-import { Td, Th, TableContainer } from '@/components/ui/Table'
 import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
 
 const PAGE_SIZE = 10
@@ -115,7 +115,7 @@ export function AssociatesListPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <Spinner className="h-6 w-6 text-navy-600" />
+          <Spinner className="h-6 w-6 text-blue-600" />
         </div>
       ) : associates.length === 0 ? (
         <EmptyState
@@ -131,76 +131,95 @@ export function AssociatesListPage() {
         />
       ) : (
         <>
-          <TableContainer>
-            <thead>
-              <tr>
-                <Th>Name</Th>
-                <Th>Contact</Th>
-                <Th>Tier</Th>
-                <Th>Status</Th>
-                <Th>Joined</Th>
-                <Th className="text-right">Actions</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {pageItems.map((associate) => (
-                <tr key={associate._id} className={isFetching ? 'opacity-60' : undefined}>
-                  <Td className="font-medium">
-                    {associate.title} {associate.fullName}
-                  </Td>
-                  <Td>
-                    <div className="flex flex-col">
-                      <span>{associate.email}</span>
-                      <span className="text-text-subtle">{associate.phone}</span>
-                    </div>
-                  </Td>
-                  <Td>{associate.tier}</Td>
-                  <Td>
-                    <Badge tone={STATUS_TONE[associate.status]}>{associate.status}</Badge>
-                  </Td>
-                  <Td className="text-text-subtle">{new Date(associate.createdAt).toLocaleDateString()}</Td>
-                  <Td>
-                    <div className="flex items-center justify-end gap-1">
-                      <IconLink
-                        to={`/admin/associates/${associate._id}`}
-                        icon={<EyeIcon className="h-4 w-4" />}
-                        label="View associate"
-                        tone="neutral"
-                      />
-                      <IconLink
-                        to={`/admin/associates/${associate._id}/edit`}
-                        icon={<PencilIcon className="h-4 w-4" />}
-                        label="Edit associate"
-                        tone="info"
-                      />
-                      {associate.status !== 'approved' && (
-                        <IconButton
-                          icon={<CheckIcon className="h-4 w-4" />}
-                          label="Approve associate"
-                          tone="success"
-                          onClick={() => setPendingAction({ type: 'approve', associate })}
-                        />
-                      )}
-                      {associate.status !== 'rejected' && (
-                        <IconButton
-                          icon={<XIcon className="h-4 w-4" />}
-                          label="Reject associate"
-                          tone="warning"
-                          onClick={() => setPendingAction({ type: 'reject', associate })}
-                        />
-                      )}
-                      <IconButton
-                        icon={<TrashIcon className="h-4 w-4" />}
-                        label="Delete associate"
-                        tone="danger"
-                        onClick={() => setPendingAction({ type: 'delete', associate })}
-                      />
-                    </div>
-                  </Td>
+          <div className="rounded-card border border-border bg-white shadow-card">
+            <table className="w-full table-fixed text-left text-sm">
+              <thead>
+                <tr className="border-b border-border bg-blue-50/60">
+                  <th className="w-[22%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Name
+                  </th>
+                  <th className="w-[26%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Contact
+                  </th>
+                  <th className="w-[10%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Tier
+                  </th>
+                  <th className="w-[12%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Status
+                  </th>
+                  <th className="w-[14%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Joined
+                  </th>
+                  <th className="w-[16%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </TableContainer>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {pageItems.map((associate) => (
+                  <tr
+                    key={associate._id}
+                    className={cn('transition-colors hover:bg-neutral-hover', isFetching && 'opacity-60')}
+                  >
+                    <td className="truncate px-4 py-3 align-middle font-medium text-text">
+                      {associate.title} {associate.fullName}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-text">
+                      <div className="flex flex-col truncate">
+                        <span className="truncate">{associate.email}</span>
+                        <span className="truncate text-text-subtle">{associate.phone}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-text">{associate.tier}</td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge tone={STATUS_TONE[associate.status]}>{associate.status}</Badge>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-text-subtle">
+                      {new Date(associate.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex items-center justify-end gap-1">
+                        <IconLink
+                          to={`/admin/associates/${associate._id}`}
+                          icon={<EyeIcon className="h-4 w-4" />}
+                          label="View associate"
+                          tone="neutral"
+                        />
+                        <IconLink
+                          to={`/admin/associates/${associate._id}/edit`}
+                          icon={<PencilIcon className="h-4 w-4" />}
+                          label="Edit associate"
+                          tone="info"
+                        />
+                        {associate.status !== 'approved' && (
+                          <IconButton
+                            icon={<CheckIcon className="h-4 w-4" />}
+                            label="Approve associate"
+                            tone="success"
+                            onClick={() => setPendingAction({ type: 'approve', associate })}
+                          />
+                        )}
+                        {associate.status !== 'rejected' && (
+                          <IconButton
+                            icon={<XIcon className="h-4 w-4" />}
+                            label="Reject associate"
+                            tone="warning"
+                            onClick={() => setPendingAction({ type: 'reject', associate })}
+                          />
+                        )}
+                        <IconButton
+                          icon={<TrashIcon className="h-4 w-4" />}
+                          label="Delete associate"
+                          tone="danger"
+                          onClick={() => setPendingAction({ type: 'delete', associate })}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between text-sm text-text-muted">

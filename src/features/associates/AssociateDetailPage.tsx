@@ -65,8 +65,8 @@ export function AssociateDetailPage() {
   const isActionLoading = statusMutation.isPending || deleteMutation.isPending
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6 pb-10">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 pb-10">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start mt-3">
         <div className="flex items-center gap-4">
           {associate.profileImage?.url ? (
             <img

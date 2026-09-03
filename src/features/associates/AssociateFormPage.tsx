@@ -197,9 +197,9 @@ export function AssociateFormPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6 pb-10">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 pb-10">
       <div>
-        <h1 className="text-xl font-semibold text-text">{isEdit ? 'Edit Associate' : 'Register Associate'}</h1>
+        <h1 className="text-xl font-semibold text-text">{isEdit ? 'Edit Associate Details' : 'Register Associate'}</h1>
         <p className="mt-1 text-sm text-text-subtle">
           {isEdit
             ? 'Update associate profile, documents and nominee details.'

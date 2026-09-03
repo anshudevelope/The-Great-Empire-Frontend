@@ -39,12 +39,12 @@ export function LandingPage() {
         <span className="mb-5 inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-wider text-blue-200">
           Real Estate Associate Network
         </span>
-        <h1 className="max-w-2xl text-5xl font-semibold tracking-tight sm:text-6xl">
+        <h1 className="max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl">
           Run your associate network with confidence
         </h1>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-blue-200/90 sm:text-lg">
+        <p className="mt-5 max-w-5xl text-base leading-relaxed text-blue-200/90 sm:text-lg">
           Great Empire is the operations home for onboarding associates, reviewing approvals, and tracking growth
-          across every tier — all from a single admin console.
+          across every tier. all from a single admin console.
         </p>
         <Link to="/admin/login" className="mt-9">
           <Button variant="inverse" size="md" className="px-6">

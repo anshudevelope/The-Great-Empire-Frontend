@@ -8,6 +8,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { AssociatesListPage } from '@/features/associates/AssociatesListPage'
 import { AssociateFormPage } from '@/features/associates/AssociateFormPage'
 import { AssociateDetailPage } from '@/features/associates/AssociateDetailPage'
+import { AssociateTreePage } from '@/features/associates/tree/AssociateTreePage'
 
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -23,6 +24,8 @@ export const router = createBrowserRouter([
           { path: 'dashboard', element: <DashboardPage /> },
           { path: 'associates', element: <AssociatesListPage /> },
           { path: 'associates/register', element: <AssociateFormPage /> },
+          { path: 'associates/tree', element: <AssociateTreePage /> },
+          { path: 'associates/tree/:id', element: <AssociateTreePage /> },
           { path: 'associates/:id', element: <AssociateDetailPage /> },
           { path: 'associates/:id/edit', element: <AssociateFormPage /> },
         ],

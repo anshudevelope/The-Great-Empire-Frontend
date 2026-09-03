@@ -4,6 +4,7 @@ import {
   createAssociate,
   deleteAssociate,
   fetchAssociateById,
+  fetchAssociateTree,
   fetchAssociates,
   updateAssociate,
   updateAssociateStatus,
@@ -27,6 +28,14 @@ export function useAssociate(id: string | undefined) {
   return useQuery({
     queryKey: ['associate', id],
     queryFn: () => fetchAssociateById(id as string),
+    enabled: !!id,
+  })
+}
+
+export function useAssociateTree(id: string | undefined, depth: number) {
+  return useQuery({
+    queryKey: ['associate-tree', id, depth],
+    queryFn: () => fetchAssociateTree(id as string, depth),
     enabled: !!id,
   })
 }

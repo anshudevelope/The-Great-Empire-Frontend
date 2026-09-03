@@ -9,11 +9,11 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Tooltip } from '@/components/ui/Tooltip'
-import { CheckIcon, PencilIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
+import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
 
 type PendingAction = 'approve' | 'reject' | 'delete' | null
 
-function Field({ label, value }: { label: string; value?: string | number | null }) {
+export function Field({ label, value }: { label: string; value?: string | number | null }) {
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-text-subtle">{label}</dt>
@@ -114,6 +114,13 @@ export function AssociateDetailPage() {
               </Button>
             </Tooltip>
           )}
+          <Tooltip label="View this associate's binary tree">
+            <Link to={`/admin/associates/tree/${associate._id}`}>
+              <Button variant="secondary" size="sm" leftIcon={<TreeIcon className="h-4 w-4" />}>
+                View Tree
+              </Button>
+            </Link>
+          </Tooltip>
           <Tooltip label="Edit associate details">
             <Link to={`/admin/associates/${associate._id}/edit`}>
               <Button variant="info" size="sm" leftIcon={<PencilIcon className="h-4 w-4" />}>

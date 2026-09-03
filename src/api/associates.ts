@@ -1,6 +1,6 @@
 import { apiRequest } from './fetchClient'
 import type { ApiListResponse, ApiMessageResponse, ApiSingleResponse } from '@/types/api'
-import type { Associate, AssociateStatus } from '@/types/associate'
+import type { Associate, AssociateStatus, AssociateTreeNode } from '@/types/associate'
 
 export interface AssociateFilters {
   status?: string
@@ -15,6 +15,12 @@ export function fetchAssociates(filters: AssociateFilters): Promise<ApiListRespo
 
 export function fetchAssociateById(id: string): Promise<ApiSingleResponse<Associate>> {
   return apiRequest<ApiSingleResponse<Associate>>(`/associates/${id}`)
+}
+
+export function fetchAssociateTree(id: string, depth = 3): Promise<ApiSingleResponse<AssociateTreeNode>> {
+  return apiRequest<ApiSingleResponse<AssociateTreeNode>>(`/associates/tree/${id}`, {
+    params: { depth: String(depth) },
+  })
 }
 
 export function createAssociate(formData: FormData): Promise<ApiSingleResponse<Associate>> {

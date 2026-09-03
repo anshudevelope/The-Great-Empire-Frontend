@@ -11,9 +11,11 @@ import {
   FiEdit2,
   FiEye,
   FiEyeOff,
+  FiGitBranch,
   FiGrid,
   FiLogOut,
   FiMenu,
+  FiMinus,
   FiPlus,
   FiSearch,
   FiTrash2,
@@ -43,3 +45,5 @@ export const AlertTriangleIcon: IconType = FiAlertTriangle
 export const UserCircleIcon: IconType = FiUser
 export const UploadIcon: IconType = FiUpload
 export const BuildingIcon: IconType = HiOutlineBuildingOffice2
+export const TreeIcon: IconType = FiGitBranch
+export const MinusIcon: IconType = FiMinus

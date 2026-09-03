@@ -25,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: 'All Associates', to: '/admin/associates' },
       { label: 'Register', to: '/admin/associates/register' },
+      { label: 'Tree View', to: '/admin/associates/tree' },
     ],
   },
 ]

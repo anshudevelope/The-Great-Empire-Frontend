@@ -44,6 +44,8 @@ const emptyDefaults: AssociateFormValues = {
   nomineeAge: '',
   tier: 'Tier I',
   sponsorId: '',
+  parentId: '',
+  position: '',
 }
 
 interface DocumentRow {
@@ -105,6 +107,8 @@ export function AssociateFormPage() {
       nomineeAge: associate.nomineeAge != null ? String(associate.nomineeAge) : '',
       tier: associate.tier,
       sponsorId: typeof associate.sponsorId === 'string' ? associate.sponsorId : (associate.sponsorId?._id ?? ''),
+      parentId: typeof associate.parentId === 'string' ? associate.parentId : (associate.parentId?._id ?? ''),
+      position: associate.position ?? '',
     })
   }, [isEdit, associateQuery.data, reset])
 
@@ -148,6 +152,8 @@ export function AssociateFormPage() {
       nomineeAge: values.nomineeAge,
       tier: values.tier,
       sponsorId: values.sponsorId || undefined,
+      parentId: values.parentId || undefined,
+      position: values.position || undefined,
     }
 
     for (const [key, value] of Object.entries(fields)) {
@@ -316,6 +322,27 @@ export function AssociateFormPage() {
                   {sponsor.fullName} — {sponsor.phone}
                 </option>
               ))}
+            </Select>
+          </FormField>
+          <FormField
+            label="Place Under (Binary Tree)"
+            htmlFor="parentId"
+            hint="Optional — sets the tree parent node; falls back to spillover if the slot is taken"
+          >
+            <Select id="parentId" {...register('parentId')}>
+              <option value="">No tree placement</option>
+              {sponsorOptions.map((sponsor) => (
+                <option key={sponsor._id} value={sponsor._id}>
+                  {sponsor.fullName} — {sponsor.phone}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Position" htmlFor="position" hint="Left or Right leg under the selected parent">
+            <Select id="position" {...register('position')}>
+              <option value="">Select position</option>
+              <option value="Left">Left</option>
+              <option value="Right">Right</option>
             </Select>
           </FormField>
         </Section>

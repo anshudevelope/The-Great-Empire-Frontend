@@ -130,3 +130,76 @@ h3 {
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Binary associate tree — org-chart connector lines for AssociateTreePage.
+   Relies on real ul/li nesting (not just flex divs) so the first-child/
+   last-child selectors below can draw the L-shaped joins between a parent
+   and its exactly-two child slots (real node, "Open", or "More"). */
+.org-tree,
+.org-tree ul {
+  display: flex;
+  justify-content: center;
+  padding-top: 28px;
+  position: relative;
+}
+
+.org-tree li {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 28px 14px 0 14px;
+  position: relative;
+}
+
+.org-tree li::before,
+.org-tree li::after {
+  border-top: 1.5px solid var(--color-border-strong);
+  content: '';
+  height: 28px;
+  position: absolute;
+  right: 50%;
+  top: 0;
+  width: 50%;
+}
+
+.org-tree li::after {
+  border-left: 1.5px solid var(--color-border-strong);
+  left: 50%;
+  right: auto;
+}
+
+.org-tree li:first-child::before {
+  border: none;
+}
+
+.org-tree li:last-child::after {
+  border: none;
+}
+
+.org-tree li:last-child::before {
+  border-radius: 0 6px 0 0;
+  border-right: 1.5px solid var(--color-border-strong);
+}
+
+.org-tree li:first-child::after {
+  border-radius: 6px 0 0 0;
+}
+
+.org-tree > li {
+  padding-top: 0;
+}
+
+.org-tree > li::before,
+.org-tree > li::after {
+  display: none;
+}
+
+.org-tree ul::before {
+  border-left: 1.5px solid var(--color-border-strong);
+  content: '';
+  height: 28px;
+  left: 50%;
+  position: absolute;
+  top: 0;
+}

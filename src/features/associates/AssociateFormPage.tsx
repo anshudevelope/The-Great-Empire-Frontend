@@ -337,9 +337,11 @@ export function AssociateFormPage() {
             <FormField
               label="Tree Position"
               htmlFor="position"
+              required
+              error={errors.position?.message}
               hint="Left or Right leg under the sponsor — falls back to spillover if the slot is taken"
             >
-              <Select id="position" {...register('position')}>
+              <Select id="position" invalid={!!errors.position} {...register('position')}>
                 <option value="">Select position</option>
                 <option value="Left">Left</option>
                 <option value="Right">Right</option>

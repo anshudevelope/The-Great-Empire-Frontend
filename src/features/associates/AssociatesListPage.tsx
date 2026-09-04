@@ -12,7 +12,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton, IconLink } from '@/components/ui/IconButton'
 import { Spinner } from '@/components/ui/Spinner'
-import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
+import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, RefreshIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
 
 const PAGE_SIZE = 10
 
@@ -40,7 +40,7 @@ export function AssociatesListPage() {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  const { data, isLoading, isFetching } = useAssociates({ search, status, tier })
+  const { data, isLoading, isFetching, refetch } = useAssociates({ search, status, tier })
   const statusMutation = useUpdateAssociateStatus()
   const deleteMutation = useDeleteAssociate()
 
@@ -111,6 +111,13 @@ export function AssociatesListPage() {
           <option value="Tier I">Tier I</option>
           <option value="Tier II">Tier II</option>
         </Select>
+        <IconButton
+          icon={<RefreshIcon className={cn('h-4 w-4', isFetching && 'animate-spin')} />}
+          label="Refresh"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="border border-border-strong"
+        />
       </div>
 
       {isLoading ? (

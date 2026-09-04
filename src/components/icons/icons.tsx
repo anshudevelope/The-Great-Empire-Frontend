@@ -17,6 +17,7 @@ import {
   FiMenu,
   FiMinus,
   FiPlus,
+  FiRefreshCw,
   FiSearch,
   FiTrash2,
   FiUpload,
@@ -47,3 +48,4 @@ export const UploadIcon: IconType = FiUpload
 export const BuildingIcon: IconType = HiOutlineBuildingOffice2
 export const TreeIcon: IconType = FiGitBranch
 export const MinusIcon: IconType = FiMinus
+export const RefreshIcon: IconType = FiRefreshCw

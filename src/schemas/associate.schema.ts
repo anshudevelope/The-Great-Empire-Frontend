@@ -47,16 +47,28 @@ const associateObjectSchema = z.object({
 // Both schemas below wrap the same object shape (via superRefine) purely to add a
 // mode-dependent password rule, so they share one inferred TS type — that lets
 // AssociateFormPage swap the schema at runtime without the resolver type splitting.
+// A sponsor without a chosen Left/Right slot saves a parentId but never
+// attaches into the tree (the backend only wires the parent's leftChild/
+// rightChild pointer when both are present) — so once a sponsor is picked,
+// position becomes required to avoid silently orphaning the associate.
+function requirePositionWithSponsor(values: { sponsorId?: string; position?: string }, ctx: z.RefinementCtx) {
+  if (values.sponsorId && !values.position) {
+    ctx.addIssue({ code: 'custom', message: 'Select a tree position for this sponsor', path: ['position'] })
+  }
+}
+
 export const createAssociateSchema = associateObjectSchema.superRefine((values, ctx) => {
   if (!values.password || values.password.length < 6) {
     ctx.addIssue({ code: 'custom', message: 'Password must be at least 6 characters', path: ['password'] })
   }
+  requirePositionWithSponsor(values, ctx)
 })
 
 export const editAssociateSchema = associateObjectSchema.superRefine((values, ctx) => {
   if (values.password && values.password.length < 6) {
     ctx.addIssue({ code: 'custom', message: 'Password must be at least 6 characters', path: ['password'] })
   }
+  requirePositionWithSponsor(values, ctx)
 })
 
 export type AssociateFormValues = z.infer<typeof associateObjectSchema>

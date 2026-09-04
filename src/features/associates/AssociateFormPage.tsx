@@ -86,6 +86,9 @@ export function AssociateFormPage() {
   const selectedSponsorId = watch('sponsorId')
 
   useEffect(() => {
+    // Also re-run once sponsorsQuery resolves: if it loads after associateQuery,
+    // the Sponsor <select> has no matching <option> yet when reset() first runs,
+    // so the browser silently falls back to "No sponsor" and never self-corrects.
     if (!isEdit || !associateQuery.data) return
     const associate = associateQuery.data.data
     reset({
@@ -111,7 +114,7 @@ export function AssociateFormPage() {
       sponsorId: typeof associate.sponsorId === 'string' ? associate.sponsorId : (associate.sponsorId?._id ?? ''),
       position: associate.position ?? '',
     })
-  }, [isEdit, associateQuery.data, reset])
+  }, [isEdit, associateQuery.data, sponsorsQuery.data, reset])
 
   const sponsorOptions = useMemo(() => {
     const list = sponsorsQuery.data?.data ?? []

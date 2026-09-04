@@ -44,7 +44,6 @@ const emptyDefaults: AssociateFormValues = {
   nomineeAge: '',
   tier: 'Tier I',
   sponsorId: '',
-  parentId: '',
   position: '',
 }
 
@@ -77,11 +76,14 @@ export function AssociateFormPage() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<AssociateFormValues>({
     resolver: zodResolver(schema),
     defaultValues: emptyDefaults,
   })
+
+  const selectedSponsorId = watch('sponsorId')
 
   useEffect(() => {
     if (!isEdit || !associateQuery.data) return
@@ -107,7 +109,6 @@ export function AssociateFormPage() {
       nomineeAge: associate.nomineeAge != null ? String(associate.nomineeAge) : '',
       tier: associate.tier,
       sponsorId: typeof associate.sponsorId === 'string' ? associate.sponsorId : (associate.sponsorId?._id ?? ''),
-      parentId: typeof associate.parentId === 'string' ? associate.parentId : (associate.parentId?._id ?? ''),
       position: associate.position ?? '',
     })
   }, [isEdit, associateQuery.data, reset])
@@ -152,8 +153,9 @@ export function AssociateFormPage() {
       nomineeAge: values.nomineeAge,
       tier: values.tier,
       sponsorId: values.sponsorId || undefined,
-      parentId: values.parentId || undefined,
-      position: values.position || undefined,
+      // No separate parent picker — the tree parent is always the sponsor
+      // (backend falls back to sponsorId when parentId is omitted).
+      position: values.sponsorId ? values.position || undefined : undefined,
     }
 
     for (const [key, value] of Object.entries(fields)) {
@@ -314,7 +316,11 @@ export function AssociateFormPage() {
               ))}
             </Select>
           </FormField>
-          <FormField label="Sponsor" htmlFor="sponsorId" hint="Optional — pick an existing approved associate">
+          <FormField
+            label="Sponsor"
+            htmlFor="sponsorId"
+            hint="Optional — pick an existing approved associate. The binary tree places this associate under their sponsor."
+          >
             <Select id="sponsorId" {...register('sponsorId')}>
               <option value="">No sponsor</option>
               {sponsorOptions.map((sponsor) => (
@@ -324,27 +330,19 @@ export function AssociateFormPage() {
               ))}
             </Select>
           </FormField>
-          <FormField
-            label="Place Under (Binary Tree)"
-            htmlFor="parentId"
-            hint="Optional — sets the tree parent node; falls back to spillover if the slot is taken"
-          >
-            <Select id="parentId" {...register('parentId')}>
-              <option value="">No tree placement</option>
-              {sponsorOptions.map((sponsor) => (
-                <option key={sponsor._id} value={sponsor._id}>
-                  {sponsor.fullName} — {sponsor.phone}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-          <FormField label="Position" htmlFor="position" hint="Left or Right leg under the selected parent">
-            <Select id="position" {...register('position')}>
-              <option value="">Select position</option>
-              <option value="Left">Left</option>
-              <option value="Right">Right</option>
-            </Select>
-          </FormField>
+          {selectedSponsorId && (
+            <FormField
+              label="Tree Position"
+              htmlFor="position"
+              hint="Left or Right leg under the sponsor — falls back to spillover if the slot is taken"
+            >
+              <Select id="position" {...register('position')}>
+                <option value="">Select position</option>
+                <option value="Left">Left</option>
+                <option value="Right">Right</option>
+              </Select>
+            </FormField>
+          )}
         </Section>
 
         <Section title="Documents">

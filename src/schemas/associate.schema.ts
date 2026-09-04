@@ -36,7 +36,6 @@ const associateBaseShape = {
   nomineeAge: numericStringField('nominee age', { min: 0, max: 120 }),
   tier: z.enum(ASSOCIATE_TIERS, { error: 'Select a tier' }),
   sponsorId: z.string().optional(),
-  parentId: z.string().optional(),
   position: z.enum(['Left', 'Right', '']).optional(),
 }
 

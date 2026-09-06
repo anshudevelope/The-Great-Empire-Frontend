@@ -56,18 +56,33 @@ export interface Associate {
   updatedAt: string
 }
 
+/**
+ * Node shape returned by the tree endpoints. Mirrors `toNode()` on the server.
+ * `leftChild`/`rightChild` are the raw pointers — they tell an empty slot apart
+ * from a child that exists but sits beyond the requested depth.
+ */
 export interface AssociateTreeNode {
   _id: string
+  memberCode: string
   fullName: string
   email: string
   phone: string
-  role: 'associate' | 'admin'
   status: AssociateStatus
+  tier: AssociateTier
   position: AssociatePosition
   profileImage: ProfileImage
+  sponsorCode: string | null
+  /** Placement parent's code. Differs from sponsorCode whenever spillover applied. */
+  parentCode: string | null
+  depth: number
+  directCount: number
+  joinedAt: string
+  /** Sponsor ≠ placement parent: spillover moved this member down a leg. */
+  isSpillover: boolean
   leftChild: string | null
   rightChild: string | null
-  sponsorId: string | null
   left: AssociateTreeNode | null
   right: AssociateTreeNode | null
+  hasMoreLeft: boolean
+  hasMoreRight: boolean
 }

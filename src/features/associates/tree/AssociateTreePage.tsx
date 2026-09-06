@@ -138,7 +138,7 @@ function TreeWithPanel({ root }: { root: AssociateTreeNode }) {
 
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-      <TreeCanvas root={root} selectedId={selectedId} onSelect={setSelectedId} />
+      <TreeCanvas root={root} selectedId={selectedId} onSelect={setSelectedId} onDrillDown={selectRoot} />
       <AssociateInfoPanel associateId={selectedId} />
     </div>
   )

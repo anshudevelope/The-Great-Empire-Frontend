@@ -8,16 +8,15 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { LogoutIcon, MenuIcon } from '@/components/icons/icons'
 
-function getInitials(email: string | null): string {
-  if (!email) return 'A'
-  const name = email.split('@')[0] ?? ''
-  const parts = name.split(/[._-]/).filter(Boolean)
+function getInitials(name: string | null): string {
+  if (!name) return 'A'
+  const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
   return name.slice(0, 2).toUpperCase() || 'A'
 }
 
 export function Header() {
-  const email = useAuthStore((state) => state.email)
+  const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const openMobileSidebar = useUIStore((state) => state.openMobileSidebar)
   const navigate = useNavigate()
@@ -27,7 +26,7 @@ export function Header() {
     logout()
     setConfirmOpen(false)
     toast.success('Signed out successfully')
-    navigate('/admin/login', { replace: true })
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -46,10 +45,13 @@ export function Header() {
       <div className="flex items-center gap-4">
         <div className="hidden items-center gap-2.5 border-r border-border pr-4 sm:flex">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-blue-700 to-blue-900 text-xs font-semibold text-white">
-            {getInitials(email)}
+            {getInitials(user?.fullName ?? null)}
           </div>
-          <span className="text-sm font-medium text-text">{email ?? 'Admin'}</span>
+          <span className="text-sm font-medium text-text">{user?.fullName ?? 'Admin'}</span>
         </div>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/change-password')}>
+          Password
+        </Button>
         <Button
           variant="ghost"
           size="sm"

@@ -12,9 +12,11 @@ interface TreeCanvasProps {
   root: AssociateTreeNode
   selectedId: string | null
   onSelect: (id: string) => void
+  /** Re-root the canvas on a member — double-click a node or use its ⤢ button. */
+  onDrillDown?: (id: string) => void
 }
 
-export function TreeCanvas({ root, selectedId, onSelect }: TreeCanvasProps) {
+export function TreeCanvas({ root, selectedId, onSelect, onDrillDown }: TreeCanvasProps) {
   const [zoom, setZoom] = useState(1)
 
   return (
@@ -37,7 +39,7 @@ export function TreeCanvas({ root, selectedId, onSelect }: TreeCanvasProps) {
           className="flex w-fit min-w-full justify-center transition-transform duration-150"
           style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
         >
-          <TreeRoot root={root} selectedId={selectedId} onSelect={onSelect} />
+          <TreeRoot root={root} selectedId={selectedId} onSelect={onSelect} onDrillDown={onDrillDown} />
         </div>
       </div>
     </div>

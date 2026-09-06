@@ -53,8 +53,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   const response = await fetch(buildUrl(path, params), { method, headers, body: payload })
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     useAuthStore.getState().logout()
+  }
+
+  // 428 is not a failure of this request — the session is valid but is holding
+  // a temporary password. Flag it so ProtectedRoute redirects to the reset
+  // screen instead of logging the user out and losing where they were.
+  if (response.status === 428) {
+    useAuthStore.getState().setMustChangePassword(true)
   }
 
   const text = await response.text()

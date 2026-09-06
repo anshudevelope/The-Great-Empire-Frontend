@@ -5,7 +5,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { loginSchema } from '@/schemas/auth.schema'
 import type { LoginFormValues } from '@/schemas/auth.schema'
-import { adminLogin } from '@/api/auth'
+import { login as loginRequest } from '@/api/auth'
 import { ApiRequestError } from '@/api/fetchClient'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
@@ -18,9 +18,12 @@ interface LocationState {
   from?: { pathname: string }
 }
 
+const homeFor = (role: string) => (role === 'admin' ? '/admin/dashboard' : '/portal/dashboard')
+
 export function LoginPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const login = useAuthStore((state) => state.login)
+  const user = useAuthStore((state) => state.user)
+  const setSession = useAuthStore((state) => state.login)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -34,20 +37,29 @@ export function LoginPage() {
   })
 
   const mutation = useMutation({
-    mutationFn: adminLogin,
-    onSuccess: (data, variables) => {
-      login(data.token, variables.email)
-      toast.success('Welcome back')
+    mutationFn: loginRequest,
+    onSuccess: (data) => {
+      setSession(data.token, data.data, data.mustChangePassword)
+
+      // A temporary password blocks every other route, so go straight to the
+      // reset screen rather than bouncing off a 428 on the dashboard.
+      if (data.mustChangePassword) {
+        toast('Please set a new password to continue', { icon: '🔒' })
+        navigate('/change-password', { replace: true })
+        return
+      }
+
+      toast.success(`Welcome back, ${data.data.fullName.split(' ')[0]}`)
       const state = location.state as LocationState | null
-      navigate(state?.from?.pathname ?? '/admin/dashboard', { replace: true })
+      navigate(state?.from?.pathname ?? homeFor(data.data.role), { replace: true })
     },
     onError: (error) => {
       toast.error(error instanceof ApiRequestError ? error.message : 'Login failed. Please try again.')
     },
   })
 
-  if (isAuthenticated) {
-    return <Navigate to="/admin/dashboard" replace />
+  if (isAuthenticated && user) {
+    return <Navigate to={homeFor(user.role)} replace />
   }
 
   return (
@@ -61,8 +73,8 @@ export function LoginPage() {
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-blue-800 text-white shadow-xs">
             <BuildingIcon className="h-5 w-5" />
           </div>
-          <h1 className="text-lg font-semibold text-text">Admin sign in</h1>
-          <p className="mt-1 text-sm text-text-subtle">Great Empire management console</p>
+          <h1 className="text-lg font-semibold text-text">Sign in</h1>
+          <p className="mt-1 text-sm text-text-subtle">Great Empire — admins and associates</p>
         </div>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit((values) => mutation.mutate(values))} noValidate>
@@ -71,7 +83,7 @@ export function LoginPage() {
               id="email"
               type="email"
               autoComplete="username"
-              placeholder="admin@example.com"
+              placeholder="you@example.com"
               invalid={!!errors.email}
               {...register('email')}
             />

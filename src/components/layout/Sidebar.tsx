@@ -28,6 +28,19 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'Tree View', to: '/admin/associates/tree' },
     ],
   },
+  {
+    label: 'Referrals',
+    icon: UsersIcon,
+    children: [
+      { label: 'Invoices', to: '/admin/referrals' },
+      { label: 'Generate', to: '/admin/referrals/generate' },
+    ],
+  },
+  {
+    label: 'Reports',
+    icon: DashboardIcon,
+    children: [{ label: 'Downline', to: '/admin/reports/downline' }],
+  },
 ]
 
 function NavIconTile({ icon: Icon, active }: { icon: typeof DashboardIcon; active: boolean }) {

@@ -32,7 +32,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Referrals',
     icon: UsersIcon,
     children: [
-      { label: 'Invoices', to: '/admin/referrals' },
+      { label: 'All Referrals', to: '/admin/referrals' },
       { label: 'Generate', to: '/admin/referrals/generate' },
     ],
   },

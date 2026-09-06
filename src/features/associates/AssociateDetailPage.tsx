@@ -65,7 +65,7 @@ export function AssociateDetailPage() {
   const isActionLoading = statusMutation.isPending || deleteMutation.isPending
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 pb-10">
+    <div className="flex flex-col gap-6 pb-10">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start mt-3">
         <div className="flex items-center gap-4">
           {associate.profileImage?.url ? (
@@ -83,7 +83,12 @@ export function AssociateDetailPage() {
             <h1 className="text-xl font-semibold text-text">
               {associate.title} {associate.fullName}
             </h1>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {/* The associate ID is how this member is referred to everywhere
+                  else — on invoices, in the tree, and by other members. */}
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-blue-700">
+                {associate.memberCode ?? 'No ID'}
+              </span>
               <Badge tone={STATUS_TONE[associate.status]}>{associate.status}</Badge>
               <span className="text-sm text-text-subtle">{associate.tier}</span>
             </div>
@@ -176,9 +181,15 @@ export function AssociateDetailPage() {
 
       <section className="rounded-card border border-border bg-white p-5 shadow-card">
         <h2 className="mb-4 text-sm font-semibold text-text">Membership</h2>
-        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+          <Field label="Associate ID" value={associate.memberCode} />
           <Field label="Tier" value={associate.tier} />
-          <Field label="Sponsor" value={sponsor ? `${sponsor.fullName} (${sponsor.phone})` : 'None'} />
+          {/* Sponsor by ID, not phone — the code is what identifies a member. */}
+          <Field
+            label="Sponsor"
+            value={sponsor ? `${sponsor.memberCode ?? '—'} — ${sponsor.fullName}` : 'None'}
+          />
+          <Field label="Placement" value={associate.position ?? 'Root'} />
           <Field label="Joined" value={new Date(associate.createdAt).toLocaleDateString()} />
         </dl>
       </section>

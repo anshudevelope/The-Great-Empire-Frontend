@@ -80,7 +80,7 @@ export function AssociatesListPage() {
         <div className="relative flex-1">
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
           <Input
-            placeholder="Search by name, email or phone"
+            placeholder="Search by associate ID, name, email or phone"
             className="pl-9"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
@@ -142,22 +142,25 @@ export function AssociatesListPage() {
             <table className="w-full table-fixed text-left text-sm">
               <thead>
                 <tr className="border-b border-border bg-blue-50/60">
-                  <th className="w-[22%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[10%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Associate ID
+                  </th>
+                  <th className="w-[20%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Name
                   </th>
-                  <th className="w-[26%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[23%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Contact
                   </th>
-                  <th className="w-[10%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Tier
                   </th>
-                  <th className="w-[12%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[11%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Status
                   </th>
-                  <th className="w-[14%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[12%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Joined
                   </th>
-                  <th className="w-[16%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[15%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Actions
                   </th>
                 </tr>
@@ -168,6 +171,14 @@ export function AssociatesListPage() {
                     key={associate._id}
                     className={cn('transition-colors hover:bg-neutral-hover', isFetching && 'opacity-60')}
                   >
+                    <td className="px-4 py-3 align-middle">
+                      <Link
+                        to={`/admin/associates/${associate._id}`}
+                        className="font-mono text-[13px] font-medium text-blue-700 hover:underline"
+                      >
+                        {associate.memberCode ?? '—'}
+                      </Link>
+                    </td>
                     <td className="truncate px-4 py-3 align-middle font-medium text-text">
                       {associate.title} {associate.fullName}
                     </td>

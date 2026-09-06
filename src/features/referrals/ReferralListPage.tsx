@@ -59,11 +59,11 @@ export function ReferralListPage() {
     <div>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-text">{isAdmin ? 'Referral invoices' : 'My referrals'}</h1>
+          <h1 className="text-xl font-semibold text-text">{isAdmin ? 'Referrals' : 'My referrals'}</h1>
           <p className="mt-1 text-sm text-text-subtle">
             {isAdmin
-              ? 'Every voucher issued, and the payment recorded against it.'
-              : 'Vouchers issued to you. Use an unused one to add a new member.'}
+              ? 'Every referral issued, the payment recorded against it, and its invoice.'
+              : 'Referrals issued to you. Use an unused one to add a new member.'}
           </p>
         </div>
         <div className="flex gap-2">

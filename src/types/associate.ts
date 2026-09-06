@@ -18,6 +18,7 @@ export interface ProfileImage {
 
 export interface SponsorRef {
   _id: string
+  memberCode?: string | null
   fullName: string
   email: string
   phone: string
@@ -25,6 +26,8 @@ export interface SponsorRef {
 
 export interface Associate {
   _id: string
+  /** Public associate ID (TRG0001). Null only for admin accounts, which sit outside the tree. */
+  memberCode: string | null
   title: AssociateTitle
   fullName: string
   fatherOrHusbandName: string

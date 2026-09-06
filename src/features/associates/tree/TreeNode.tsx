@@ -1,6 +1,11 @@
+import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
 import type { AssociateStatus, AssociateTreeNode } from '@/types/associate'
+
+const TOOLTIP_WIDTH = 288 // w-72
+const TOOLTIP_HEIGHT = 240 // approximate; only used to decide flip direction
 
 const STATUS_RING: Record<string, string> = {
   approved: 'ring-blue-500',
@@ -82,7 +87,7 @@ const dateOnly = (value?: string) =>
  * placeholders — there is no commission engine yet, so they read 0.00 rather
  * than pretending to be calculated.
  */
-function NodeTooltip({ node }: { node: AssociateTreeNode }) {
+function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRect }) {
   const rows = [
     { label: 'Tier I (Carry)', carry: true },
     { label: 'Tier I', carry: false },
@@ -90,12 +95,30 @@ function NodeTooltip({ node }: { node: AssociateTreeNode }) {
     { label: 'Tier II', carry: false },
   ]
 
-  return (
+  // Rendered in a portal with fixed positioning. The tree canvas scrolls, so
+  // any absolutely-positioned tooltip inside it gets clipped by that overflow —
+  // and no z-index can escape an ancestor's clipping box.
+  const flipBelow = anchor.top < TOOLTIP_HEIGHT + 12
+  const top = flipBelow ? anchor.bottom + 8 : anchor.top - 8
+  const left = Math.min(
+    Math.max(8, anchor.left + anchor.width / 2 - TOOLTIP_WIDTH / 2),
+    window.innerWidth - TOOLTIP_WIDTH - 8,
+  )
+
+  return createPortal(
     <div
       role="tooltip"
+      style={{
+        position: 'fixed',
+        top,
+        left,
+        width: TOOLTIP_WIDTH,
+        transform: flipBelow ? undefined : 'translateY(-100%)',
+        zIndex: 9999,
+      }}
       className={cn(
-        'pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden w-72 -translate-x-1/2 overflow-hidden',
-        'rounded-card border border-border bg-white text-left shadow-popover group-hover:block',
+        'pointer-events-none overflow-hidden',
+        'rounded-card border border-border bg-white text-left shadow-popover',
       )}
     >
       <div className="bg-linear-to-r from-blue-700 to-blue-900 px-3 py-2 text-white">
@@ -146,7 +169,8 @@ function NodeTooltip({ node }: { node: AssociateTreeNode }) {
           {node.isSpillover && <span className="ml-1 opacity-80">(spillover)</span>}
         </p>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -156,8 +180,21 @@ function NodeCard({
   onSelect,
   onDrillDown,
 }: { node: AssociateTreeNode; selected: boolean } & SelectHandlers) {
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
+
+  // The rect is measured on enter rather than tracked continuously — the tree
+  // doesn't move while a node is hovered, and re-measuring on scroll would be
+  // needless work.
+  const showTooltip = () => setAnchor(wrapperRef.current?.getBoundingClientRect() ?? null)
+
   return (
-    <div className="group relative">
+    <div
+      ref={wrapperRef}
+      className="group relative"
+      onMouseEnter={showTooltip}
+      onMouseLeave={() => setAnchor(null)}
+    >
       <button
         type="button"
         onClick={() => onSelect(node._id)}
@@ -209,7 +246,7 @@ function NodeCard({
         </button>
       )}
 
-      <NodeTooltip node={node} />
+      {anchor && <NodeTooltip node={node} anchor={anchor} />}
     </div>
   )
 }

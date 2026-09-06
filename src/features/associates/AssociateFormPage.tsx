@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -12,7 +12,9 @@ import {
   editAssociateSchema,
 } from '@/schemas/associate.schema'
 import type { AssociateFormValues } from '@/schemas/associate.schema'
-import { useAssociate, useAssociates, useCreateAssociate, useUpdateAssociate } from './hooks'
+import { useAssociate, useCreateAssociate, useUpdateAssociate } from './hooks'
+import { AssociateSelect } from '@/components/ui/AssociateSelect'
+import type { AssociateOption } from '@/api/associates'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Select } from '@/components/ui/Select'
@@ -63,12 +65,14 @@ export function AssociateFormPage() {
   const navigate = useNavigate()
 
   const associateQuery = useAssociate(id)
-  const sponsorsQuery = useAssociates({ status: 'approved' })
   const createMutation = useCreateAssociate()
   const updateMutation = useUpdateAssociate(id ?? '')
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [documentRows, setDocumentRows] = useState<DocumentRow[]>([createDocumentRow()])
+  // Sponsor is picked through a searchable select rather than a <select> of
+  // every associate — that list is unusable once there are more than a screenful.
+  const [sponsorOption, setSponsorOption] = useState<AssociateOption | null>(null)
 
   const schema = isEdit ? editAssociateSchema : createAssociateSchema
 
@@ -77,6 +81,7 @@ export function AssociateFormPage() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<AssociateFormValues>({
     resolver: zodResolver(schema),
@@ -86,11 +91,27 @@ export function AssociateFormPage() {
   const selectedSponsorId = watch('sponsorId')
 
   useEffect(() => {
-    // Also re-run once sponsorsQuery resolves: if it loads after associateQuery,
-    // the Sponsor <select> has no matching <option> yet when reset() first runs,
-    // so the browser silently falls back to "No sponsor" and never self-corrects.
     if (!isEdit || !associateQuery.data) return
     const associate = associateQuery.data.data
+
+    // Seed the searchable select from the populated sponsor, so editing shows
+    // the existing sponsor instead of an empty box.
+    const sponsorRef = typeof associate.sponsorId === 'object' ? associate.sponsorId : null
+    setSponsorOption(
+      sponsorRef
+        ? {
+            _id: sponsorRef._id,
+            memberCode: sponsorRef.memberCode ?? null,
+            fullName: sponsorRef.fullName,
+            email: sponsorRef.email,
+            role: 'associate',
+            status: 'approved',
+            tier: null,
+            label: `${sponsorRef.memberCode ?? '—'} — ${sponsorRef.fullName}`,
+          }
+        : null,
+    )
+
     reset({
       title: associate.title,
       fullName: associate.fullName,
@@ -114,13 +135,7 @@ export function AssociateFormPage() {
       sponsorId: typeof associate.sponsorId === 'string' ? associate.sponsorId : (associate.sponsorId?._id ?? ''),
       position: associate.position ?? '',
     })
-  }, [isEdit, associateQuery.data, sponsorsQuery.data, reset])
-
-  const sponsorOptions = useMemo(() => {
-    const list = sponsorsQuery.data?.data ?? []
-    if (isEdit && id) return list.filter((sponsor) => sponsor._id !== id)
-    return list
-  }, [sponsorsQuery.data, isEdit, id])
+  }, [isEdit, associateQuery.data, reset])
 
   function updateDocumentRow(rowId: string, patch: Partial<DocumentRow>) {
     setDocumentRows((rows) => rows.map((row) => (row.id === rowId ? { ...row, ...patch } : row)))
@@ -202,7 +217,7 @@ export function AssociateFormPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 pb-10">
+    <div className="flex flex-col gap-6 pb-10">
       <div>
         <h1 className="text-xl font-semibold text-text">{isEdit ? 'Edit Associate Details' : 'Register Associate'}</h1>
         <p className="mt-1 text-sm text-text-subtle">
@@ -280,7 +295,12 @@ export function AssociateFormPage() {
         </Section>
 
         <Section title="Address">
-          <FormField label="Address" htmlFor="address" error={errors.address?.message} className="sm:col-span-2">
+          <FormField
+            label="Address"
+            htmlFor="address"
+            error={errors.address?.message}
+            className="sm:col-span-2 lg:col-span-3 xl:col-span-4"
+          >
             <Textarea id="address" invalid={!!errors.address} {...register('address')} />
           </FormField>
           <FormField label="City" htmlFor="city" error={errors.city?.message}>
@@ -322,16 +342,24 @@ export function AssociateFormPage() {
           <FormField
             label="Sponsor"
             htmlFor="sponsorId"
-            hint="Optional — pick an existing approved associate. The binary tree places this associate under their sponsor."
+            hint="Search by associate ID or name. The binary tree places this associate under their sponsor."
           >
-            <Select id="sponsorId" {...register('sponsorId')}>
-              <option value="">No sponsor</option>
-              {sponsorOptions.map((sponsor) => (
-                <option key={sponsor._id} value={sponsor._id}>
-                  {sponsor.fullName} — {sponsor.phone}
-                </option>
-              ))}
-            </Select>
+            {/* Registered so RHF still owns the value; the visible control is
+                the searchable select below. */}
+            <input type="hidden" {...register('sponsorId')} />
+            <AssociateSelect
+              id="sponsorId"
+              value={sponsorOption}
+              onChange={(option) => {
+                setSponsorOption(option)
+                setValue('sponsorId', option?._id ?? '', { shouldValidate: true })
+                if (!option) setValue('position', '')
+              }}
+              role="associate"
+              status="approved"
+              exclude={id}
+              placeholder="Search by ID or name…"
+            />
           </FormField>
           {selectedSponsorId && (
             <FormField
@@ -351,7 +379,7 @@ export function AssociateFormPage() {
         </Section>
 
         <Section title="Documents">
-          <div className="flex flex-col gap-3 sm:col-span-2">
+          <div className="flex flex-col gap-3 sm:col-span-2 lg:col-span-3 xl:col-span-4">
             <FormField label="Profile Image" hint="PNG or JPG, shown across the admin panel">
               <label className="flex cursor-pointer items-center gap-3 rounded-control border border-dashed border-border-strong bg-blue-50/40 px-4 py-3 text-sm text-text-muted hover:bg-blue-50">
                 <UploadIcon className="h-4 w-4 shrink-0" />
@@ -430,7 +458,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="rounded-card border border-border bg-white p-5 shadow-card">
       <h2 className="mb-4 text-sm font-semibold text-text">{title}</h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{children}</div>
     </div>
   )
 }

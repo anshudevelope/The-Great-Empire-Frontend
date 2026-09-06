@@ -11,12 +11,25 @@ interface AssociateSelectProps {
   onChange: (option: AssociateOption | null) => void
   /** Restrict results — 'associate' for issuedTo, omit for receivedBy (staff or member). */
   role?: 'admin' | 'associate'
+  /** e.g. 'approved' for a sponsor picker. */
+  status?: string
+  /** Keeps an associate out of their own sponsor list when editing. */
+  exclude?: string
   placeholder?: string
   invalid?: boolean
   id?: string
 }
 
-export function AssociateSelect({ value, onChange, role, placeholder, invalid, id }: AssociateSelectProps) {
+export function AssociateSelect({
+  value,
+  onChange,
+  role,
+  status,
+  exclude,
+  placeholder,
+  invalid,
+  id,
+}: AssociateSelectProps) {
   const [term, setTerm] = useState('')
   const [debounced, setDebounced] = useState('')
   const [open, setOpen] = useState(false)
@@ -37,8 +50,8 @@ export function AssociateSelect({ value, onChange, role, placeholder, invalid, i
   }, [])
 
   const { data, isFetching } = useQuery({
-    queryKey: ['associate-search', debounced, role],
-    queryFn: () => searchAssociates(debounced, role),
+    queryKey: ['associate-search', debounced, role, status, exclude],
+    queryFn: () => searchAssociates(debounced, { role, status, exclude }),
     enabled: open,
   })
 

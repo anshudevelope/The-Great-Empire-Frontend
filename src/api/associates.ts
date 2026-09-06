@@ -52,9 +52,12 @@ export interface AssociateOption {
   label: string
 }
 
-export function searchAssociates(q: string, role?: string): Promise<ApiListResponse<AssociateOption>> {
+export function searchAssociates(
+  q: string,
+  options: { role?: string; status?: string; exclude?: string } = {},
+): Promise<ApiListResponse<AssociateOption>> {
   return apiRequest<ApiListResponse<AssociateOption>>('/associates/search', {
-    params: { q, role, limit: '10' },
+    params: { q, ...options, limit: '10' },
   })
 }
 

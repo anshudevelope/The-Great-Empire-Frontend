@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchReferralSummary } from '@/api/referrals'
+import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/cn'
 import { BuildingIcon } from '@/components/icons/icons'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 const NAV = [
   { label: 'Dashboard', to: '/portal/dashboard' },
   { label: 'My Referrals', to: '/portal/referrals' },
+  { label: 'My Invoices', to: '/portal/invoices' },
   { label: 'Add Member', to: '/portal/add-member' },
   { label: 'My Tree', to: '/portal/tree' },
   { label: 'My Directs', to: '/portal/directs' },
@@ -18,6 +20,7 @@ const NAV = [
 export function PortalLayout() {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const company = useCompanyBrand()
   const navigate = useNavigate()
 
   // Drives the unread badge on My Referrals.
@@ -32,7 +35,7 @@ export function PortalLayout() {
             <BuildingIcon className="h-4 w-4" />
           </div>
           <div className="leading-tight">
-            <p className="text-[14px] font-semibold tracking-tight text-text">Great Empire</p>
+            <p className="truncate text-[14px] font-semibold tracking-tight text-text">{company.name}</p>
             <p className="text-[11px] text-text-subtle">Associate Portal</p>
           </div>
         </div>
@@ -79,7 +82,7 @@ export function PortalLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-white px-4 md:px-6">
           <div className="md:hidden">
-            <p className="text-sm font-semibold text-text">Great Empire</p>
+            <p className="text-sm font-semibold text-text">{company.name}</p>
             <p className="font-mono text-[11px] text-text-subtle">{user?.memberCode}</p>
           </div>
           <div className="ml-auto flex items-center gap-3">

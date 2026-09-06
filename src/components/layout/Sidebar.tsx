@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/cn'
+import { useCompanyBrand } from '@/api/company'
 import { useUIStore } from '@/store/uiStore'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { BuildingIcon, ChevronDownIcon, DashboardIcon, UsersIcon, XIcon } from '@/components/icons/icons'
@@ -35,6 +36,11 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'All Referrals', to: '/admin/referrals' },
       { label: 'Generate', to: '/admin/referrals/generate' },
     ],
+  },
+  {
+    label: 'Invoices',
+    icon: DashboardIcon,
+    children: [{ label: 'All Invoices', to: '/admin/invoices' }],
   },
   {
     label: 'Reports',
@@ -139,13 +145,16 @@ function SidebarContent() {
 }
 
 function SidebarBrand() {
+  // Name comes from the server's data/company.json — one file renames the app.
+  const company = useCompanyBrand()
+
   return (
     <div className="flex items-center gap-2.5">
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-blue-600 to-blue-800 text-white shadow-xs">
         <BuildingIcon className="h-4 w-4" />
       </div>
       <div className="leading-tight">
-        <p className="text-[14px] font-semibold tracking-tight text-text">Great Empire</p>
+        <p className="truncate text-[14px] font-semibold tracking-tight text-text">{company.name}</p>
         <p className="text-[11px] text-text-subtle">Admin Console</p>
       </div>
     </div>

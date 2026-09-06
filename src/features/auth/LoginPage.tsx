@@ -7,6 +7,7 @@ import { loginSchema } from '@/schemas/auth.schema'
 import type { LoginFormValues } from '@/schemas/auth.schema'
 import { login as loginRequest } from '@/api/auth'
 import { ApiRequestError } from '@/api/fetchClient'
+import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -21,6 +22,7 @@ interface LocationState {
 const homeFor = (role: string) => (role === 'admin' ? '/admin/dashboard' : '/portal/dashboard')
 
 export function LoginPage() {
+  const company = useCompanyBrand()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const setSession = useAuthStore((state) => state.login)
@@ -74,7 +76,7 @@ export function LoginPage() {
             <BuildingIcon className="h-5 w-5" />
           </div>
           <h1 className="text-lg font-semibold text-text">Sign in</h1>
-          <p className="mt-1 text-sm text-text-subtle">Great Empire — admins and associates</p>
+          <p className="mt-1 text-sm text-text-subtle">{company.name} — admins and associates</p>
         </div>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit((values) => mutation.mutate(values))} noValidate>

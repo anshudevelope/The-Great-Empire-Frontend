@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { cancelReferral, fetchMyReferrals, fetchReferrals } from '@/api/referrals'
@@ -172,16 +173,17 @@ export function ReferralListPage() {
               </div>
             )}
 
-            {isAdmin && open.status === 'unused' && (
-              <Button
-                variant="danger"
-                className="self-start"
-                isLoading={cancel.isPending}
-                onClick={() => cancel.mutate(open._id)}
-              >
-                Cancel referral
-              </Button>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {/* The printable receipt lives in the Invoices section. */}
+              <Link to={`${isAdmin ? '/admin' : '/portal'}/invoices/${open._id}`}>
+                <Button variant="secondary">Open invoice</Button>
+              </Link>
+              {isAdmin && open.status === 'unused' && (
+                <Button variant="danger" isLoading={cancel.isPending} onClick={() => cancel.mutate(open._id)}>
+                  Cancel referral
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </Modal>

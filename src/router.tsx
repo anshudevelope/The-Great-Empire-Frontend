@@ -14,6 +14,8 @@ import { AssociateTreePage } from '@/features/associates/tree/AssociateTreePage'
 import { ReferralGeneratePage } from '@/features/referrals/ReferralGeneratePage'
 import { ReferralListPage } from '@/features/referrals/ReferralListPage'
 import { DownlineReportPage } from '@/features/reports/DownlineReportPage'
+import { InvoiceListPage } from '@/features/invoices/InvoiceListPage'
+import { InvoiceDetailPage } from '@/features/invoices/InvoiceDetailPage'
 import { PortalDashboardPage } from '@/features/portal/PortalDashboardPage'
 import { AddMemberPage } from '@/features/portal/AddMemberPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
@@ -49,6 +51,8 @@ export const router = createBrowserRouter([
           { path: 'associates/:id/edit', element: <AssociateFormPage /> },
           { path: 'referrals', element: <ReferralListPage /> },
           { path: 'referrals/generate', element: <ReferralGeneratePage /> },
+          { path: 'invoices', element: <InvoiceListPage /> },
+          { path: 'invoices/:id', element: <InvoiceDetailPage /> },
           { path: 'reports/downline', element: <DownlineReportPage /> },
         ],
       },
@@ -65,6 +69,8 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: 'dashboard', element: <PortalDashboardPage /> },
           { path: 'referrals', element: <ReferralListPage /> },
+          { path: 'invoices', element: <InvoiceListPage /> },
+          { path: 'invoices/:id', element: <InvoiceDetailPage /> },
           { path: 'add-member', element: <AddMemberPage /> },
           { path: 'tree', element: <PortalTreePage /> },
           { path: 'directs', element: <DirectsPage /> },

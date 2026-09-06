@@ -203,3 +203,39 @@ h3 {
   position: absolute;
   top: 0;
 }
+
+/* ---------------------------------------------------------------------------
+   Printing an invoice.
+
+   The browser's print dialog doubles as "Save as PDF", so an invoice becomes a
+   real, shareable file without shipping a PDF renderer. Everything outside
+   .print-area is hidden rather than removed, so the document keeps its layout.
+   --------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    left: 0;
+    max-width: none;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

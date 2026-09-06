@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAssociates } from '@/features/associates/hooks'
-import { Spinner } from '@/components/ui/Spinner'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
 import { CheckIcon, ClockIcon, PlusIcon, UsersIcon, XIcon } from '@/components/icons/icons'
 
@@ -34,26 +34,30 @@ export function DashboardPage() {
         </Link>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <Spinner className="h-6 w-6 text-blue-600" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STAT_CONFIG.map((stat) => (
-            <div
-              key={stat.key}
-              className="group rounded-card border border-border bg-white p-5 shadow-card transition-shadow hover:shadow-card-hover"
-            >
-              <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${stat.tone}`}>
-                <stat.icon className="h-5 w-5" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-busy={isLoading}>
+        {isLoading
+          ? // Same card shell as the real stats, so nothing shifts when the
+            // numbers arrive.
+            STAT_CONFIG.map((stat) => (
+              <div key={stat.key} className="rounded-card border border-border bg-white p-5 shadow-card">
+                <Skeleton className="mb-4 h-10 w-10 rounded-lg" />
+                <Skeleton className="h-9 w-16" />
+                <Skeleton className="mt-2 h-4 w-28" />
               </div>
-              <p className="text-3xl font-semibold tabular-nums tracking-tight text-text">{counts[stat.key]}</p>
-              <p className="mt-1 text-sm text-text-subtle">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      )}
+            ))
+          : STAT_CONFIG.map((stat) => (
+              <div
+                key={stat.key}
+                className="group rounded-card border border-border bg-white p-5 shadow-card transition-shadow hover:shadow-card-hover"
+              >
+                <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${stat.tone}`}>
+                  <stat.icon className="h-5 w-5" />
+                </div>
+                <p className="text-3xl font-semibold tabular-nums tracking-tight text-text">{counts[stat.key]}</p>
+                <p className="mt-1 text-sm text-text-subtle">{stat.label}</p>
+              </div>
+            ))}
+      </div>
 
       <div className="rounded-card border border-border bg-white p-6 shadow-card">
         <h2 className="text-sm font-semibold text-text">Quick actions</h2>

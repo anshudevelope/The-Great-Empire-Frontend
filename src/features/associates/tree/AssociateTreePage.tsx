@@ -127,18 +127,18 @@ export function AssociateTreePage() {
       ) : (
         // Keyed by root so the selection resets when the tree's root changes,
         // without needing an effect to reset state in response to a prop change.
-        <TreeWithPanel key={rootId} root={treeQuery.data.data} />
+        <TreeWithPanel key={rootId} root={treeQuery.data.data} onDrillDown={selectRoot} />
       )}
     </div>
   )
 }
 
-function TreeWithPanel({ root }: { root: AssociateTreeNode }) {
+function TreeWithPanel({ root, onDrillDown }: { root: AssociateTreeNode; onDrillDown: (id: string) => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-      <TreeCanvas root={root} selectedId={selectedId} onSelect={setSelectedId} onDrillDown={selectRoot} />
+      <TreeCanvas root={root} selectedId={selectedId} onSelect={setSelectedId} onDrillDown={onDrillDown} />
       <AssociateInfoPanel associateId={selectedId} />
     </div>
   )

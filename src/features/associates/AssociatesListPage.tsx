@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton, IconLink } from '@/components/ui/IconButton'
 import { Spinner } from '@/components/ui/Spinner'
 import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, RefreshIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
+import { formatShortDate } from '@/lib/datetime'
 
 const PAGE_SIZE = 10
 
@@ -219,7 +220,7 @@ export function AssociatesListPage() {
                       <Badge tone={STATUS_TONE[associate.status]}>{associate.status}</Badge>
                     </td>
                     <td className="px-4 py-3 align-middle text-text-subtle">
-                      {new Date(associate.createdAt).toLocaleDateString()}
+                      {formatShortDate(associate.createdAt)}
                     </td>
                     <td className="px-4 py-3 align-middle">
                       <div className="flex items-center justify-end gap-1">

@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatShortDate } from '@/lib/datetime'
 
 const money = (value: number) => `₹${value.toLocaleString('en-IN')}`
-const day = (value?: string | null) => (value ? new Date(value).toLocaleDateString('en-IN') : '—')
+const day = (value?: string | null) => formatShortDate(value)
 
 /**
  * The invoice register — every payment the company has received.

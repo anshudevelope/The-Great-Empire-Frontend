@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
+import { formatShortDate } from '@/lib/datetime'
 
 const statusTone: Record<ReferralStatus, 'success' | 'info' | 'neutral'> = {
   unused: 'info',
@@ -20,7 +21,7 @@ const statusTone: Record<ReferralStatus, 'success' | 'info' | 'neutral'> = {
 }
 
 const money = (value: number) => `₹${value.toLocaleString('en-IN')}`
-const day = (value: string | null) => (value ? new Date(value).toLocaleDateString('en-IN') : '—')
+const day = (value: string | null) => formatShortDate(value)
 
 /**
  * The invoice list. Both sides see the same rows through the same component —

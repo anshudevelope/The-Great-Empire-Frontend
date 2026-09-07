@@ -106,6 +106,10 @@ h3 {
   font-weight: 600;
 }
 
+button{
+  cursor: pointer;
+}
+
 ::selection {
   background: var(--color-blue-200);
   color: var(--color-blue-950);

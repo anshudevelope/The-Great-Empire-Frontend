@@ -1,10 +1,11 @@
 import type { Invoice } from '@/api/invoices'
+import { formatDate } from '@/lib/datetime'
 
 const money = (value: number) =>
   `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 const day = (value?: string | null) =>
-  value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
+  formatDate(value)
 
 /**
  * The invoice itself — the part that goes on paper.

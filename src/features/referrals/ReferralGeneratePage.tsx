@@ -13,8 +13,9 @@ import { Textarea } from '@/components/ui/Textarea'
 import { FormField } from '@/components/ui/FormField'
 import { Modal } from '@/components/ui/Modal'
 import { AssociateSelect } from '@/components/ui/AssociateSelect'
+import { todayIST } from '@/lib/datetime'
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = todayIST
 
 /**
  * Admin issues a referral voucher to an associate who has paid for it.

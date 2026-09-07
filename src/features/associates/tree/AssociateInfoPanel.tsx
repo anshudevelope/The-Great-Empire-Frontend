@@ -5,6 +5,7 @@ import { Field } from '../AssociateDetailPage'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { UserCircleIcon } from '@/components/icons/icons'
+import { formatDate } from '@/lib/datetime'
 
 export function AssociateInfoPanel({ associateId }: { associateId: string | null }) {
   const { data, isLoading } = useAssociate(associateId ?? undefined)
@@ -58,7 +59,7 @@ export function AssociateInfoPanel({ associateId }: { associateId: string | null
               label="Sponsor"
               value={typeof associate.sponsorId === 'object' ? (associate.sponsorId?.fullName ?? null) : null}
             />
-            <Field label="Joined" value={new Date(associate.createdAt).toLocaleDateString()} />
+            <Field label="Joined" value={formatDate(associate.createdAt)} />
           </dl>
 
           <Link

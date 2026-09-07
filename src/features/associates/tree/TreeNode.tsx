@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
 import type { AssociateStatus, AssociateTreeNode } from '@/types/associate'
+import { formatDate } from '@/lib/datetime'
 
 const TOOLTIP_WIDTH = 288 // w-72
 const TOOLTIP_HEIGHT = 240 // approximate; only used to decide flip direction
@@ -78,7 +79,7 @@ function ChildSlot({
 }
 
 const dateOnly = (value?: string) =>
-  value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
+  formatDate(value)
 
 /**
  * Hover card, modelled on the reference platform's genealogy tooltip.

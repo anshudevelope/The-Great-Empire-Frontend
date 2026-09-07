@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
+import { formatDate } from '@/lib/datetime'
 
 type PendingAction = 'approve' | 'reject' | 'delete' | null
 
@@ -152,7 +153,7 @@ export function AssociateDetailPage() {
           <Field label="Father / Husband Name" value={associate.fatherOrHusbandName} />
           <Field label="Marital Status" value={associate.maritalStatus} />
           <Field label="Gender" value={associate.gender} />
-          <Field label="Date of Birth" value={associate.dob ? new Date(associate.dob).toLocaleDateString() : undefined} />
+          <Field label="Date of Birth" value={formatDate(associate.dob, '')} />
           <Field label="Age" value={associate.age} />
         </dl>
       </section>
@@ -201,7 +202,7 @@ export function AssociateDetailPage() {
                   : `${associate.position} leg`
             }
           />
-          <Field label="Joined" value={new Date(associate.createdAt).toLocaleDateString()} />
+          <Field label="Joined" value={formatDate(associate.createdAt)} />
         </dl>
       </section>
 

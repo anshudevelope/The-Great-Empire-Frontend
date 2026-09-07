@@ -16,6 +16,8 @@ export interface DownlineRow {
   depth: number
   directCount: number
   sponsorCode: string | null
+  sponsorMemberCode: string | null
+  treeStatus: 'unplaced' | 'root' | 'placed'
   placedUnderCode: string | null
   /** True when the sponsor differs from the placement parent — i.e. spillover. */
   isSpillover: boolean

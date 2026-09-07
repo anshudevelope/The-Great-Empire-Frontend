@@ -15,6 +15,10 @@ interface AssociateSelectProps {
   status?: string
   /** Keeps an associate out of their own sponsor list when editing. */
   exclude?: string
+  /** Only members who can still be referred: unplaced and unsponsored. */
+  referable?: boolean
+  /** Show the Sponsor ID (SPN####) instead of the member code in each row. */
+  showSponsorCode?: boolean
   placeholder?: string
   invalid?: boolean
   id?: string
@@ -26,10 +30,15 @@ export function AssociateSelect({
   role,
   status,
   exclude,
+  referable,
+  showSponsorCode,
   placeholder,
   invalid,
   id,
 }: AssociateSelectProps) {
+  // Sponsor pickers identify people by Sponsor ID; everything else by member code.
+  const labelFor = (option: AssociateOption) =>
+    (showSponsorCode ? option.sponsorLabel : option.label) ?? option.label
   const [term, setTerm] = useState('')
   const [debounced, setDebounced] = useState('')
   const [open, setOpen] = useState(false)
@@ -50,8 +59,9 @@ export function AssociateSelect({
   }, [])
 
   const { data, isFetching } = useQuery({
-    queryKey: ['associate-search', debounced, role, status, exclude],
-    queryFn: () => searchAssociates(debounced, { role, status, exclude }),
+    queryKey: ['associate-search', debounced, role, status, exclude, referable],
+    queryFn: () =>
+      searchAssociates(debounced, { role, status, exclude, referable: referable ? 'true' : undefined }),
     enabled: open,
   })
 
@@ -60,7 +70,7 @@ export function AssociateSelect({
   if (value) {
     return (
       <div className="flex items-center justify-between gap-2 rounded-control border border-border-strong bg-white px-3 py-2">
-        <span className="truncate text-sm text-text">{value.label}</span>
+        <span className="truncate text-sm text-text">{labelFor(value)}</span>
         <button
           type="button"
           onClick={() => {
@@ -113,10 +123,13 @@ export function AssociateSelect({
                 'hover:bg-neutral-hover',
               )}
             >
-              <span className="text-sm font-medium text-text">{option.label}</span>
+              <span className="text-sm font-medium text-text">{labelFor(option)}</span>
               <span className="text-xs text-text-subtle">
-                {option.email}
+                {/* Show the other code too, so a row is identifiable either way. */}
+                {showSponsorCode ? option.memberCode : option.sponsorCode}
+                {option.email ? ` · ${option.email}` : ''}
                 {option.tier ? ` · ${option.tier}` : ''}
+                {option.treeStatus === 'unplaced' ? ' · not in tree' : ''}
               </span>
             </button>
           ))}

@@ -43,18 +43,30 @@ export function deleteAssociate(id: string): Promise<ApiMessageResponse> {
 export interface AssociateOption {
   _id: string
   memberCode: string | null
+  /** The option's own Sponsor ID (SPN####). */
+  sponsorCode: string | null
   fullName: string
   email: string
   role: 'admin' | 'associate'
   status: string
   tier: string | null
+  treeStatus: 'unplaced' | 'root' | 'placed' | null
   /** Pre-built dropdown label, e.g. "TRG0042 — Rakesh". */
   label: string
+  /** Sponsor-picker label, e.g. "SPN0042 — Rakesh". */
+  sponsorLabel: string | null
 }
 
 export function searchAssociates(
   q: string,
-  options: { role?: string; status?: string; exclude?: string } = {},
+  options: {
+    role?: string
+    status?: string
+    exclude?: string
+    /** Only members who can still be referred: unplaced and unsponsored. */
+    referable?: string
+    treeStatus?: string
+  } = {},
 ): Promise<ApiListResponse<AssociateOption>> {
   return apiRequest<ApiListResponse<AssociateOption>>('/associates/search', {
     params: { q, ...options, limit: '10' },
@@ -81,7 +93,6 @@ export interface RedeemResult {
   _id: string
   memberCode: string
   fullName: string
-  email: string
   tier: string
   tierLabel: string
   status: string
@@ -95,11 +106,19 @@ export interface RedeemResult {
 export interface RedeemResponse {
   success: true
   message: string
-  /** Shown once, for the sponsor to hand over. Never retrievable afterwards. */
-  tempPassword: string
   data: RedeemResult
 }
 
-export function redeemReferral(formData: FormData): Promise<RedeemResponse> {
-  return apiRequest<RedeemResponse>('/associates/redeem', { method: 'POST', body: formData })
+/**
+ * Place an already-registered member into the sponsor's tree.
+ *
+ * No member details travel here — the referral names who is being placed, so
+ * the only inputs are the referral credentials and the leg.
+ */
+export function redeemReferral(payload: {
+  referralNo: string
+  pin: string
+  position: string
+}): Promise<RedeemResponse> {
+  return apiRequest<RedeemResponse>('/associates/redeem', { method: 'POST', body: payload })
 }

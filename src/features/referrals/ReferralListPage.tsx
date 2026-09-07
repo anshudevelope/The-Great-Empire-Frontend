@@ -98,7 +98,8 @@ export function ReferralListPage() {
               <tr>
                 <th className="px-4 py-3 font-semibold">Invoice</th>
                 <th className="px-4 py-3 font-semibold">Referral no</th>
-                <th className="px-4 py-3 font-semibold">Issued to</th>
+                <th className="px-4 py-3 font-semibold">Member</th>
+                <th className="px-4 py-3 font-semibold">Sponsor</th>
                 <th className="px-4 py-3 font-semibold">Tier</th>
                 <th className="px-4 py-3 font-semibold">Amount paid</th>
                 <th className="px-4 py-3 font-semibold">Payment</th>
@@ -112,7 +113,12 @@ export function ReferralListPage() {
                   <td className="px-4 py-3 font-mono text-xs text-text-muted">{row.invoiceNo}</td>
                   <td className="px-4 py-3 font-mono text-xs text-text">{row.referralNo}</td>
                   <td className="px-4 py-3">
-                    <span className="font-medium text-text">{row.issuedTo.memberCode}</span>
+                    <span className="font-medium text-text">{row.member.memberCode}</span>
+                    <span className="block text-xs text-text-subtle">{row.member.name}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {/* Identified by Sponsor ID here — that is the code they act under. */}
+                    <span className="font-mono text-xs text-text">{row.issuedTo.sponsorCode ?? row.issuedTo.memberCode}</span>
                     <span className="block text-xs text-text-subtle">{row.issuedTo.name}</span>
                   </td>
                   <td className="px-4 py-3 text-text-muted">{row.tierLabel}</td>
@@ -144,6 +150,7 @@ export function ReferralListPage() {
               <Line label="Referral no" value={open.referralNo} mono />
               <Line label="Issued on" value={day(open.issuedAt)} />
               <Line label="Issued by" value={open.issuedBy ?? '—'} />
+              <Line label="Referred member" value={`${open.member.memberCode ?? ''} — ${open.member.name ?? ''}`} />
               <Line label="Received from" value={`${open.issuedTo.memberCode ?? ''} — ${open.issuedTo.name ?? ''}`} />
               <Line label="Tier" value={`${open.tier} — ${open.tierLabel}`} />
             </div>
@@ -163,7 +170,10 @@ export function ReferralListPage() {
 
             {open.status === 'used' && (
               <div className="rounded-card border border-success-border bg-success-bg p-4 text-sm text-success">
-                Redeemed on {day(open.usedAt)} — created member {open.usedBy?.memberCode} ({open.usedBy?.name})
+                {open.member.memberCode} ({open.member.name}) placed on {day(open.usedAt)}
+                {open.placement?.under ? ` under ${open.placement.under}` : ''}
+                {open.placement?.position ? `, ${open.placement.position} leg` : ''}
+                {open.placement?.by ? ` — by the ${open.placement.by}` : ''}.
               </div>
             )}
             {open.status === 'cancelled' && (

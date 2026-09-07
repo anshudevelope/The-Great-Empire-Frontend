@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -15,6 +15,7 @@ import type { AssociateFormValues } from '@/schemas/associate.schema'
 import { useAssociate, useCreateAssociate, useUpdateAssociate } from './hooks'
 import { AssociateSelect } from '@/components/ui/AssociateSelect'
 import type { AssociateOption } from '@/api/associates'
+import { useAuthStore } from '@/store/authStore'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Select } from '@/components/ui/Select'
@@ -45,7 +46,7 @@ const emptyDefaults: AssociateFormValues = {
   nomineeRelation: '',
   nomineeAge: '',
   tier: 'Tier I',
-  sponsorId: '',
+  parentId: '',
   position: '',
 }
 
@@ -64,15 +65,50 @@ export function AssociateFormPage() {
   const isEdit = !!id
   const navigate = useNavigate()
 
+  // Only an admin may set placement; associates can create the record only.
+  const isAdmin = useAuthStore((state) => state.user?.role === 'admin')
+
   const associateQuery = useAssociate(id)
   const createMutation = useCreateAssociate()
   const updateMutation = useUpdateAssociate(id ?? '')
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [documentRows, setDocumentRows] = useState<DocumentRow[]>([createDocumentRow()])
-  // Sponsor is picked through a searchable select rather than a <select> of
-  // every associate — that list is unusable once there are more than a screenful.
-  const [sponsorOption, setSponsorOption] = useState<AssociateOption | null>(null)
+  // Placement is opt-in. A member can be created with no tree node at all;
+  // their sponsor puts them in later by redeeming a referral.
+  //
+  // Both of these are DERIVED from the loaded associate with an optional
+  // override, rather than pushed into state from an effect — setting state in
+  // an effect triggers a second render pass and the cascading-render lint rule.
+  const loaded = associateQuery.data?.data
+  const [placeNowOverride, setPlaceNowOverride] = useState<boolean | null>(null)
+  const [parentOverride, setParentOverride] = useState<AssociateOption | null | undefined>(undefined)
+
+  // An unplaced member is exactly who this form is used to place, so the
+  // placement block opens already ticked when they aren't in the tree yet.
+  const placeNow = placeNowOverride ?? loaded?.treeStatus === 'unplaced'
+
+  const loadedParent = useMemo<AssociateOption | null>(() => {
+    const parentRef = loaded && typeof loaded.parentId === 'object' ? loaded.parentId : null
+    if (!parentRef) return null
+    return {
+      _id: parentRef._id,
+      memberCode: parentRef.memberCode ?? null,
+      sponsorCode: null,
+      fullName: parentRef.fullName,
+      email: parentRef.email,
+      role: 'associate',
+      status: 'approved',
+      tier: null,
+      treeStatus: 'placed',
+      label: `${parentRef.memberCode ?? '—'} — ${parentRef.fullName}`,
+      sponsorLabel: null,
+    }
+  }, [loaded])
+
+  const parentOption = parentOverride === undefined ? loadedParent : parentOverride
+  const setParentOption = setParentOverride
+  const setPlaceNow = setPlaceNowOverride
 
   const schema = isEdit ? editAssociateSchema : createAssociateSchema
 
@@ -80,7 +116,7 @@ export function AssociateFormPage() {
     register,
     handleSubmit,
     reset,
-    watch,
+
     setValue,
     formState: { errors },
   } = useForm<AssociateFormValues>({
@@ -88,29 +124,9 @@ export function AssociateFormPage() {
     defaultValues: emptyDefaults,
   })
 
-  const selectedSponsorId = watch('sponsorId')
-
   useEffect(() => {
     if (!isEdit || !associateQuery.data) return
     const associate = associateQuery.data.data
-
-    // Seed the searchable select from the populated sponsor, so editing shows
-    // the existing sponsor instead of an empty box.
-    const sponsorRef = typeof associate.sponsorId === 'object' ? associate.sponsorId : null
-    setSponsorOption(
-      sponsorRef
-        ? {
-            _id: sponsorRef._id,
-            memberCode: sponsorRef.memberCode ?? null,
-            fullName: sponsorRef.fullName,
-            email: sponsorRef.email,
-            role: 'associate',
-            status: 'approved',
-            tier: null,
-            label: `${sponsorRef.memberCode ?? '—'} — ${sponsorRef.fullName}`,
-          }
-        : null,
-    )
 
     reset({
       title: associate.title,
@@ -132,7 +148,7 @@ export function AssociateFormPage() {
       nomineeRelation: associate.nomineeRelation ?? '',
       nomineeAge: associate.nomineeAge != null ? String(associate.nomineeAge) : '',
       tier: associate.tier,
-      sponsorId: typeof associate.sponsorId === 'string' ? associate.sponsorId : (associate.sponsorId?._id ?? ''),
+      parentId: typeof associate.parentId === 'string' ? associate.parentId : (associate.parentId?._id ?? ''),
       position: associate.position ?? '',
     })
   }, [isEdit, associateQuery.data, reset])
@@ -170,10 +186,10 @@ export function AssociateFormPage() {
       nomineeRelation: values.nomineeRelation,
       nomineeAge: values.nomineeAge,
       tier: values.tier,
-      sponsorId: values.sponsorId || undefined,
-      // No separate parent picker — the tree parent is always the sponsor
-      // (backend falls back to sponsorId when parentId is omitted).
-      position: values.sponsorId ? values.position || undefined : undefined,
+      // Placement only travels when the admin explicitly opted in. Sponsorship
+      // is never sent from here — a referral assigns it.
+      parentId: placeNow ? values.parentId || undefined : undefined,
+      position: placeNow ? values.position || undefined : undefined,
     }
 
     for (const [key, value] of Object.entries(fields)) {
@@ -201,7 +217,10 @@ export function AssociateFormPage() {
       })
     } else {
       createMutation.mutate(formData, {
-        onSuccess: (response) => navigate(`/admin/associates/${response.data._id}`),
+        // An associate has no access to the admin detail page, so send them
+        // somewhere they can actually go.
+        onSuccess: (response) =>
+          navigate(isAdmin ? `/admin/associates/${response.data._id}` : '/portal/dashboard'),
       })
     }
   }
@@ -339,43 +358,72 @@ export function AssociateFormPage() {
               ))}
             </Select>
           </FormField>
-          <FormField
-            label="Sponsor"
-            htmlFor="sponsorId"
-            hint="Search by associate ID or name. The binary tree places this associate under their sponsor."
-          >
-            {/* Registered so RHF still owns the value; the visible control is
-                the searchable select below. */}
-            <input type="hidden" {...register('sponsorId')} />
-            <AssociateSelect
-              id="sponsorId"
-              value={sponsorOption}
-              onChange={(option) => {
-                setSponsorOption(option)
-                setValue('sponsorId', option?._id ?? '', { shouldValidate: true })
-                if (!option) setValue('position', '')
-              }}
-              role="associate"
-              status="approved"
-              exclude={id}
-              placeholder="Search by ID or name…"
-            />
-          </FormField>
-          {selectedSponsorId && (
-            <FormField
-              label="Tree Position"
-              htmlFor="position"
-              required
-              error={errors.position?.message}
-              hint="Left or Right leg under the sponsor — falls back to spillover if the slot is taken"
-            >
-              <Select id="position" invalid={!!errors.position} {...register('position')}>
-                <option value="">Select position</option>
-                <option value="Left">Left</option>
-                <option value="Right">Right</option>
-              </Select>
-            </FormField>
-          )}
+          {/* Sponsorship is NOT set here. Who referred a member is decided by
+              the referral that records who paid for them. */}
+          <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
+            <div className="rounded-card border border-border bg-bg p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium text-text">Tree placement</p>
+                  <p className="mt-0.5 text-xs text-text-subtle">
+                    Optional. Leave this off and the associate is created outside the tree — their sponsor places them
+                    later by redeeming a referral, or you can place them from Edit at any time.
+                  </p>
+                </div>
+                {isAdmin && (
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-text-muted">
+                    <input
+                      type="checkbox"
+                      checked={placeNow}
+                      onChange={(event) => {
+                        setPlaceNow(event.target.checked)
+                        if (!event.target.checked) {
+                          setParentOption(null)
+                          setValue('parentId', '')
+                          setValue('position', '')
+                        }
+                      }}
+                    />
+                    Place in the tree now
+                  </label>
+                )}
+              </div>
+
+              {placeNow && (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <FormField label="Place under" htmlFor="parentId" required hint="Search by associate ID or name">
+                    <input type="hidden" {...register('parentId')} />
+                    <AssociateSelect
+                      id="parentId"
+                      value={parentOption}
+                      onChange={(option) => {
+                        setParentOption(option)
+                        setValue('parentId', option?._id ?? '', { shouldValidate: true })
+                      }}
+                      role="associate"
+                      status="approved"
+                      exclude={id}
+                      placeholder="Search by ID or name…"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Leg"
+                    htmlFor="position"
+                    required
+                    error={errors.position?.message}
+                    hint="Falls back to spillover if the slot is already taken"
+                  >
+                    <Select id="position" invalid={!!errors.position} {...register('position')}>
+                      <option value="">Select leg</option>
+                      <option value="Left">Left</option>
+                      <option value="Right">Right</option>
+                    </Select>
+                  </FormField>
+                </div>
+              )}
+            </div>
+          </div>
         </Section>
 
         <Section title="Documents">

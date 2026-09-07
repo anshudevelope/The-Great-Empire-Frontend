@@ -71,6 +71,9 @@ export const router = createBrowserRouter([
           { path: 'referrals', element: <ReferralListPage /> },
           { path: 'invoices', element: <InvoiceListPage /> },
           { path: 'invoices/:id', element: <InvoiceDetailPage /> },
+          // Associates can register members too — placement stays admin-only,
+          // and the form hides that section for them.
+          { path: 'register', element: <AssociateFormPage /> },
           { path: 'add-member', element: <AddMemberPage /> },
           { path: 'tree', element: <PortalTreePage /> },
           { path: 'directs', element: <DirectsPage /> },

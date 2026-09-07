@@ -7,6 +7,16 @@ export interface ReferralParty {
   _id: string
   name: string | null
   memberCode: string | null
+  /** The party's own Sponsor ID (SPN####), where relevant. */
+  sponsorCode?: string | null
+  treeStatus?: 'unplaced' | 'root' | 'placed' | null
+}
+
+/** How the referred member got into the tree, once they did. */
+export interface ReferralPlacement {
+  by: 'admin' | 'sponsor' | null
+  under: string | null
+  position: 'Left' | 'Right' | null
 }
 
 export interface ReferralPayment {
@@ -23,7 +33,10 @@ export interface ReferralInvoice {
   referralNo: string
   issuedAt: string
   issuedBy: string | null
+  /** The sponsor — who paid, and who gets the referral credit. */
   issuedTo: ReferralParty
+  /** The referred member. Registered BEFORE the referral, never created by it. */
+  member: ReferralParty
   tier: string
   tierLabel: string
   /** Money the associate PAID to the company. Recorded only — never a payout. */
@@ -32,8 +45,8 @@ export interface ReferralInvoice {
   status: ReferralStatus
   /** Masked as ••••NN — the real PIN is shown once at generation and never again. */
   pinHint: string | null
-  usedBy: ReferralParty | null
   usedAt: string | null
+  placement: ReferralPlacement | null
   cancelledAt: string | null
   cancelReason: string
   readAt: string | null
@@ -56,4 +69,6 @@ export interface VerifiedReferral {
   tierLabel: string
   amountPaid: number
   sponsor: { _id: string; name: string; memberCode: string }
+  /** Who this referral will place — the member already exists. */
+  member?: { _id: string; name: string | null; memberCode: string | null }
 }

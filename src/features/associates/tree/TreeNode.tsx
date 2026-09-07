@@ -163,7 +163,9 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
       </table>
 
       <div className="bg-linear-to-r from-blue-700 to-blue-900 px-3 py-1.5 text-[10px] text-white">
-        <p>Sponsor PID : {node.sponsorCode ?? '—'}</p>
+        {/* The member's own Sponsor ID, then who sponsored them. */}
+        <p>Sponsor ID : {node.sponsorCode ?? '—'}</p>
+        <p>Sponsor PID : {node.sponsorMemberCode ?? '—'}</p>
         <p>
           Parent PID : {node.parentCode ?? '—'}
           {node.isSpillover && <span className="ml-1 opacity-80">(spillover)</span>}

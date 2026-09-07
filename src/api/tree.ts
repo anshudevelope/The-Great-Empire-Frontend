@@ -12,6 +12,8 @@ export interface TreeNodeData {
   position: string | null
   profileImage?: { url: string; public_id: string }
   sponsorCode: string | null
+  sponsorMemberCode: string | null
+  treeStatus: 'unplaced' | 'root' | 'placed'
   parentCode: string | null
   depth: number
   directCount: number

@@ -11,7 +11,9 @@ const NAV = [
   { label: 'Dashboard', to: '/portal/dashboard' },
   { label: 'My Referrals', to: '/portal/referrals' },
   { label: 'My Invoices', to: '/portal/invoices' },
-  { label: 'Add Member', to: '/portal/add-member' },
+  // Two distinct jobs: creating the person, and putting them in your tree.
+  { label: 'Register Associate', to: '/portal/register' },
+  { label: 'Place Member', to: '/portal/add-member' },
   { label: 'My Tree', to: '/portal/tree' },
   { label: 'My Directs', to: '/portal/directs' },
   { label: 'Downline', to: '/portal/downline' },

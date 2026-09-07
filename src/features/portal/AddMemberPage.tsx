@@ -9,7 +9,6 @@ import type { VerifiedReferral } from '@/types/referral'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { FormField } from '@/components/ui/FormField'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
@@ -18,12 +17,12 @@ import { cn } from '@/lib/cn'
 type Leg = 'Left' | 'Right'
 
 /**
- * Redeem a referral voucher to add a new member.
+ * Place a member you referred into your tree.
  *
- * The form has no sponsor field and no tier field on purpose: both are carried
- * by the voucher. That leaves exactly ONE tree input — which leg — and the
- * spillover result is previewed before submitting so the placement is never a
- * surprise.
+ * The member already exists — an admin registered them when the referral was
+ * raised — so this page never asks for their details. It carries the sponsor
+ * (you) and the member; the ONE input you make is which leg, and the spillover
+ * result is previewed before you commit so the placement is never a surprise.
  */
 export function AddMemberPage() {
   const user = useAuthStore((state) => state.user)
@@ -31,35 +30,18 @@ export function AddMemberPage() {
 
   const [referralNo, setReferralNo] = useState('')
   const [pin, setPin] = useState('')
-  const [voucher, setVoucher] = useState<VerifiedReferral | null>(null)
+  const [referral, setReferral] = useState<VerifiedReferral | null>(null)
   const [leg, setLeg] = useState<Leg>('Left')
-  const [result, setResult] = useState<{ member: RedeemResult; tempPassword: string } | null>(null)
-
-  const [details, setDetails] = useState({
-    title: 'Mr.',
-    fullName: '',
-    gender: 'Male',
-    phone: '',
-    email: '',
-    dob: '',
-    address: '',
-    city: '',
-    state: 'Uttar Pradesh',
-    pinCode: '',
-    nomineeName: '',
-    nomineeRelation: '',
-  })
-  const setField = (key: keyof typeof details) => (event: { target: { value: string } }) =>
-    setDetails((prev) => ({ ...prev, [key]: event.target.value }))
+  const [result, setResult] = useState<RedeemResult | null>(null)
 
   const verify = useMutation({
     mutationFn: verifyReferral,
     onSuccess: (response) => {
-      setVoucher(response.data)
+      setReferral(response.data)
       toast.success('Referral verified')
     },
     onError: (error) => {
-      setVoucher(null)
+      setReferral(null)
       toast.error(error instanceof ApiRequestError ? error.message : 'Could not verify this referral.')
     },
   })
@@ -68,152 +50,97 @@ export function AddMemberPage() {
   const { data: preview, isFetching: previewing } = useQuery({
     queryKey: ['placement-preview', leg],
     queryFn: () => fetchPlacementPreview(leg),
-    enabled: !!voucher,
+    enabled: !!referral,
   })
 
-  const redeem = useMutation({
+  const place = useMutation({
     mutationFn: redeemReferral,
     onSuccess: (response) => {
-      setResult({ member: response.data, tempPassword: response.tempPassword })
+      setResult(response.data)
       queryClient.invalidateQueries({ queryKey: ['referrals'] })
       queryClient.invalidateQueries({ queryKey: ['referral-summary'] })
       queryClient.invalidateQueries({ queryKey: ['binary-tree'] })
+      queryClient.invalidateQueries({ queryKey: ['directs'] })
     },
     onError: (error) => {
-      toast.error(error instanceof ApiRequestError ? error.message : 'Registration failed.')
+      toast.error(error instanceof ApiRequestError ? error.message : 'Placement failed.')
     },
   })
 
   const submit = () => {
-    if (!voucher) return
-    const form = new FormData()
-    form.append('referralNo', voucher.referralNo)
-    form.append('pin', pin)
-    form.append('position', leg)
-    for (const [key, value] of Object.entries(details)) {
-      if (value) form.append(key, value)
-    }
-    redeem.mutate(form)
+    if (!referral) return
+    place.mutate({ referralNo: referral.referralNo, pin, position: leg })
   }
 
   const reset = () => {
     setResult(null)
-    setVoucher(null)
+    setReferral(null)
     setReferralNo('')
     setPin('')
-    setDetails({
-      title: 'Mr.', fullName: '', gender: 'Male', phone: '', email: '', dob: '',
-      address: '', city: '', state: 'Uttar Pradesh', pinCode: '', nomineeName: '', nomineeRelation: '',
-    })
   }
 
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-xl font-semibold text-text">Add a member</h1>
+        <h1 className="text-xl font-semibold text-text">Place a member</h1>
         <p className="mt-1 text-sm text-text-subtle">
-          Enter a referral you were issued, then the new member's details.
+          Enter a referral you were issued and choose a leg. The member is already registered — you are only deciding
+          where they sit in your tree.
         </p>
       </header>
 
-      {/* ── 1. Voucher ───────────────────────────────────────────────── */}
-      <Section step={1} title="Referral" done={!!voucher}>
-        {voucher ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-success-border bg-success-bg p-4">
-            <div className="text-sm text-success">
-              <p className="font-medium">{voucher.referralNo} verified</p>
-              <p className="mt-0.5">
-                {voucher.tier} — {voucher.tierLabel} · ₹{voucher.amountPaid.toLocaleString('en-IN')} · issued to you
-              </p>
-            </div>
-            <Button size="sm" variant="secondary" onClick={() => setVoucher(null)}>
-              Use another
-            </Button>
+      {/* ── 1. Referral ──────────────────────────────────────────────── */}
+      <Section step={1} title="Referral" done={!!referral}>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <FormField label="Referral number" htmlFor="referralNo" required>
+            <Input
+              id="referralNo"
+              placeholder="REF-000123"
+              value={referralNo}
+              onChange={(event) => setReferralNo(event.target.value)}
+              disabled={!!referral}
+            />
+          </FormField>
+          <FormField label="PIN" htmlFor="pin" required hint="The 6 digits given to you with the referral">
+            <Input
+              id="pin"
+              inputMode="numeric"
+              placeholder="••••••"
+              value={pin}
+              onChange={(event) => setPin(event.target.value)}
+              disabled={!!referral}
+            />
+          </FormField>
+          <div className="flex items-end">
+            {referral ? (
+              <Button variant="secondary" onClick={reset} className="w-full">
+                Use a different referral
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                isLoading={verify.isPending}
+                disabled={!referralNo || !pin}
+                onClick={() => verify.mutate({ referralNo, pin })}
+              >
+                Verify
+              </Button>
+            )}
           </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-            <FormField label="Referral number" htmlFor="referralNo" required>
-              <Input
-                id="referralNo"
-                placeholder="REF-000123"
-                value={referralNo}
-                onChange={(event) => setReferralNo(event.target.value.toUpperCase())}
-              />
-            </FormField>
-            <FormField label="PIN" htmlFor="pin" required>
-              <Input
-                id="pin"
-                inputMode="numeric"
-                placeholder="••••••"
-                value={pin}
-                onChange={(event) => setPin(event.target.value)}
-              />
-            </FormField>
-            <Button
-              className="h-10"
-              isLoading={verify.isPending}
-              onClick={() => verify.mutate({ referralNo, pin })}
-              disabled={!referralNo || !pin}
-            >
-              Verify
-            </Button>
+        </div>
+
+        {referral && (
+          <div className="mt-4 grid gap-3 rounded-card border border-success-border bg-success-bg p-4 sm:grid-cols-4">
+            <Line label="Member" value={`${referral.member?.memberCode ?? '—'} — ${referral.member?.name ?? ''}`} />
+            <Line label="Tier" value={`${referral.tier} — ${referral.tierLabel}`} />
+            <Line label="Amount paid" value={`₹${referral.amountPaid.toLocaleString('en-IN')}`} />
+            <Line label="Invoice" value={referral.invoiceNo} mono />
           </div>
         )}
       </Section>
 
-      {/* ── 2. Member details ────────────────────────────────────────── */}
-      <Section step={2} title="New member details" disabled={!voucher}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <FormField label="Title" htmlFor="title">
-            <Select id="title" value={details.title} onChange={setField('title')}>
-              {['Mr.', 'Mrs.', 'Ms.', 'Dr.'].map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </Select>
-          </FormField>
-          <FormField label="Full name" htmlFor="fullName" required>
-            <Input id="fullName" value={details.fullName} onChange={setField('fullName')} />
-          </FormField>
-          <FormField label="Gender" htmlFor="gender">
-            <Select id="gender" value={details.gender} onChange={setField('gender')}>
-              {['Male', 'Female', 'Other'].map((g) => (
-                <option key={g}>{g}</option>
-              ))}
-            </Select>
-          </FormField>
-          <FormField label="Date of birth" htmlFor="dob">
-            <Input id="dob" type="date" value={details.dob} onChange={setField('dob')} />
-          </FormField>
-          <FormField label="Phone" htmlFor="phone" required>
-            <Input id="phone" value={details.phone} onChange={setField('phone')} />
-          </FormField>
-          <FormField label="Email" htmlFor="email" required>
-            <Input id="email" type="email" value={details.email} onChange={setField('email')} />
-          </FormField>
-          <FormField label="Address" htmlFor="address" className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-            <Input id="address" value={details.address} onChange={setField('address')} />
-          </FormField>
-          <FormField label="City" htmlFor="city">
-            <Input id="city" value={details.city} onChange={setField('city')} />
-          </FormField>
-          <FormField label="State" htmlFor="state">
-            <Input id="state" value={details.state} onChange={setField('state')} />
-          </FormField>
-          <FormField label="Nominee name" htmlFor="nomineeName">
-            <Input id="nomineeName" value={details.nomineeName} onChange={setField('nomineeName')} />
-          </FormField>
-          <FormField label="Nominee relation" htmlFor="nomineeRelation">
-            <Input id="nomineeRelation" value={details.nomineeRelation} onChange={setField('nomineeRelation')} />
-          </FormField>
-        </div>
-        <p className="mt-4 rounded-card border border-border bg-bg p-3 text-xs text-text-subtle">
-          No password field: the system generates a temporary one and shows it to you once. The member must replace it
-          at first login, so you never hold their permanent password.
-        </p>
-      </Section>
-
-      {/* ── 3. Placement ─────────────────────────────────────────────── */}
-      <Section step={3} title="Placement" disabled={!voucher}>
+      {/* ── 2. Placement ─────────────────────────────────────────────── */}
+      <Section step={2} title="Placement" disabled={!referral}>
         <div className="flex flex-col gap-4">
           <FormField label="Sponsor" htmlFor="sponsor" hint="Taken from the referral — this is you.">
             <div className="flex items-center gap-2 rounded-control border border-border-strong bg-neutral-hover px-3 py-2 text-sm text-text-muted">
@@ -267,59 +194,34 @@ export function AddMemberPage() {
       </Section>
 
       <div className="mt-6 flex justify-end">
-        <Button
-          isLoading={redeem.isPending}
-          disabled={!voucher || !details.fullName || !details.email || !details.phone}
-          onClick={submit}
-        >
-          Register member
+        <Button isLoading={place.isPending} disabled={!referral} onClick={submit}>
+          Place member
         </Button>
       </div>
 
-      <Modal open={!!result} onClose={reset} title="Member registered" size="lg">
+      <Modal open={!!result} onClose={reset} title="Member placed" size="lg">
         {result && (
           <div className="flex flex-col gap-4">
-            <div className="rounded-card border border-warning-border bg-warning-bg p-4">
-              <p className="text-sm font-medium text-warning">Hand over this temporary password</p>
-              <p className="mt-1 text-xs text-warning">
-                It is shown only once. {result.member.fullName} must change it at first login.
-              </p>
-              <p className="mt-3 rounded bg-white px-3 py-2 font-mono text-base font-semibold tracking-wider text-text">
-                {result.tempPassword}
-              </p>
-            </div>
-
             <div className="grid gap-3 sm:grid-cols-2">
-              <Line label="Member code" value={result.member.memberCode} mono />
-              <Line label="Name" value={result.member.fullName} />
-              <Line label="Tier" value={`${result.member.tier} — ${result.member.tierLabel}`} />
-              <Line label="Sponsor" value={result.member.sponsor.memberCode} />
+              <Line label="Member code" value={result.memberCode} mono />
+              <Line label="Name" value={result.fullName} />
+              <Line label="Tier" value={`${result.tier} — ${result.tierLabel}`} />
+              <Line label="Sponsor" value={result.sponsor.memberCode} />
               <Line
                 label="Placed under"
-                value={result.member.placedUnder ? `${result.member.placedUnder.memberCode} — ${result.member.placedUnder.fullName}` : '—'}
+                value={result.placedUnder ? `${result.placedUnder.memberCode} — ${result.placedUnder.fullName}` : '—'}
               />
-              <Line label="Leg" value={`${result.member.position} · depth ${result.member.depth}`} />
+              <Line label="Leg" value={`${result.position} · depth ${result.depth}`} />
             </div>
 
-            {result.member.spilledOver && (
+            {result.spilledOver && (
               <p className="rounded-card border border-info-border bg-info-bg p-3 text-xs text-info">
                 This member spilled over past a full slot. They sit deeper in the tree, but you remain their sponsor and
                 keep the referral credit.
               </p>
             )}
 
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  void navigator.clipboard.writeText(
-                    `Member: ${result.member.memberCode}\nEmail: ${result.member.email}\nTemporary password: ${result.tempPassword}`,
-                  )
-                  toast.success('Copied')
-                }}
-              >
-                Copy login details
-              </Button>
+            <div className="flex justify-end">
               <Button onClick={reset}>Done</Button>
             </div>
           </div>

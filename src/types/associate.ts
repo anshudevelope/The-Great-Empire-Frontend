@@ -24,10 +24,20 @@ export interface SponsorRef {
   phone: string
 }
 
+export type TreeStatus = 'unplaced' | 'root' | 'placed'
+
 export interface Associate {
   _id: string
   /** Public associate ID (TRG0001). Null only for admin accounts, which sit outside the tree. */
   memberCode: string | null
+  /** This associate's OWN Sponsor ID (SPN0001) — the code they hand out when referring. */
+  sponsorCode: string | null
+  /** The member code of whoever sponsored them. Null until a referral assigns one. */
+  sponsorMemberCode: string | null
+  /** The Sponsor ID of whoever sponsored them. */
+  sponsorSponsorCode: string | null
+  /** Placement is optional at creation — 'unplaced' means not in the tree yet. */
+  treeStatus: TreeStatus
   title: AssociateTitle
   fullName: string
   fatherOrHusbandName: string
@@ -74,8 +84,12 @@ export interface AssociateTreeNode {
   tier: AssociateTier
   position: AssociatePosition
   profileImage: ProfileImage
+  /** This node's own Sponsor ID (SPN####). */
   sponsorCode: string | null
-  /** Placement parent's code. Differs from sponsorCode whenever spillover applied. */
+  /** Member code of whoever sponsored them — the tooltip's "Sponsor PID". */
+  sponsorMemberCode: string | null
+  treeStatus: TreeStatus
+  /** Placement parent's code. Differs from the sponsor whenever spillover applied. */
   parentCode: string | null
   depth: number
   directCount: number

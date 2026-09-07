@@ -26,9 +26,11 @@ const today = () => new Date().toISOString().slice(0, 10)
 export function ReferralGeneratePage() {
   const queryClient = useQueryClient()
 
+  const [member, setMember] = useState<AssociateOption | null>(null)
   const [issuedTo, setIssuedTo] = useState<AssociateOption | null>(null)
   const [receivedBy, setReceivedBy] = useState<AssociateOption | null>(null)
-  const [tier, setTier] = useState('Tier I')
+  // Optional: place the member straight away instead of leaving it to the sponsor.
+  const [position, setPosition] = useState('')
   const [amountPaid, setAmountPaid] = useState('')
   const [paymentMode, setPaymentMode] = useState('')
   const [paymentRef, setPaymentRef] = useState('')
@@ -43,8 +45,11 @@ export function ReferralGeneratePage() {
     onSuccess: (response) => {
       setIssued({ pin: response.pin, invoice: response.data })
       queryClient.invalidateQueries({ queryKey: ['referrals'] })
+      queryClient.invalidateQueries({ queryKey: ['associates'] })
+      setMember(null)
       setIssuedTo(null)
       setReceivedBy(null)
+      setPosition('')
       setAmountPaid('')
       setPaymentRef('')
       setPaymentMode('')
@@ -57,13 +62,15 @@ export function ReferralGeneratePage() {
 
   const submit = () => {
     setError(null)
-    if (!issuedTo) return setError('Choose the associate this referral is for.')
+    if (!member) return setError('Choose the associate this referral is for.')
+    if (!issuedTo) return setError('Choose the sponsor who paid for them.')
     const amount = Number(amountPaid)
-    if (!Number.isFinite(amount) || amount < 0) return setError('Enter the amount the associate paid.')
+    if (!Number.isFinite(amount) || amount < 0) return setError('Enter the amount the sponsor paid.')
 
     mutation.mutate({
+      member: member._id,
       issuedTo: issuedTo._id,
-      tier,
+      position: position || undefined,
       amountPaid: amount,
       paymentMode: paymentMode || undefined,
       paymentRef: paymentRef || undefined,
@@ -86,21 +93,47 @@ export function ReferralGeneratePage() {
         <div className="flex flex-col gap-5 rounded-card border border-border bg-white p-6 xl:col-span-2">
           <div className="grid gap-4 md:grid-cols-2">
             <FormField
-              label="Issue to associate"
-              htmlFor="issuedTo"
+              label="Referred associate"
+              htmlFor="member"
               required
-              hint="They become the sponsor of whoever is registered with this voucher."
+              hint="The member this payment is for. Only associates who are not yet in the tree can be referred."
             >
-              <AssociateSelect id="issuedTo" value={issuedTo} onChange={setIssuedTo} role="associate" placeholder="Search associates…" />
+              <AssociateSelect
+                id="member"
+                value={member}
+                onChange={setMember}
+                role="associate"
+                referable
+                placeholder="Search by associate ID or name…"
+              />
             </FormField>
 
-            <FormField label="Tier" htmlFor="tier" required hint="Tier I = Insurance · Tier II = Plots">
-              <Select id="tier" value={tier} onChange={(event) => setTier(event.target.value)}>
-                <option value="Tier I">Tier I — Insurance</option>
-                <option value="Tier II">Tier II — Plots</option>
-              </Select>
+            <FormField
+              label="Sponsor (referrer)"
+              htmlFor="issuedTo"
+              required
+              hint="Who paid for them. Search by Sponsor ID or name — they become the member's sponsor."
+            >
+              <AssociateSelect
+                id="issuedTo"
+                value={issuedTo}
+                onChange={setIssuedTo}
+                role="associate"
+                status="approved"
+                showSponsorCode
+                exclude={member?._id}
+                placeholder="Search by Sponsor ID or name…"
+              />
             </FormField>
           </div>
+
+          {/* Tier is not chosen here — it belongs to the member and was fixed
+              when they were registered. */}
+          {member?.tier && (
+            <p className="-mt-1 text-xs text-text-subtle">
+              Tier comes from the member: <span className="font-medium text-text">{member.tier}</span>
+            </p>
+          )}
 
           <div className="rounded-card border border-border bg-bg p-4">
             <p className="mb-1 text-sm font-medium text-text">Payment received</p>
@@ -146,6 +179,25 @@ export function ReferralGeneratePage() {
             </div>
           </div>
 
+          {/* Placement here is the exception, not the rule — normally the
+              sponsor does it with the PIN. */}
+          <div className="rounded-card border border-border bg-bg p-4">
+            <p className="mb-1 text-sm font-medium text-text">Tree placement (optional)</p>
+            <p className="mb-4 text-xs text-text-subtle">
+              Leave this empty and the sponsor places the member themselves using the referral number and PIN. Only set a
+              leg here if the sponsor cannot do it — it consumes the referral immediately, and the PIN becomes unusable.
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField label="Leg" htmlFor="position" hint="Spillover applies if the slot is taken">
+                <Select id="position" value={position} onChange={(event) => setPosition(event.target.value)}>
+                  <option value="">Leave it to the sponsor</option>
+                  <option value="Left">Left</option>
+                  <option value="Right">Right</option>
+                </Select>
+              </FormField>
+            </div>
+          </div>
+
           <FormField label="Notes" htmlFor="notes">
             <Textarea id="notes" rows={2} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </FormField>
@@ -161,8 +213,18 @@ export function ReferralGeneratePage() {
         <aside className="rounded-card border border-border bg-white p-6">
           <p className="text-sm font-semibold text-text">Summary</p>
           <dl className="mt-4 flex flex-col gap-3 text-sm">
-            <SummaryRow label="Issued to" value={issuedTo ? issuedTo.label : 'Not selected'} muted={!issuedTo} />
-            <SummaryRow label="Tier" value={`${tier} — ${tier === 'Tier I' ? 'Insurance' : 'Plots'}`} />
+            <SummaryRow label="Member" value={member ? member.label : 'Not selected'} muted={!member} />
+            <SummaryRow
+              label="Sponsor"
+              value={issuedTo ? (issuedTo.sponsorLabel ?? issuedTo.label) : 'Not selected'}
+              muted={!issuedTo}
+            />
+            <SummaryRow label="Tier" value={member?.tier ? `${member.tier}` : 'From the member'} muted={!member?.tier} />
+            <SummaryRow
+              label="Placement"
+              value={position ? `${position} leg, now` : 'Sponsor will place'}
+              muted={!position}
+            />
             <SummaryRow
               label="Amount paid"
               value={amountPaid ? `₹${Number(amountPaid).toLocaleString('en-IN')}` : 'Not entered'}

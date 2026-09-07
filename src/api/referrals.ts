@@ -20,8 +20,12 @@ export interface CreateReferralResponse {
 }
 
 export interface CreateReferralPayload {
+  /** The already-registered associate this referral is for. */
+  member: string
+  /** The sponsor who paid for them. */
   issuedTo: string
-  tier: string
+  /** Optional — set a leg to place the member immediately instead of leaving it to the sponsor. */
+  position?: string
   amountPaid: number
   paymentMode?: string
   paymentRef?: string

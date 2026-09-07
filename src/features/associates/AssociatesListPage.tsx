@@ -29,6 +29,7 @@ export function AssociatesListPage() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('')
   const [tier, setTier] = useState<TierFilter>('')
+  const [treeStatus, setTreeStatus] = useState('')
   const [page, setPage] = useState(1)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
@@ -40,7 +41,7 @@ export function AssociatesListPage() {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  const { data, isLoading, isFetching, refetch } = useAssociates({ search, status, tier })
+  const { data, isLoading, isFetching, refetch } = useAssociates({ search, status, tier, treeStatus })
   const statusMutation = useUpdateAssociateStatus()
   const deleteMutation = useDeleteAssociate()
 
@@ -111,6 +112,20 @@ export function AssociatesListPage() {
           <option value="Tier I">Tier I</option>
           <option value="Tier II">Tier II</option>
         </Select>
+        {/* Placement is optional now, so "waiting to be placed" is a real
+            working list, not an error state. */}
+        <Select
+          value={treeStatus}
+          onChange={(event) => {
+            setTreeStatus(event.target.value)
+            setPage(1)
+          }}
+          containerClassName="sm:w-44"
+        >
+          <option value="">All placements</option>
+          <option value="unplaced">Not in tree</option>
+          <option value="placed">In tree</option>
+        </Select>
         <IconButton
           icon={<RefreshIcon className={cn('h-4 w-4', isFetching && 'animate-spin')} />}
           label="Refresh"
@@ -142,13 +157,16 @@ export function AssociatesListPage() {
             <table className="w-full table-fixed text-left text-sm">
               <thead>
                 <tr className="border-b border-border bg-blue-50/60">
-                  <th className="w-[10%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Associate ID
                   </th>
-                  <th className="w-[20%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Sponsor ID
+                  </th>
+                  <th className="w-[17%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Name
                   </th>
-                  <th className="w-[23%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[20%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Contact
                   </th>
                   <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
@@ -179,8 +197,16 @@ export function AssociatesListPage() {
                         {associate.memberCode ?? '—'}
                       </Link>
                     </td>
+                    <td className="px-4 py-3 align-middle font-mono text-[13px] text-text-muted">
+                      {associate.sponsorCode ?? '—'}
+                    </td>
                     <td className="truncate px-4 py-3 align-middle font-medium text-text">
                       {associate.title} {associate.fullName}
+                      {associate.treeStatus === 'unplaced' && (
+                        <span className="ml-1.5 rounded bg-warning-bg px-1.5 py-0.5 text-[10px] font-medium text-warning">
+                          not in tree
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 align-middle text-text">
                       <div className="flex flex-col truncate">

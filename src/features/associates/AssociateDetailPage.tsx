@@ -183,13 +183,24 @@ export function AssociateDetailPage() {
         <h2 className="mb-4 text-sm font-semibold text-text">Membership</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
           <Field label="Associate ID" value={associate.memberCode} />
+          {/* Their own referral code — the one they give out as a sponsor. */}
+          <Field label="Sponsor ID" value={associate.sponsorCode} />
           <Field label="Tier" value={associate.tier} />
-          {/* Sponsor by ID, not phone — the code is what identifies a member. */}
+          {/* Who referred them. Assigned by a referral, not at registration. */}
           <Field
-            label="Sponsor"
-            value={sponsor ? `${sponsor.memberCode ?? '—'} — ${sponsor.fullName}` : 'None'}
+            label="Sponsored by"
+            value={sponsor ? `${sponsor.memberCode ?? '—'} — ${sponsor.fullName}` : 'Not referred yet'}
           />
-          <Field label="Placement" value={associate.position ?? 'Root'} />
+          <Field
+            label="Tree"
+            value={
+              associate.treeStatus === 'unplaced'
+                ? 'Not in the tree yet'
+                : associate.treeStatus === 'root'
+                  ? 'Root'
+                  : `${associate.position} leg`
+            }
+          />
           <Field label="Joined" value={new Date(associate.createdAt).toLocaleDateString()} />
         </dl>
       </section>

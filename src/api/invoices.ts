@@ -51,7 +51,13 @@ export interface Invoice {
     type: string
     referenceNo: string
     issuedAt: string
-    resultedIn: { memberCode: string; name: string | null; at: string | null } | null
+    /** The member this payment was for. Known when the referral is raised. */
+    forMember: {
+      memberCode: string
+      name: string | null
+      placedAt: string | null
+      placedUnder: string | null
+    } | null
   }
   items: InvoiceItem[]
   totals: { subtotal: number; total: number; amountPaid: number; balance: number }

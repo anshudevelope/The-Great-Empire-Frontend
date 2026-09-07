@@ -11,7 +11,9 @@ import { Button } from '@/components/ui/Button'
 import { PlusIcon, SearchIcon } from '@/components/icons/icons'
 import type { AssociateTreeNode } from '@/types/associate'
 
-const DEPTH_OPTIONS = [2, 3, 4, 5]
+// Matches the API's depth cap, so a member placed deep by spillover is always
+// reachable — drill into an intermediate node for anything beyond that.
+const DEPTH_OPTIONS = [2, 3, 4, 5, 6, 8, 10]
 
 export function AssociateTreePage() {
   const { id } = useParams<{ id: string }>()

@@ -79,7 +79,7 @@ export function PortalTreePage() {
             ))}
           </div>
           <Select value={String(depth)} onChange={(event) => setDepth(Number(event.target.value))} containerClassName="w-32">
-            {[2, 3, 4, 5, 6].map((value) => (
+            {[2, 3, 4, 5, 6, 8, 10].map((value) => (
               <option key={value} value={value}>
                 {value} levels
               </option>

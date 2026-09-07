@@ -75,11 +75,21 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
             {transaction.type} · <span className="font-mono">{transaction.referenceNo}</span>
           </p>
           <p className="text-sm text-text-muted">Issued {day(transaction.issuedAt)}</p>
-          {transaction.resultedIn && (
-            <p className="mt-1 text-sm text-text-muted">
-              Registered {transaction.resultedIn.memberCode}
-              {transaction.resultedIn.name ? ` — ${transaction.resultedIn.name}` : ''}
-            </p>
+          {/* Who the payment was for — the whole point of the receipt. */}
+          {transaction.forMember && (
+            <>
+              <p className="mt-2 text-sm">
+                <span className="text-text-subtle">For member: </span>
+                <span className="font-medium">{transaction.forMember.memberCode}</span>
+                {transaction.forMember.name ? ` — ${transaction.forMember.name}` : ''}
+              </p>
+              {transaction.forMember.placedAt && (
+                <p className="text-sm text-text-muted">
+                  Placed {formatDate(transaction.forMember.placedAt)}
+                  {transaction.forMember.placedUnder ? ` under ${transaction.forMember.placedUnder}` : ''}
+                </p>
+              )}
+            </>
           )}
         </div>
       </section>

@@ -73,7 +73,7 @@ export function PortalLayout() {
             className="w-full justify-start"
             onClick={() => {
               logout()
-              navigate('/login', { replace: true })
+              navigate('/associate/login', { replace: true })
             }}
           >
             Sign out

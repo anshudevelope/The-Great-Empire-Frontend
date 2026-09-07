@@ -1,7 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { LandingPage } from '@/pages/LandingPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { LoginPage } from '@/features/auth/LoginPage'
+import { AdminLoginPage } from '@/features/auth/AdminLoginPage'
+import { AssociateLoginPage } from '@/features/auth/AssociateLoginPage'
 import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -24,9 +25,13 @@ import { DirectsPage } from '@/features/portal/DirectsPage'
 export const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
 
-  // One login for both roles — the API decides which side you land on.
-  { path: '/login', element: <LoginPage /> },
-  { path: '/admin/login', element: <Navigate to="/login" replace /> },
+  // Separate doors for staff and members. Both post to the same endpoint —
+  // the split is branding and routing, never authorisation, which the API and
+  // the role-guarded branches below still enforce.
+  { path: '/admin/login', element: <AdminLoginPage /> },
+  { path: '/associate/login', element: <AssociateLoginPage /> },
+  // Legacy links and bookmarks.
+  { path: '/login', element: <Navigate to="/associate/login" replace /> },
 
   // Reachable while `mustChangePassword` is set, unlike every other route.
   {
@@ -36,7 +41,7 @@ export const router = createBrowserRouter([
 
   {
     path: '/admin',
-    element: <ProtectedRoute role="admin" />,
+    element: <ProtectedRoute role="admin" loginPath="/admin/login" />,
     children: [
       {
         element: <AdminLayout />,

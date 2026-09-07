@@ -26,7 +26,7 @@ export function Header() {
     logout()
     setConfirmOpen(false)
     toast.success('Signed out successfully')
-    navigate('/login', { replace: true })
+    navigate('/admin/login', { replace: true })
   }
 
   return (

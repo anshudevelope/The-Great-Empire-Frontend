@@ -5,16 +5,22 @@ import type { UserRole } from '@/types/auth'
 interface ProtectedRouteProps {
   /** Restrict this branch to one role. Omit to allow any signed-in user. */
   role?: UserRole
+  /**
+   * Which login page to bounce to. Defaults to the associate portal, since
+   * that's who most signed-out visitors are — the admin branch overrides it so
+   * staff aren't sent to a member-facing screen.
+   */
+  loginPath?: string
 }
 
-export function ProtectedRoute({ role }: ProtectedRouteProps) {
+export function ProtectedRoute({ role, loginPath = '/associate/login' }: ProtectedRouteProps) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const mustChangePassword = useAuthStore((state) => state.mustChangePassword)
   const user = useAuthStore((state) => state.user)
   const location = useLocation()
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate to={loginPath} state={{ from: location }} replace />
   }
 
   // The API refuses every other route until the temporary password is

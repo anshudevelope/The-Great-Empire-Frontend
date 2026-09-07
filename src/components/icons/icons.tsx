@@ -4,6 +4,7 @@
 import type { IconType } from 'react-icons'
 import {
   FiAlertTriangle,
+  FiShield,
   FiCheck,
   FiChevronDown,
   FiChevronRight,
@@ -49,3 +50,4 @@ export const BuildingIcon: IconType = HiOutlineBuildingOffice2
 export const TreeIcon: IconType = FiGitBranch
 export const MinusIcon: IconType = FiMinus
 export const RefreshIcon: IconType = FiRefreshCw
+export const ShieldIcon: IconType = FiShield

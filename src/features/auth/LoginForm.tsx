@@ -62,15 +62,7 @@ export function LoginForm({ audience, badge, title, subtitle, icon, otherLabel, 
   const mutation = useMutation({
     mutationFn: loginRequest,
     onSuccess: (data) => {
-      setSession(data.token, data.data, data.mustChangePassword)
-
-      // A temporary password blocks every other route, so go straight to the
-      // reset screen rather than bouncing off a 428 on the dashboard.
-      if (data.mustChangePassword) {
-        toast('Please set a new password to continue', { icon: '🔒' })
-        navigate('/change-password', { replace: true })
-        return
-      }
+      setSession(data.token, data.data)
 
       const role = data.data.role
 

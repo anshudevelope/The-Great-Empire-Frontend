@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchReferralSummary } from '@/api/referrals'
+import { fetchPendingPlacement } from '@/api/associates'
 import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/cn'
@@ -11,9 +12,8 @@ const NAV = [
   { label: 'Dashboard', to: '/portal/dashboard' },
   { label: 'My Referrals', to: '/portal/referrals' },
   { label: 'My Invoices', to: '/portal/invoices' },
-  // Two distinct jobs: creating the person, and putting them in your tree.
-  { label: 'Register Associate', to: '/portal/register' },
-  { label: 'Place Member', to: '/portal/add-member' },
+  // The admin registers associates; the sponsor only decides where they sit.
+  { label: 'Place Members', to: '/portal/place-members' },
   { label: 'My Tree', to: '/portal/tree' },
   { label: 'My Directs', to: '/portal/directs' },
   { label: 'Downline', to: '/portal/downline' },
@@ -28,6 +28,10 @@ export function PortalLayout() {
   // Drives the unread badge on My Referrals.
   const { data: summary } = useQuery({ queryKey: ['referral-summary'], queryFn: fetchReferralSummary })
   const unread = summary?.data.unread ?? 0
+
+  // Drives the waiting count on Place Members.
+  const { data: pending } = useQuery({ queryKey: ['pending-placement'], queryFn: fetchPendingPlacement })
+  const waiting = pending?.count ?? 0
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
@@ -58,6 +62,11 @@ export function PortalLayout() {
               {item.to === '/portal/referrals' && unread > 0 && (
                 <span className="ml-2 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                   {unread}
+                </span>
+              )}
+              {item.to === '/portal/place-members' && waiting > 0 && (
+                <span className="ml-2 rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  {waiting}
                 </span>
               )}
             </NavLink>

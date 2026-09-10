@@ -12,6 +12,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton, IconLink } from '@/components/ui/IconButton'
 import { Spinner } from '@/components/ui/Spinner'
+import { SecretText } from '@/components/ui/SecretText'
 import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, RefreshIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
 import { formatShortDate } from '@/lib/datetime'
 
@@ -161,25 +162,29 @@ export function AssociatesListPage() {
                   <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Associate ID
                   </th>
-                  <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
-                    Sponsor ID
-                  </th>
-                  <th className="w-[17%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[15%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Name
                   </th>
-                  <th className="w-[20%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[17%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Contact
                   </th>
+                  <th className="w-[13%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Password
+                  </th>
+                  {/* Who they were registered under — identified by their associate ID. */}
                   <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                    Sponsor
+                  </th>
+                  <th className="w-[7%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Tier
                   </th>
-                  <th className="w-[11%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Status
                   </th>
-                  <th className="w-[12%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[8%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Joined
                   </th>
-                  <th className="w-[15%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-subtle">
+                  <th className="w-[13%] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Actions
                   </th>
                 </tr>
@@ -198,9 +203,6 @@ export function AssociatesListPage() {
                         {associate.memberCode ?? '—'}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 align-middle font-mono text-[13px] text-text-muted">
-                      {associate.sponsorCode ?? '—'}
-                    </td>
                     <td className="truncate px-4 py-3 align-middle font-medium text-text">
                       {associate.title} {associate.fullName}
                       {associate.treeStatus === 'unplaced' && (
@@ -214,6 +216,12 @@ export function AssociatesListPage() {
                         <span className="truncate">{associate.email}</span>
                         <span className="truncate text-text-subtle">{associate.phone}</span>
                       </div>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <SecretText value={associate.password} emptyLabel="Set from Edit" />
+                    </td>
+                    <td className="px-4 py-3 align-middle font-mono text-[13px] text-text-muted">
+                      {associate.sponsorMemberCode ?? '—'}
                     </td>
                     <td className="px-4 py-3 align-middle text-text">{associate.tier}</td>
                     <td className="px-4 py-3 align-middle">

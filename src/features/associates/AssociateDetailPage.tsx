@@ -9,6 +9,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { SecretText } from '@/components/ui/SecretText'
 import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
 import { formatDate } from '@/lib/datetime'
 
@@ -163,6 +164,12 @@ export function AssociateDetailPage() {
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Field label="Phone" value={associate.phone} />
           <Field label="Email" value={associate.email} />
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-subtle">Password</dt>
+            <dd className="mt-0.5">
+              <SecretText value={associate.password} emptyLabel="Not stored — set a new one from Edit" />
+            </dd>
+          </div>
           <Field label="Address" value={associate.address} />
           <Field label="City" value={associate.city} />
           <Field label="State" value={associate.state} />
@@ -184,13 +191,11 @@ export function AssociateDetailPage() {
         <h2 className="mb-4 text-sm font-semibold text-text">Membership</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
           <Field label="Associate ID" value={associate.memberCode} />
-          {/* Their own referral code — the one they give out as a sponsor. */}
-          <Field label="Sponsor ID" value={associate.sponsorCode} />
           <Field label="Tier" value={associate.tier} />
-          {/* Who referred them. Assigned by a referral, not at registration. */}
+          {/* Chosen by the admin at registration. */}
           <Field
             label="Sponsored by"
-            value={sponsor ? `${sponsor.memberCode ?? '—'} — ${sponsor.fullName}` : 'Not referred yet'}
+            value={sponsor ? `${sponsor.memberCode ?? '—'} — ${sponsor.fullName}` : 'No sponsor (tree root)'}
           />
           <Field
             label="Tree"

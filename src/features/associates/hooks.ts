@@ -44,9 +44,11 @@ export function useCreateAssociate() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (formData: FormData) => createAssociate(formData),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['associates'] })
-      toast.success('Associate registered successfully')
+      queryClient.invalidateQueries({ queryKey: ['referrals'] })
+      // The server says where the member ended up — placed, or waiting for their sponsor.
+      toast.success(response.message || 'Associate registered successfully', { duration: 6000 })
     },
     onError: (error) => toast.error(getErrorMessage(error, 'Could not register associate')),
   })
@@ -59,6 +61,8 @@ export function useUpdateAssociate(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['associates'] })
       queryClient.invalidateQueries({ queryKey: ['associate', id] })
+      // Edit can change the sponsor and payment, which the referral lists show.
+      queryClient.invalidateQueries({ queryKey: ['referrals'] })
       toast.success('Associate updated successfully')
     },
     onError: (error) => toast.error(getErrorMessage(error, 'Could not update associate')),

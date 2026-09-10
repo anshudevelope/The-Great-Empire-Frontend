@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
+import type { FieldErrors, UseFormRegister } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import {
   ASSOCIATE_TIERS,
   ASSOCIATE_TITLES,
@@ -14,8 +16,11 @@ import {
 import type { AssociateFormValues } from '@/schemas/associate.schema'
 import { useAssociate, useCreateAssociate, useUpdateAssociate } from './hooks'
 import { AssociateSelect } from '@/components/ui/AssociateSelect'
+import { fetchPlacementPreview } from '@/api/associates'
 import type { AssociateOption } from '@/api/associates'
-import { useAuthStore } from '@/store/authStore'
+import type { SponsorRef } from '@/types/associate'
+import { PAYMENT_MODES } from '@/types/referral'
+import { todayIST } from '@/lib/datetime'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Select } from '@/components/ui/Select'
@@ -46,9 +51,19 @@ const emptyDefaults: AssociateFormValues = {
   nomineeRelation: '',
   nomineeAge: '',
   tier: 'Tier I',
+  sponsorId: '',
   parentId: '',
   position: '',
+  amountPaid: '',
+  paymentMode: '',
+  paymentRef: '',
+  receivedOn: '',
+  receivedBy: '',
+  notes: '',
 }
+
+// Sent as-is, blanks included, so clearing a field on Edit really clears it.
+const PAYMENT_KEYS = ['amountPaid', 'paymentMode', 'paymentRef', 'receivedOn', 'receivedBy', 'notes'] as const
 
 interface DocumentRow {
   id: string
@@ -60,13 +75,37 @@ function createDocumentRow(): DocumentRow {
   return { id: crypto.randomUUID(), docType: 'KYC Document', file: null }
 }
 
+const idOf = (ref: SponsorRef | string | null | undefined) => (typeof ref === 'string' ? ref : (ref?._id ?? ''))
+
+// A populated reference, shaped like a search result so the picker can show it
+// as the current value.
+function toOption(ref: SponsorRef | string | null | undefined): AssociateOption | null {
+  if (!ref || typeof ref !== 'object') return null
+  return {
+    _id: ref._id,
+    memberCode: ref.memberCode ?? null,
+    fullName: ref.fullName,
+    email: ref.email,
+    role: 'associate',
+    status: 'approved',
+    tier: null,
+    treeStatus: 'placed',
+    label: `${ref.memberCode ?? '—'} — ${ref.fullName}`,
+  }
+}
+
+const FULL_ROW = 'sm:col-span-2 lg:col-span-3 xl:col-span-4'
+const READONLY_BOX = 'rounded-control border border-border-strong bg-neutral-hover px-3 py-2 text-sm text-text-muted'
+
+/**
+ * Admin-only. Register and Edit share one "Membership & Placement" section:
+ * the sponsor, then — once there is one — optional placement and an optional
+ * payment record.
+ */
 export function AssociateFormPage() {
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
-
-  // Only an admin may set placement; associates can create the record only.
-  const isAdmin = useAuthStore((state) => state.user?.role === 'admin')
 
   const associateQuery = useAssociate(id)
   const createMutation = useCreateAssociate()
@@ -74,41 +113,28 @@ export function AssociateFormPage() {
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [documentRows, setDocumentRows] = useState<DocumentRow[]>([createDocumentRow()])
-  // Placement is opt-in. A member can be created with no tree node at all;
-  // their sponsor puts them in later by redeeming a referral.
-  //
-  // Both of these are DERIVED from the loaded associate with an optional
+
+  const loaded = associateQuery.data?.data
+  const isRoot = loaded?.treeStatus === 'root'
+  const isUnplaced = loaded?.treeStatus === 'unplaced'
+
+  // Picker values are DERIVED from the loaded associate with an optional
   // override, rather than pushed into state from an effect — setting state in
   // an effect triggers a second render pass and the cascading-render lint rule.
-  const loaded = associateQuery.data?.data
-  const [placeNowOverride, setPlaceNowOverride] = useState<boolean | null>(null)
-  const [parentOverride, setParentOverride] = useState<AssociateOption | null | undefined>(undefined)
+  // On Register nothing is loaded, so they simply start empty.
+  const loadedSponsor = useMemo(() => toOption(loaded?.sponsorId), [loaded])
+  const loadedParent = useMemo(() => toOption(loaded?.parentId), [loaded])
+  const loadedReceivedBy = useMemo(() => toOption(loaded?.referral?.receivedBy), [loaded])
 
-  // An unplaced member is exactly who this form is used to place, so the
-  // placement block opens already ticked when they aren't in the tree yet.
-  const placeNow = placeNowOverride ?? loaded?.treeStatus === 'unplaced'
+  const [sponsorOverride, setSponsor] = useState<AssociateOption | null | undefined>(undefined)
+  const [parentOverride, setParentOption] = useState<AssociateOption | null | undefined>(undefined)
+  const [receivedByOverride, setReceivedBy] = useState<AssociateOption | null | undefined>(undefined)
 
-  const loadedParent = useMemo<AssociateOption | null>(() => {
-    const parentRef = loaded && typeof loaded.parentId === 'object' ? loaded.parentId : null
-    if (!parentRef) return null
-    return {
-      _id: parentRef._id,
-      memberCode: parentRef.memberCode ?? null,
-      sponsorCode: null,
-      fullName: parentRef.fullName,
-      email: parentRef.email,
-      role: 'associate',
-      status: 'approved',
-      tier: null,
-      treeStatus: 'placed',
-      label: `${parentRef.memberCode ?? '—'} — ${parentRef.fullName}`,
-      sponsorLabel: null,
-    }
-  }, [loaded])
-
-  const parentOption = parentOverride === undefined ? loadedParent : parentOverride
-  const setParentOption = setParentOverride
-  const setPlaceNow = setPlaceNowOverride
+  const sponsor = sponsorOverride === undefined ? loadedSponsor : sponsorOverride
+  // Someone not in the tree yet usually goes straight under their sponsor.
+  const parentOption =
+    parentOverride === undefined ? (loadedParent ?? (isUnplaced ? loadedSponsor : null)) : parentOverride
+  const receivedBy = receivedByOverride === undefined ? loadedReceivedBy : receivedByOverride
 
   const schema = isEdit ? editAssociateSchema : createAssociateSchema
 
@@ -116,19 +142,30 @@ export function AssociateFormPage() {
     register,
     handleSubmit,
     reset,
-
     setValue,
+    control,
     formState: { errors },
   } = useForm<AssociateFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: emptyDefaults,
+    defaultValues: { ...emptyDefaults, receivedOn: todayIST() },
+  })
+
+  // Register: live spillover preview for the leg chosen under the sponsor.
+  const sponsorLeg = useWatch({ control, name: 'position' })
+  const preview = useQuery({
+    queryKey: ['placement-preview', sponsor?._id, sponsorLeg],
+    queryFn: () => fetchPlacementPreview(sponsorLeg ?? '', sponsor?._id),
+    enabled: !isEdit && !!sponsor && !!sponsorLeg,
   })
 
   useEffect(() => {
     if (!isEdit || !associateQuery.data) return
     const associate = associateQuery.data.data
+    const sponsorId = idOf(associate.sponsorId)
+    const referral = associate.referral
 
     reset({
+      ...emptyDefaults,
       title: associate.title,
       fullName: associate.fullName,
       fatherOrHusbandName: associate.fatherOrHusbandName ?? '',
@@ -148,10 +185,34 @@ export function AssociateFormPage() {
       nomineeRelation: associate.nomineeRelation ?? '',
       nomineeAge: associate.nomineeAge != null ? String(associate.nomineeAge) : '',
       tier: associate.tier,
-      parentId: typeof associate.parentId === 'string' ? associate.parentId : (associate.parentId?._id ?? ''),
+      sponsorId,
+      parentId: idOf(associate.parentId) || (associate.treeStatus === 'unplaced' ? sponsorId : ''),
       position: associate.position ?? '',
+      amountPaid: referral ? String(referral.amountPaid) : '',
+      paymentMode: referral?.paymentMode ?? '',
+      paymentRef: referral?.paymentRef ?? '',
+      receivedOn: referral?.receivedOn ? referral.receivedOn.slice(0, 10) : todayIST(),
+      receivedBy: idOf(referral?.receivedBy),
+      notes: referral?.notes ?? '',
     })
   }, [isEdit, associateQuery.data, reset])
+
+  function changeSponsor(option: AssociateOption | null) {
+    // An unplaced member follows their sponsor as parent, unless the admin
+    // already picked a different parent by hand.
+    if (isEdit && isUnplaced && option && (!parentOption || parentOption._id === sponsor?._id)) {
+      setParentOption(option)
+      setValue('parentId', option._id)
+    }
+    setSponsor(option)
+    setValue('sponsorId', option?._id ?? '', { shouldValidate: true })
+    if (!isEdit && !option) setValue('position', '')
+  }
+
+  function changeReceivedBy(option: AssociateOption | null) {
+    setReceivedBy(option)
+    setValue('receivedBy', option?._id ?? '')
+  }
 
   function updateDocumentRow(rowId: string, patch: Partial<DocumentRow>) {
     setDocumentRows((rows) => rows.map((row) => (row.id === rowId ? { ...row, ...patch } : row)))
@@ -175,6 +236,7 @@ export function AssociateFormPage() {
       gender: values.gender,
       phone: values.phone,
       email: values.email,
+      password: values.password,
       dob: values.dob,
       age: values.age,
       address: values.address,
@@ -186,18 +248,32 @@ export function AssociateFormPage() {
       nomineeRelation: values.nomineeRelation,
       nomineeAge: values.nomineeAge,
       tier: values.tier,
-      // Placement only travels when the admin explicitly opted in. Sponsorship
-      // is never sent from here — a referral assigns it.
-      parentId: placeNow ? values.parentId || undefined : undefined,
-      position: placeNow ? values.position || undefined : undefined,
+    }
+
+    if (isEdit) {
+      // Placement only travels when it actually changed, as a parent + leg pair.
+      const placementChanged =
+        values.parentId !== idOf(loaded?.parentId) || (values.position ?? '') !== (loaded?.position ?? '')
+      if (values.parentId && values.position && placementChanged) {
+        fields.parentId = values.parentId
+        fields.position = values.position
+      }
+      if (values.sponsorId && values.sponsorId !== idOf(loaded?.sponsorId)) {
+        fields.sponsorId = values.sponsorId
+      }
+    } else if (values.sponsorId) {
+      fields.sponsorId = values.sponsorId
+      fields.position = values.position
     }
 
     for (const [key, value] of Object.entries(fields)) {
       if (value) formData.append(key, value)
     }
 
-    if (values.password) {
-      formData.append('password', values.password)
+    if (values.sponsorId) {
+      for (const key of PAYMENT_KEYS) formData.append(key, values[key] ?? '')
+      // Tells Edit the payment block was on screen, so blanks mean "clear".
+      if (isEdit) formData.append('paymentSubmitted', 'true')
     }
 
     if (profileImageFile) {
@@ -217,10 +293,7 @@ export function AssociateFormPage() {
       })
     } else {
       createMutation.mutate(formData, {
-        // An associate has no access to the admin detail page, so send them
-        // somewhere they can actually go.
-        onSuccess: (response) =>
-          navigate(isAdmin ? `/admin/associates/${response.data._id}` : '/portal/dashboard'),
+        onSuccess: (response) => navigate(`/admin/associates/${response.data._id}`),
       })
     }
   }
@@ -235,14 +308,20 @@ export function AssociateFormPage() {
     )
   }
 
+  const sponsorHint = !isEdit
+    ? 'Search by associate ID or name. Leave empty only for the very first associate — the tree root.'
+    : loadedSponsor
+      ? 'Choosing someone else moves the referral and its invoice to them.'
+      : 'Optional — this associate was registered without a sponsor.'
+
   return (
     <div className="flex flex-col gap-6 pb-10">
       <div>
         <h1 className="text-xl font-semibold text-text">{isEdit ? 'Edit Associate Details' : 'Register Associate'}</h1>
         <p className="mt-1 text-sm text-text-subtle">
           {isEdit
-            ? 'Update associate profile, documents and nominee details.'
-            : 'Create a new associate record pending admin approval.'}
+            ? 'Update the associate’s details, password, sponsor, placement and payment.'
+            : 'Fill in the associate’s details and choose their sponsor. Placement and payment are optional.'}
         </p>
       </div>
 
@@ -295,7 +374,7 @@ export function AssociateFormPage() {
           </FormField>
         </Section>
 
-        <Section title="Contact Details">
+        <Section title="Contact & Login">
           <FormField label="Phone" htmlFor="phone" required error={errors.phone?.message}>
             <Input id="phone" inputMode="numeric" invalid={!!errors.phone} {...register('phone')} />
           </FormField>
@@ -307,19 +386,14 @@ export function AssociateFormPage() {
             htmlFor="password"
             required={!isEdit}
             error={errors.password?.message}
-            hint={isEdit ? 'Leave blank to keep the current password' : undefined}
+            hint={isEdit ? 'Leave blank to keep the current password' : 'The associate signs in with this. You can view it later.'}
           >
             <PasswordInput id="password" invalid={!!errors.password} {...register('password')} />
           </FormField>
         </Section>
 
         <Section title="Address">
-          <FormField
-            label="Address"
-            htmlFor="address"
-            error={errors.address?.message}
-            className="sm:col-span-2 lg:col-span-3 xl:col-span-4"
-          >
+          <FormField label="Address" htmlFor="address" error={errors.address?.message} className={FULL_ROW}>
             <Textarea id="address" invalid={!!errors.address} {...register('address')} />
           </FormField>
           <FormField label="City" htmlFor="city" error={errors.city?.message}>
@@ -348,7 +422,7 @@ export function AssociateFormPage() {
           </FormField>
         </Section>
 
-        <Section title="Membership">
+        <Section title="Membership & Placement">
           <FormField label="Tier" htmlFor="tier" required error={errors.tier?.message}>
             <Select id="tier" invalid={!!errors.tier} {...register('tier')}>
               {ASSOCIATE_TIERS.map((tier) => (
@@ -358,76 +432,156 @@ export function AssociateFormPage() {
               ))}
             </Select>
           </FormField>
-          {/* Sponsorship is NOT set here. Who referred a member is decided by
-              the referral that records who paid for them. */}
-          <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-            <div className="rounded-card border border-border bg-bg p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm font-medium text-text">Tree placement</p>
-                  <p className="mt-0.5 text-xs text-text-subtle">
-                    Optional. Leave this off and the associate is created outside the tree — their sponsor places them
-                    later by redeeming a referral, or you can place them from Edit at any time.
-                  </p>
-                </div>
-                {isAdmin && (
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-text-muted">
-                    <input
-                      type="checkbox"
-                      checked={placeNow}
-                      onChange={(event) => {
-                        setPlaceNow(event.target.checked)
-                        if (!event.target.checked) {
-                          setParentOption(null)
-                          setValue('parentId', '')
-                          setValue('position', '')
-                        }
-                      }}
-                    />
-                    Place in the tree now
-                  </label>
-                )}
+
+          {isEdit && isRoot ? (
+            <FormField label="Sponsor" htmlFor="sponsor-readonly" className="sm:col-span-1 lg:col-span-2">
+              <div id="sponsor-readonly" className={READONLY_BOX}>
+                None — this associate is the tree root
               </div>
+            </FormField>
+          ) : (
+            <FormField label="Sponsor" htmlFor="sponsorId" hint={sponsorHint} className="sm:col-span-1 lg:col-span-2">
+              <input type="hidden" {...register('sponsorId')} />
+              <AssociateSelect
+                id="sponsorId"
+                value={sponsor}
+                onChange={changeSponsor}
+                role="associate"
+                status="approved"
+                inTree
+                exclude={id}
+                placeholder="Search by associate ID or name…"
+              />
+            </FormField>
+          )}
 
-              {placeNow && (
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <FormField label="Place under" htmlFor="parentId" required hint="Search by associate ID or name">
-                    <input type="hidden" {...register('parentId')} />
-                    <AssociateSelect
-                      id="parentId"
-                      value={parentOption}
-                      onChange={(option) => {
-                        setParentOption(option)
-                        setValue('parentId', option?._id ?? '', { shouldValidate: true })
-                      }}
-                      role="associate"
-                      status="approved"
-                      exclude={id}
-                      placeholder="Search by ID or name…"
-                    />
-                  </FormField>
+          {/* Register: the leg is chosen relative to the sponsor. */}
+          {!isEdit && sponsor && (
+            <OptionalBox
+              title="Tree placement"
+              description={
+                <>
+                  Pick a leg to place them under {sponsor.memberCode} now. Leave it empty and {sponsor.fullName} places
+                  them from their portal, choosing the parent and leg.
+                </>
+              }
+            >
+              <FormField label="Leg" htmlFor="position" error={errors.position?.message}>
+                <Select id="position" invalid={!!errors.position} {...register('position')}>
+                  <option value="">Let the sponsor place them</option>
+                  <option value="Left">Left</option>
+                  <option value="Right">Right</option>
+                </Select>
+              </FormField>
 
-                  <FormField
-                    label="Leg"
-                    htmlFor="position"
-                    required
-                    error={errors.position?.message}
-                    hint="Falls back to spillover if the slot is already taken"
-                  >
-                    <Select id="position" invalid={!!errors.position} {...register('position')}>
-                      <option value="">Select leg</option>
-                      <option value="Left">Left</option>
-                      <option value="Right">Right</option>
-                    </Select>
-                  </FormField>
+              <div className="flex items-end lg:col-span-2">
+                <div className="w-full rounded-control border border-info-border bg-info-bg px-3 py-2 text-sm text-info">
+                  {!sponsorLeg ? (
+                    'Not placed yet — the sponsor will see them under Place Members.'
+                  ) : preview.isFetching ? (
+                    <span className="flex items-center gap-2">
+                      <Spinner className="h-3.5 w-3.5" /> Working out placement…
+                    </span>
+                  ) : preview.data ? (
+                    preview.data.data.isDirect ? (
+                      <>
+                        Directly under <span className="font-medium">{sponsor.label}</span>, {sponsorLeg} leg.
+                      </>
+                    ) : (
+                      <>
+                        {sponsor.memberCode}’s {sponsorLeg} slot is taken — they spill over to{' '}
+                        <span className="font-medium">
+                          {preview.data.data.parent.memberCode} — {preview.data.data.parent.fullName}
+                        </span>{' '}
+                        ({preview.data.data.levelsBelow} levels below).
+                      </>
+                    )
+                  ) : (
+                    'Could not preview this placement.'
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            </OptionalBox>
+          )}
+
+          {/* Edit: any parent, so a placed member can also be moved. */}
+          {isEdit && !isRoot && (
+            <OptionalBox
+              title="Tree placement"
+              description={
+                isUnplaced ? (
+                  <>
+                    Not in the tree yet. Pick a leg to place them
+                    {sponsor ? ` — under ${sponsor.memberCode} unless you choose another parent` : ''}. Leave the leg
+                    empty{sponsor ? ` and ${sponsor.fullName} places them from their portal` : ''}.
+                  </>
+                ) : (
+                  <>
+                    Currently under {loadedParent?.label ?? '—'} on the {loaded?.position} leg. Change the parent or leg
+                    to move them — spillover applies if that slot is taken.
+                  </>
+                )
+              }
+            >
+              <FormField label="Place under" htmlFor="parentId" error={errors.parentId?.message}>
+                <input type="hidden" {...register('parentId')} />
+                <AssociateSelect
+                  id="parentId"
+                  value={parentOption}
+                  onChange={(option) => {
+                    setParentOption(option)
+                    setValue('parentId', option?._id ?? '', { shouldValidate: true })
+                  }}
+                  role="associate"
+                  inTree
+                  exclude={id}
+                  placeholder="Search by ID or name…"
+                />
+              </FormField>
+
+              <FormField label="Leg" htmlFor="position" error={errors.position?.message}>
+                <Select id="position" invalid={!!errors.position} {...register('position')}>
+                  <option value="">{isUnplaced ? 'Not placed yet' : 'Select leg'}</option>
+                  <option value="Left">Left</option>
+                  <option value="Right">Right</option>
+                </Select>
+              </FormField>
+            </OptionalBox>
+          )}
+
+          {sponsor && !(isEdit && isRoot) && (
+            <OptionalBox
+              title="Payment received"
+              description={
+                loaded?.referral ? (
+                  <>
+                    Recorded on invoice <span className="font-mono">{loaded.referral.invoiceNo}</span>. Changes here update
+                    that invoice.
+                  </>
+                ) : isEdit ? (
+                  <>
+                    No payment recorded yet. Entering one creates the invoice for {sponsor.fullName}.
+                  </>
+                ) : (
+                  <>
+                    What {sponsor.fullName} paid for this associate. Everything here can be left empty — the invoice is
+                    still created, at ₹0 if no amount is entered.
+                  </>
+                )
+              }
+            >
+              <PaymentFields
+                register={register}
+                errors={errors}
+                receivedBy={receivedBy}
+                onReceivedByChange={changeReceivedBy}
+              />
+            </OptionalBox>
+          )}
         </Section>
 
         <Section title="Documents">
-          <div className="flex flex-col gap-3 sm:col-span-2 lg:col-span-3 xl:col-span-4">
+          <div className={`flex flex-col gap-3 ${FULL_ROW}`}>
             <FormField label="Profile Image" hint="PNG or JPG, shown across the admin panel">
               <label className="flex cursor-pointer items-center gap-3 rounded-control border border-dashed border-border-strong bg-blue-50/40 px-4 py-3 text-sm text-text-muted hover:bg-blue-50">
                 <UploadIcon className="h-4 w-4 shrink-0" />
@@ -508,5 +662,76 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="mb-4 text-sm font-semibold text-text">{title}</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{children}</div>
     </div>
+  )
+}
+
+/** A full-width sub-panel inside a Section, marked optional. */
+function OptionalBox({ title, description, children }: { title: string; description: ReactNode; children: ReactNode }) {
+  return (
+    <div className={FULL_ROW}>
+      <div className="rounded-card border border-border bg-bg p-4">
+        <p className="text-sm font-medium text-text">
+          {title} <span className="font-normal text-text-subtle">(optional)</span>
+        </p>
+        <p className="mt-0.5 text-xs text-text-subtle">{description}</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function PaymentFields({
+  register,
+  errors,
+  receivedBy,
+  onReceivedByChange,
+}: {
+  register: UseFormRegister<AssociateFormValues>
+  errors: FieldErrors<AssociateFormValues>
+  receivedBy: AssociateOption | null
+  onReceivedByChange: (option: AssociateOption | null) => void
+}) {
+  return (
+    <>
+      <FormField label="Amount paid (₹)" htmlFor="amountPaid" error={errors.amountPaid?.message}>
+        <Input
+          id="amountPaid"
+          type="number"
+          min="0"
+          inputMode="decimal"
+          placeholder="25000"
+          invalid={!!errors.amountPaid}
+          {...register('amountPaid')}
+        />
+      </FormField>
+      <FormField label="Payment mode" htmlFor="paymentMode">
+        <Select id="paymentMode" {...register('paymentMode')}>
+          <option value="">Not recorded</option>
+          {PAYMENT_MODES.map((mode) => (
+            <option key={mode} value={mode}>
+              {mode}
+            </option>
+          ))}
+        </Select>
+      </FormField>
+      <FormField label="Reference" htmlFor="paymentRef" hint="UPI txn id, cheque no, bank ref" error={errors.paymentRef?.message}>
+        <Input id="paymentRef" invalid={!!errors.paymentRef} {...register('paymentRef')} />
+      </FormField>
+      <FormField label="Received on" htmlFor="receivedOn">
+        <Input id="receivedOn" type="date" {...register('receivedOn')} />
+      </FormField>
+      <FormField label="Received by" htmlFor="receivedBy" className="sm:col-span-2">
+        <input type="hidden" {...register('receivedBy')} />
+        <AssociateSelect
+          id="receivedBy"
+          value={receivedBy}
+          onChange={onReceivedByChange}
+          placeholder="Who took the payment…"
+        />
+      </FormField>
+      <FormField label="Notes" htmlFor="notes" error={errors.notes?.message} className="sm:col-span-2 lg:col-span-3">
+        <Textarea id="notes" rows={2} invalid={!!errors.notes} {...register('notes')} />
+      </FormField>
+    </>
   )
 }

@@ -26,16 +26,33 @@ export interface SponsorRef {
 
 export type TreeStatus = 'unplaced' | 'root' | 'placed'
 
+/** The member's live referral — its payment pre-fills the edit form. Admin responses only. */
+export interface AssociateReferral {
+  _id: string
+  referralNo: string
+  invoiceNo: string
+  status: 'unused' | 'used' | 'cancelled'
+  amountPaid: number
+  paymentMode: string | null
+  paymentRef: string
+  receivedOn: string | null
+  receivedBy: SponsorRef | null
+  notes: string
+}
+
 export interface Associate {
   _id: string
-  /** Public associate ID (TRG0001). Null only for admin accounts, which sit outside the tree. */
+  /** The one associate ID (TGE0001) — also what they are referred to by as a sponsor. Null only for admins. */
   memberCode: string | null
-  /** This associate's OWN Sponsor ID (SPN0001) — the code they hand out when referring. */
-  sponsorCode: string | null
-  /** The member code of whoever sponsored them. Null until a referral assigns one. */
+  /** Associate ID of whoever sponsored them. Null only for the tree root. */
   sponsorMemberCode: string | null
-  /** The Sponsor ID of whoever sponsored them. */
-  sponsorSponsorCode: string | null
+  /**
+   * Readable password — present on admin responses only. Null when the account
+   * predates stored passwords; the admin sets a new one from Edit.
+   */
+  password?: string | null
+  /** Present on the admin's single-associate response; null when no payment is recorded. */
+  referral?: AssociateReferral | null
   /** Placement is optional at creation — 'unplaced' means not in the tree yet. */
   treeStatus: TreeStatus
   title: AssociateTitle
@@ -84,8 +101,6 @@ export interface AssociateTreeNode {
   tier: AssociateTier
   position: AssociatePosition
   profileImage: ProfileImage
-  /** This node's own Sponsor ID (SPN####). */
-  sponsorCode: string | null
   /** Member code of whoever sponsored them — the tooltip's "Sponsor PID". */
   sponsorMemberCode: string | null
   treeStatus: TreeStatus

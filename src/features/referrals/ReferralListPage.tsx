@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { cancelReferral, fetchMyReferrals, fetchReferrals } from '@/api/referrals'
+import { REFERRAL_STATUS_LABEL } from '@/types/referral'
 import type { ReferralInvoice, ReferralStatus } from '@/types/referral'
 import { useAuthStore } from '@/store/authStore'
 import { Badge } from '@/components/ui/Badge'
@@ -24,9 +25,9 @@ const money = (value: number) => `₹${value.toLocaleString('en-IN')}`
 const day = (value: string | null) => formatShortDate(value)
 
 /**
- * The invoice list. Both sides see the same rows through the same component —
- * only the data source differs, and the API scopes an associate to vouchers
- * issued to them.
+ * Every associate registered under a sponsor, with the payment and invoice.
+ * Both sides see the same rows through the same component — only the data
+ * source differs, and the API scopes an associate to their own referrals.
  */
 export function ReferralListPage() {
   const isAdmin = useAuthStore((state) => state.user?.role === 'admin')
@@ -64,20 +65,20 @@ export function ReferralListPage() {
           <h1 className="text-xl font-semibold text-text">{isAdmin ? 'Referrals' : 'My referrals'}</h1>
           <p className="mt-1 text-sm text-text-subtle">
             {isAdmin
-              ? 'Every referral issued, the payment recorded against it, and its invoice.'
-              : 'Referrals issued to you. Use an unused one to add a new member.'}
+              ? 'Every associate registered under a sponsor, the payment recorded, and its invoice.'
+              : 'Associates registered under you. Place the ones not in your tree yet from Place Members.'}
           </p>
         </div>
         <div className="flex gap-2">
           <Select value={status} onChange={(event) => setStatus(event.target.value)} containerClassName="w-40">
             <option value="">All statuses</option>
-            <option value="unused">Unused</option>
-            <option value="used">Used</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="unused">{REFERRAL_STATUS_LABEL.unused}</option>
+            <option value="used">{REFERRAL_STATUS_LABEL.used}</option>
+            <option value="cancelled">{REFERRAL_STATUS_LABEL.cancelled}</option>
           </Select>
           {isAdmin && (
             <Input
-              placeholder="Search referral / invoice no"
+              placeholder="Search referral / invoice / ID"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="w-56"
@@ -118,8 +119,7 @@ export function ReferralListPage() {
                     <span className="block text-xs text-text-subtle">{row.member.name}</span>
                   </td>
                   <td className="px-4 py-3">
-                    {/* Identified by Sponsor ID here — that is the code they act under. */}
-                    <span className="font-mono text-xs text-text">{row.issuedTo.sponsorCode ?? row.issuedTo.memberCode}</span>
+                    <span className="font-mono text-xs text-text">{row.issuedTo.memberCode}</span>
                     <span className="block text-xs text-text-subtle">{row.issuedTo.name}</span>
                   </td>
                   <td className="px-4 py-3 text-text-muted">{row.tierLabel}</td>
@@ -129,7 +129,7 @@ export function ReferralListPage() {
                     <span className="block">{day(row.payment.receivedOn)}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge tone={statusTone[row.status]}>{row.status}</Badge>
+                    <Badge tone={statusTone[row.status]}>{REFERRAL_STATUS_LABEL[row.status]}</Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Button size="sm" variant="ghost" onClick={() => setOpen(row)}>
@@ -164,8 +164,6 @@ export function ReferralListPage() {
                 <Line label="Reference" value={open.payment.reference || '—'} />
                 <Line label="Received on" value={day(open.payment.receivedOn)} />
                 <Line label="Received by" value={open.payment.receivedBy?.name ?? '—'} />
-                {/* The PIN itself is never retrievable — only the last two digits. */}
-                <Line label="PIN" value={open.pinHint ?? '—'} mono />
               </div>
             </div>
 
@@ -175,6 +173,12 @@ export function ReferralListPage() {
                 {open.placement?.under ? ` under ${open.placement.under}` : ''}
                 {open.placement?.position ? `, ${open.placement.position} leg` : ''}
                 {open.placement?.by ? ` — by the ${open.placement.by}` : ''}.
+              </div>
+            )}
+            {open.status === 'unused' && (
+              <div className="rounded-card border border-warning-border bg-warning-bg p-4 text-sm text-warning">
+                {open.member.memberCode} is not in the tree yet
+                {isAdmin ? ` — ${open.issuedTo.memberCode} can place them, or you can from Edit.` : ' — place them from Place Members.'}
               </div>
             )}
             {open.status === 'cancelled' && (
@@ -191,7 +195,7 @@ export function ReferralListPage() {
               </Link>
               {isAdmin && open.status === 'unused' && (
                 <Button variant="danger" isLoading={cancel.isPending} onClick={() => cancel.mutate(open._id)}>
-                  Cancel referral
+                  Cancel payment record
                 </Button>
               )}
             </div>

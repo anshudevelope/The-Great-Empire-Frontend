@@ -12,13 +12,13 @@ import { AssociatesListPage } from '@/features/associates/AssociatesListPage'
 import { AssociateFormPage } from '@/features/associates/AssociateFormPage'
 import { AssociateDetailPage } from '@/features/associates/AssociateDetailPage'
 import { AssociateTreePage } from '@/features/associates/tree/AssociateTreePage'
-import { ReferralGeneratePage } from '@/features/referrals/ReferralGeneratePage'
 import { ReferralListPage } from '@/features/referrals/ReferralListPage'
+import { ReferralGeneratePage } from '@/features/referrals/ReferralGeneratePage'
 import { DownlineReportPage } from '@/features/reports/DownlineReportPage'
 import { InvoiceListPage } from '@/features/invoices/InvoiceListPage'
 import { InvoiceDetailPage } from '@/features/invoices/InvoiceDetailPage'
 import { PortalDashboardPage } from '@/features/portal/PortalDashboardPage'
-import { AddMemberPage } from '@/features/portal/AddMemberPage'
+import { PlaceMembersPage } from '@/features/portal/PlaceMembersPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
 import { DirectsPage } from '@/features/portal/DirectsPage'
 
@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
   // Legacy links and bookmarks.
   { path: '/login', element: <Navigate to="/associate/login" replace /> },
 
-  // Reachable while `mustChangePassword` is set, unlike every other route.
+  // Either role.
   {
     element: <ProtectedRoute />,
     children: [{ path: '/change-password', element: <ChangePasswordPage /> }],
@@ -55,6 +55,7 @@ export const router = createBrowserRouter([
           { path: 'associates/:id', element: <AssociateDetailPage /> },
           { path: 'associates/:id/edit', element: <AssociateFormPage /> },
           { path: 'referrals', element: <ReferralListPage /> },
+          // For members registered without a sponsor — no PIN.
           { path: 'referrals/generate', element: <ReferralGeneratePage /> },
           { path: 'invoices', element: <InvoiceListPage /> },
           { path: 'invoices/:id', element: <InvoiceDetailPage /> },
@@ -76,10 +77,9 @@ export const router = createBrowserRouter([
           { path: 'referrals', element: <ReferralListPage /> },
           { path: 'invoices', element: <InvoiceListPage /> },
           { path: 'invoices/:id', element: <InvoiceDetailPage /> },
-          // Associates can register members too — placement stays admin-only,
-          // and the form hides that section for them.
-          { path: 'register', element: <AssociateFormPage /> },
-          { path: 'add-member', element: <AddMemberPage /> },
+          // Only the admin registers associates; the sponsor's job is placement.
+          { path: 'place-members', element: <PlaceMembersPage /> },
+          { path: 'add-member', element: <Navigate to="/portal/place-members" replace /> },
           { path: 'tree', element: <PortalTreePage /> },
           { path: 'directs', element: <DirectsPage /> },
           { path: 'downline', element: <DownlineReportPage /> },

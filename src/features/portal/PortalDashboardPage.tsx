@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchReferralSummary } from '@/api/referrals'
+import { fetchPendingPlacement } from '@/api/associates'
 import { fetchLegsReport, fetchLevelsReport } from '@/api/reports'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
@@ -14,6 +15,8 @@ export function PortalDashboardPage() {
   const summary = useQuery({ queryKey: ['referral-summary'], queryFn: fetchReferralSummary })
   const legs = useQuery({ queryKey: ['legs'], queryFn: () => fetchLegsReport() })
   const levels = useQuery({ queryKey: ['levels'], queryFn: () => fetchLevelsReport() })
+  const pending = useQuery({ queryKey: ['pending-placement'], queryFn: fetchPendingPlacement })
+  const waiting = pending.data?.count ?? 0
 
   const loading = summary.isLoading || legs.isLoading || levels.isLoading
 
@@ -26,9 +29,9 @@ export function PortalDashboardPage() {
             <span className="font-mono">{user?.memberCode}</span> · {user?.tier}
           </p>
         </div>
-        {(summary.data?.data.unused ?? 0) > 0 && (
-          <Link to="/portal/add-member">
-            <Button>Add a member</Button>
+        {waiting > 0 && (
+          <Link to="/portal/place-members">
+            <Button>Place members ({waiting})</Button>
           </Link>
         )}
       </header>
@@ -41,12 +44,12 @@ export function PortalDashboardPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat
-              label="Unused referrals"
-              value={String(summary.data?.data.unused ?? 0)}
+              label="Waiting to be placed"
+              value={String(waiting)}
               hint={summary.data ? `${money(summary.data.data.unusedAmount)} paid` : undefined}
               accent
             />
-            <Stat label="Members added" value={String(summary.data?.data.used ?? 0)} hint="Referrals redeemed" />
+            <Stat label="Members placed" value={String(summary.data?.data.used ?? 0)} hint="Referrals placed in your tree" />
             <Stat label="Total downline" value={String(levels.data?.totals.members ?? 0)} hint="Everyone below you" />
             <Stat label="Active members" value={String(levels.data?.totals.active ?? 0)} hint="Approved status" />
           </div>

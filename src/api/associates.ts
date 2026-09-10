@@ -23,8 +23,17 @@ export function fetchAssociateTree(id: string, depth = 3): Promise<ApiSingleResp
   })
 }
 
-export function createAssociate(formData: FormData): Promise<ApiSingleResponse<Associate>> {
-  return apiRequest<ApiSingleResponse<Associate>>('/associates/register', { method: 'POST', body: formData })
+export interface RegisterAssociateResponse {
+  success: true
+  message: string
+  data: Associate
+  /** The referral (and invoice) raised when a sponsor was chosen. */
+  referral: { _id: string; referralNo: string; invoiceNo: string } | null
+}
+
+/** Admin only. Carries the sponsor, optional leg and payment alongside the member details. */
+export function createAssociate(formData: FormData): Promise<RegisterAssociateResponse> {
+  return apiRequest<RegisterAssociateResponse>('/associates/register', { method: 'POST', body: formData })
 }
 
 export function updateAssociate(id: string, formData: FormData): Promise<ApiSingleResponse<Associate>> {
@@ -39,22 +48,18 @@ export function deleteAssociate(id: string): Promise<ApiMessageResponse> {
   return apiRequest<ApiMessageResponse>(`/associates/${id}`, { method: 'DELETE' })
 }
 
-/** Row shape for the searchable selects (issuedTo, receivedBy, sponsor). */
+/** Row shape for the admin's searchable selects (sponsor, parent, receivedBy). */
 export interface AssociateOption {
   _id: string
   memberCode: string | null
-  /** The option's own Sponsor ID (SPN####). */
-  sponsorCode: string | null
   fullName: string
   email: string
   role: 'admin' | 'associate'
   status: string
   tier: string | null
   treeStatus: 'unplaced' | 'root' | 'placed' | null
-  /** Pre-built dropdown label, e.g. "TRG0042 — Rakesh". */
+  /** Pre-built dropdown label, e.g. "TGE0042 — Rakesh". */
   label: string
-  /** Sponsor-picker label, e.g. "SPN0042 — Rakesh". */
-  sponsorLabel: string | null
 }
 
 export function searchAssociates(
@@ -63,7 +68,9 @@ export function searchAssociates(
     role?: string
     status?: string
     exclude?: string
-    /** Only members who can still be referred: unplaced and unsponsored. */
+    /** Only members who are in the tree (root or placed). */
+    inTree?: string
+    /** Only members who can still be given a sponsor: unplaced and unsponsored. */
     referable?: string
     treeStatus?: string
   } = {},
@@ -77,7 +84,7 @@ export interface PlacementPreview {
   parent: { _id: string; memberCode: string; fullName: string }
   position: 'Left' | 'Right'
   depth: number
-  /** How far below the viewer the new member will land. 1 = directly under them. */
+  /** How far below the starting node the member will land. 1 = directly under it. */
   levelsBelow: number
   /** False means spillover moved the placement further down the leg. */
   isDirect: boolean
@@ -89,36 +96,62 @@ export function fetchPlacementPreview(position: string, sponsorId?: string): Pro
   })
 }
 
-export interface RedeemResult {
+// ---------------------------------------------------------------------------
+// Sponsor-side placement
+// ---------------------------------------------------------------------------
+
+/** A member registered under the signed-in associate who is not in the tree yet. */
+export interface PendingMember {
   _id: string
   memberCode: string
   fullName: string
+  email: string
+  phone: string
   tier: string
-  tierLabel: string
+  tierLabel: string | null
   status: string
-  position: string
-  depth: number
-  sponsor: { memberCode: string }
-  placedUnder: { memberCode: string; fullName: string } | null
-  spilledOver: boolean
+  joinedAt: string
 }
 
-export interface RedeemResponse {
+export function fetchPendingPlacement(): Promise<{ success: true; count: number; data: PendingMember[] }> {
+  return apiRequest<{ success: true; count: number; data: PendingMember[] }>('/associates/pending-placement')
+}
+
+/** Somewhere a member can be placed: the caller or someone below them, with at least one open leg. */
+export interface PlacementParent {
+  _id: string
+  memberCode: string
+  fullName: string
+  isSelf: boolean
+  /** 0 = the caller, 1 = directly below them, … */
+  levelsBelow: number
+  leftOpen: boolean
+  rightOpen: boolean
+}
+
+export function fetchPlacementParents(q: string): Promise<{ success: true; count: number; data: PlacementParent[] }> {
+  return apiRequest<{ success: true; count: number; data: PlacementParent[] }>('/associates/placement-parents', {
+    params: { q },
+  })
+}
+
+export interface PlaceMemberResponse {
   success: true
   message: string
-  data: RedeemResult
+  data: {
+    _id: string
+    memberCode: string
+    fullName: string
+    position: 'Left' | 'Right'
+    depth: number
+    placedUnder: { memberCode: string; fullName: string }
+  }
 }
 
-/**
- * Place an already-registered member into the sponsor's tree.
- *
- * No member details travel here — the referral names who is being placed, so
- * the only inputs are the referral credentials and the leg.
- */
-export function redeemReferral(payload: {
-  referralNo: string
-  pin: string
-  position: string
-}): Promise<RedeemResponse> {
-  return apiRequest<RedeemResponse>('/associates/redeem', { method: 'POST', body: payload })
+/** Exact placement — no spillover. A taken slot comes back as an error. */
+export function placeMember(
+  memberId: string,
+  payload: { parentId: string; position: 'Left' | 'Right' },
+): Promise<PlaceMemberResponse> {
+  return apiRequest<PlaceMemberResponse>(`/associates/${memberId}/place`, { method: 'POST', body: payload })
 }

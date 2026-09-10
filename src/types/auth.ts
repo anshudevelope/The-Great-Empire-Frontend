@@ -8,14 +8,12 @@ export interface AuthUser {
   role: UserRole
   status: string
   tier?: string | null
-  mustChangePassword?: boolean
 }
 
 export interface LoginResponse {
   success: true
   message: string
   token: string
-  mustChangePassword: boolean
   data: AuthUser
 }
 

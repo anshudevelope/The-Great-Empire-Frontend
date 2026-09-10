@@ -15,7 +15,6 @@ export interface DownlineRow {
   position: string | null
   depth: number
   directCount: number
-  sponsorCode: string | null
   sponsorMemberCode: string | null
   treeStatus: 'unplaced' | 'root' | 'placed'
   placedUnderCode: string | null

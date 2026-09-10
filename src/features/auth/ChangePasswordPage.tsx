@@ -14,20 +14,13 @@ import { FormField } from '@/components/ui/FormField'
 import { BuildingIcon } from '@/components/icons/icons'
 
 /**
- * Reached in two ways:
- *  - forced, when the account still holds a temporary password (the API answers
- *    428 everywhere else until it is replaced)
- *  - voluntarily, from the profile menu
- *
- * Every member registered through a referral lands here on first login, because
- * their sponsor was handed the initial password.
+ * Voluntary password change, reached from the profile menu. The admin sees the
+ * new password in the associate listing afterwards.
  */
 export function ChangePasswordPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
-  const forced = useAuthStore((state) => state.mustChangePassword)
   const updateToken = useAuthStore((state) => state.updateToken)
-  const setMustChangePassword = useAuthStore((state) => state.setMustChangePassword)
   const navigate = useNavigate()
 
   const {
@@ -43,10 +36,7 @@ export function ChangePasswordPage() {
     mutationFn: (values: ChangePasswordFormValues) =>
       changePassword({ currentPassword: values.currentPassword, newPassword: values.newPassword }),
     onSuccess: (data) => {
-      // The API re-issues a token for the cleared state; swapping it in avoids
-      // an immediate 428 on the next request.
       updateToken(data.token)
-      setMustChangePassword(false)
       toast.success('Password updated')
       navigate(user?.role === 'admin' ? '/admin/dashboard' : '/portal/dashboard', { replace: true })
     },
@@ -64,19 +54,13 @@ export function ChangePasswordPage() {
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-blue-800 text-white shadow-xs">
             <BuildingIcon className="h-5 w-5" />
           </div>
-          <h1 className="text-lg font-semibold text-text">
-            {forced ? 'Set a new password' : 'Change password'}
-          </h1>
-          <p className="mt-1 text-sm text-text-subtle">
-            {forced
-              ? 'Your account is using a temporary password. Choose your own to continue.'
-              : 'Pick a new password for your account.'}
-          </p>
+          <h1 className="text-lg font-semibold text-text">Change password</h1>
+          <p className="mt-1 text-sm text-text-subtle">Pick a new password for your account.</p>
         </div>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit((values) => mutation.mutate(values))} noValidate>
           <FormField
-            label={forced ? 'Temporary password' : 'Current password'}
+            label="Current password"
             htmlFor="currentPassword"
             required
             error={errors.currentPassword?.message}

@@ -1,14 +1,20 @@
+/** 'unused' = member not in the tree yet, 'used' = placed. */
 export type ReferralStatus = 'unused' | 'used' | 'cancelled'
 export type PaymentMode = 'Cash' | 'UPI' | 'Bank Transfer' | 'Cheque' | 'Card' | 'Other'
 
 export const PAYMENT_MODES: PaymentMode[] = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Card', 'Other']
 
+/** Human wording for a referral's status — it tracks placement, not a voucher. */
+export const REFERRAL_STATUS_LABEL: Record<ReferralStatus, string> = {
+  unused: 'Not placed',
+  used: 'Placed',
+  cancelled: 'Cancelled',
+}
+
 export interface ReferralParty {
   _id: string
   name: string | null
   memberCode: string | null
-  /** The party's own Sponsor ID (SPN####), where relevant. */
-  sponsorCode?: string | null
   treeStatus?: 'unplaced' | 'root' | 'placed' | null
 }
 
@@ -26,7 +32,10 @@ export interface ReferralPayment {
   receivedBy: ReferralParty | null
 }
 
-/** The invoice both the admin and the issued-to associate see. Never carries the PIN. */
+/**
+ * Raised when the admin registers an associate under a sponsor. Both the admin
+ * and the sponsor see this same record.
+ */
 export interface ReferralInvoice {
   _id: string
   invoiceNo: string
@@ -35,16 +44,14 @@ export interface ReferralInvoice {
   issuedBy: string | null
   /** The sponsor — who paid, and who gets the referral credit. */
   issuedTo: ReferralParty
-  /** The referred member. Registered BEFORE the referral, never created by it. */
+  /** The associate registered under that sponsor. */
   member: ReferralParty
   tier: string
   tierLabel: string
-  /** Money the associate PAID to the company. Recorded only — never a payout. */
+  /** Money the sponsor PAID to the company. Recorded only — never a payout. */
   amountPaid: number
   payment: ReferralPayment
   status: ReferralStatus
-  /** Masked as ••••NN — the real PIN is shown once at generation and never again. */
-  pinHint: string | null
   usedAt: string | null
   placement: ReferralPlacement | null
   cancelledAt: string | null
@@ -60,15 +67,4 @@ export interface ReferralSummary {
   totalAmount: number
   unusedAmount: number
   unread: number
-}
-
-export interface VerifiedReferral {
-  referralNo: string
-  invoiceNo: string
-  tier: string
-  tierLabel: string
-  amountPaid: number
-  sponsor: { _id: string; name: string; memberCode: string }
-  /** Who this referral will place — the member already exists. */
-  member?: { _id: string; name: string | null; memberCode: string | null }
 }

@@ -127,7 +127,7 @@ export function DownlineReportPage() {
                     <td className="px-4 py-3 text-text-muted">{row.tierLabel}</td>
                     <td className="px-4 py-3 text-text-muted">{row.position ?? '—'}</td>
                     <td className="px-4 py-3 text-text-muted">{row.depth}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-text-muted">{row.sponsorCode ?? '—'}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-text-muted">{row.sponsorMemberCode ?? '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-text-muted">
                       {row.placedUnderCode ?? '—'}
                       {/* Sponsor ≠ parent means spillover moved them down the leg. */}

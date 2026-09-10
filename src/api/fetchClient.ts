@@ -57,13 +57,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     useAuthStore.getState().logout()
   }
 
-  // 428 is not a failure of this request — the session is valid but is holding
-  // a temporary password. Flag it so ProtectedRoute redirects to the reset
-  // screen instead of logging the user out and losing where they were.
-  if (response.status === 428) {
-    useAuthStore.getState().setMustChangePassword(true)
-  }
-
   const text = await response.text()
   let json: unknown = null
   if (text) {

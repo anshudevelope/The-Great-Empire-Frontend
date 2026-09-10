@@ -1,6 +1,35 @@
 import { apiRequest } from './fetchClient'
 import type { ApiMessageResponse, ApiSingleResponse } from '@/types/api'
-import type { ReferralInvoice, ReferralSummary, VerifiedReferral } from '@/types/referral'
+import type { ReferralInvoice, ReferralSummary } from '@/types/referral'
+
+// Most referrals are created by registering an associate under a sponsor
+// (createAssociate). createReferral covers members registered without one.
+
+export interface CreateReferralPayload {
+  /** An already-registered associate with no sponsor, not in the tree. */
+  member: string
+  /** The sponsor who paid for them. */
+  issuedTo: string
+  /** Optional — place the member under the sponsor now instead of leaving it to the sponsor. */
+  position?: string
+  amountPaid: number
+  paymentMode?: string
+  paymentRef?: string
+  receivedOn?: string
+  receivedBy?: string
+  notes?: string
+}
+
+export interface CreateReferralResponse {
+  success: true
+  message: string
+  placement: { placedUnder: string; position: 'Left' | 'Right'; spilledOver: boolean } | null
+  data: ReferralInvoice
+}
+
+export function createReferral(payload: CreateReferralPayload): Promise<CreateReferralResponse> {
+  return apiRequest<CreateReferralResponse>('/referrals', { method: 'POST', body: payload })
+}
 
 export interface ReferralListResponse {
   success: true
@@ -11,29 +40,6 @@ export interface ReferralListResponse {
   data: ReferralInvoice[]
 }
 
-/** The generate response is the ONLY place the plaintext PIN ever appears. */
-export interface CreateReferralResponse {
-  success: true
-  message: string
-  pin: string
-  data: ReferralInvoice
-}
-
-export interface CreateReferralPayload {
-  /** The already-registered associate this referral is for. */
-  member: string
-  /** The sponsor who paid for them. */
-  issuedTo: string
-  /** Optional — set a leg to place the member immediately instead of leaving it to the sponsor. */
-  position?: string
-  amountPaid: number
-  paymentMode?: string
-  paymentRef?: string
-  receivedOn?: string
-  receivedBy?: string
-  notes?: string
-}
-
 export interface ReferralFilters {
   status?: string
   tier?: string
@@ -42,10 +48,6 @@ export interface ReferralFilters {
   page?: string
   limit?: string
   [key: string]: string | undefined
-}
-
-export function createReferral(payload: CreateReferralPayload): Promise<CreateReferralResponse> {
-  return apiRequest<CreateReferralResponse>('/referrals', { method: 'POST', body: payload })
 }
 
 export function fetchReferrals(filters: ReferralFilters = {}): Promise<ReferralListResponse> {
@@ -62,10 +64,6 @@ export function fetchReferralSummary(): Promise<ApiSingleResponse<ReferralSummar
 
 export function fetchInvoice(id: string): Promise<ApiSingleResponse<ReferralInvoice>> {
   return apiRequest<ApiSingleResponse<ReferralInvoice>>(`/referrals/${id}/invoice`)
-}
-
-export function verifyReferral(payload: { referralNo: string; pin: string }): Promise<ApiSingleResponse<VerifiedReferral>> {
-  return apiRequest<ApiSingleResponse<VerifiedReferral>>('/referrals/verify', { method: 'POST', body: payload })
 }
 
 export function cancelReferral(id: string, reason?: string): Promise<ApiSingleResponse<ReferralInvoice>> {

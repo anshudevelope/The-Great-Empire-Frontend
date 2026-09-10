@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { createReferral } from '@/api/referrals'
@@ -18,11 +19,12 @@ import { todayIST } from '@/lib/datetime'
 const today = todayIST
 
 /**
- * Admin issues a referral voucher to an associate who has paid for it.
+ * Gives an associate who is already registered — but has no sponsor — a
+ * sponsor, and records what that sponsor paid.
  *
- * The PIN is generated server-side and returned exactly once — it is stored
- * only as a hash, so if it is lost the voucher must be cancelled and reissued.
- * That is why the success modal is deliberately obstructive.
+ * New associates get their sponsor straight from Register; this page is for
+ * members created without one. No PIN is issued: the sponsor places the member
+ * from their portal, or the admin sets a leg here to place them now.
  */
 export function ReferralGeneratePage() {
   const queryClient = useQueryClient()
@@ -30,7 +32,6 @@ export function ReferralGeneratePage() {
   const [member, setMember] = useState<AssociateOption | null>(null)
   const [issuedTo, setIssuedTo] = useState<AssociateOption | null>(null)
   const [receivedBy, setReceivedBy] = useState<AssociateOption | null>(null)
-  // Optional: place the member straight away instead of leaving it to the sponsor.
   const [position, setPosition] = useState('')
   const [amountPaid, setAmountPaid] = useState('')
   const [paymentMode, setPaymentMode] = useState('')
@@ -38,15 +39,16 @@ export function ReferralGeneratePage() {
   const [receivedOn, setReceivedOn] = useState(today())
   const [notes, setNotes] = useState('')
 
-  const [issued, setIssued] = useState<{ pin: string; invoice: ReferralInvoice } | null>(null)
+  const [issued, setIssued] = useState<{ message: string; invoice: ReferralInvoice } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const mutation = useMutation({
     mutationFn: createReferral,
     onSuccess: (response) => {
-      setIssued({ pin: response.pin, invoice: response.data })
+      setIssued({ message: response.message, invoice: response.data })
       queryClient.invalidateQueries({ queryKey: ['referrals'] })
       queryClient.invalidateQueries({ queryKey: ['associates'] })
+      queryClient.invalidateQueries({ queryKey: ['associate-search'] })
       setMember(null)
       setIssuedTo(null)
       setReceivedBy(null)
@@ -57,7 +59,7 @@ export function ReferralGeneratePage() {
       setNotes('')
     },
     onError: (err) => {
-      toast.error(err instanceof ApiRequestError ? err.message : 'Could not generate referral.')
+      toast.error(err instanceof ApiRequestError ? err.message : 'Could not create referral.')
     },
   })
 
@@ -66,7 +68,7 @@ export function ReferralGeneratePage() {
     if (!member) return setError('Choose the associate this referral is for.')
     if (!issuedTo) return setError('Choose the sponsor who paid for them.')
     const amount = Number(amountPaid)
-    if (!Number.isFinite(amount) || amount < 0) return setError('Enter the amount the sponsor paid.')
+    if (amountPaid === '' || !Number.isFinite(amount) || amount < 0) return setError('Enter the amount the sponsor paid.')
 
     mutation.mutate({
       member: member._id,
@@ -86,7 +88,12 @@ export function ReferralGeneratePage() {
       <header className="mb-5">
         <h1 className="text-xl font-semibold text-text">Generate referral</h1>
         <p className="mt-1 text-sm text-text-subtle">
-          Issue a voucher to an associate who has paid for it. They redeem it from their dashboard to add a new member.
+          For an associate who is already registered but has no sponsor yet. New associates get their sponsor directly
+          from{' '}
+          <Link to="/admin/associates/register" className="font-medium text-blue-700 hover:underline">
+            Register
+          </Link>
+          .
         </p>
       </header>
 
@@ -97,7 +104,7 @@ export function ReferralGeneratePage() {
               label="Referred associate"
               htmlFor="member"
               required
-              hint="The member this payment is for. Only associates who are not yet in the tree can be referred."
+              hint="Only associates with no sponsor who are not in the tree yet are listed."
             >
               <AssociateSelect
                 id="member"
@@ -113,7 +120,7 @@ export function ReferralGeneratePage() {
               label="Sponsor (referrer)"
               htmlFor="issuedTo"
               required
-              hint="Who paid for them. Search by Sponsor ID or name — they become the member's sponsor."
+              hint="Who paid for them. Must already be in the tree."
             >
               <AssociateSelect
                 id="issuedTo"
@@ -121,9 +128,9 @@ export function ReferralGeneratePage() {
                 onChange={setIssuedTo}
                 role="associate"
                 status="approved"
-                showSponsorCode
+                inTree
                 exclude={member?._id}
-                placeholder="Search by Sponsor ID or name…"
+                placeholder="Search by associate ID or name…"
               />
             </FormField>
           </div>
@@ -139,7 +146,7 @@ export function ReferralGeneratePage() {
           <div className="rounded-card border border-border bg-bg p-4">
             <p className="mb-1 text-sm font-medium text-text">Payment received</p>
             <p className="mb-4 text-xs text-text-subtle">
-              Money the associate paid to the company. Only the amount is required — the rest can be filled in later.
+              Money the sponsor paid to the company. Only the amount is required — the rest can be filled in later.
             </p>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -180,16 +187,14 @@ export function ReferralGeneratePage() {
             </div>
           </div>
 
-          {/* Placement here is the exception, not the rule — normally the
-              sponsor does it with the PIN. */}
           <div className="rounded-card border border-border bg-bg p-4">
             <p className="mb-1 text-sm font-medium text-text">Tree placement (optional)</p>
             <p className="mb-4 text-xs text-text-subtle">
-              Leave this empty and the sponsor places the member themselves using the referral number and PIN. Only set a
-              leg here if the sponsor cannot do it — it consumes the referral immediately, and the PIN becomes unusable.
+              Leave this empty and the sponsor places the member from Place Members, choosing the parent and leg in their
+              own tree. Set a leg to place them under the sponsor now — spillover applies if that slot is taken.
             </p>
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField label="Leg" htmlFor="position" hint="Spillover applies if the slot is taken">
+              <FormField label="Leg" htmlFor="position">
                 <Select id="position" value={position} onChange={(event) => setPosition(event.target.value)}>
                   <option value="">Leave it to the sponsor</option>
                   <option value="Left">Left</option>
@@ -210,16 +215,11 @@ export function ReferralGeneratePage() {
           </Button>
         </div>
 
-        {/* Running summary — the PIN warning matters before they click, not after. */}
         <aside className="rounded-card border border-border bg-white p-6">
           <p className="text-sm font-semibold text-text">Summary</p>
           <dl className="mt-4 flex flex-col gap-3 text-sm">
             <SummaryRow label="Member" value={member ? member.label : 'Not selected'} muted={!member} />
-            <SummaryRow
-              label="Sponsor"
-              value={issuedTo ? (issuedTo.sponsorLabel ?? issuedTo.label) : 'Not selected'}
-              muted={!issuedTo}
-            />
+            <SummaryRow label="Sponsor" value={issuedTo ? issuedTo.label : 'Not selected'} muted={!issuedTo} />
             <SummaryRow label="Tier" value={member?.tier ? `${member.tier}` : 'From the member'} muted={!member?.tier} />
             <SummaryRow
               label="Placement"
@@ -235,47 +235,35 @@ export function ReferralGeneratePage() {
             <SummaryRow label="Received by" value={receivedBy ? receivedBy.label : 'Not recorded'} muted={!receivedBy} />
           </dl>
 
-          <div className="mt-5 rounded-card border border-warning-border bg-warning-bg p-3">
-            <p className="text-xs font-medium text-warning">The PIN is shown once</p>
-            <p className="mt-1 text-xs text-warning">
-              It is stored only as a hash. Copy it before closing the dialog — if lost, the voucher has to be cancelled and
-              reissued.
+          <div className="mt-5 rounded-card border border-info-border bg-info-bg p-3">
+            <p className="text-xs font-medium text-info">No PIN needed</p>
+            <p className="mt-1 text-xs text-info">
+              An invoice is created for the sponsor, and the member shows up on their Place Members page straight away.
             </p>
           </div>
         </aside>
       </div>
 
-      <Modal open={!!issued} onClose={() => setIssued(null)} title="Referral generated">
+      <Modal open={!!issued} onClose={() => setIssued(null)} title="Referral created">
         {issued && (
           <div className="flex flex-col gap-4">
-            <div className="rounded-card border border-warning-border bg-warning-bg p-4">
-              <p className="text-sm font-medium text-warning">Copy the PIN now</p>
-              <p className="mt-1 text-xs text-warning">
-                It is stored only as a hash and cannot be shown again. If it is lost, cancel this referral and issue a new one.
-              </p>
-            </div>
+            <p className="rounded-card border border-success-border bg-success-bg p-3 text-sm text-success">
+              {issued.message}
+            </p>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Referral No" value={issued.invoice.referralNo} mono />
-              <Field label="PIN" value={issued.pin} mono highlight />
               <Field label="Invoice No" value={issued.invoice.invoiceNo} mono />
-              <Field label="Issued to" value={issued.invoice.issuedTo.memberCode ?? '—'} />
+              <Field label="Member" value={`${issued.invoice.member.memberCode ?? '—'} — ${issued.invoice.member.name ?? ''}`} />
+              <Field label="Sponsor" value={`${issued.invoice.issuedTo.memberCode ?? '—'} — ${issued.invoice.issuedTo.name ?? ''}`} />
               <Field label="Tier" value={`${issued.invoice.tier} — ${issued.invoice.tierLabel}`} />
               <Field label="Amount paid" value={`₹${issued.invoice.amountPaid.toLocaleString('en-IN')}`} />
             </div>
 
             <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  void navigator.clipboard.writeText(
-                    `Referral No: ${issued.invoice.referralNo}\nPIN: ${issued.pin}\nTier: ${issued.invoice.tier}\nAmount: ₹${issued.invoice.amountPaid}`,
-                  )
-                  toast.success('Copied')
-                }}
-              >
-                Copy details
-              </Button>
+              <Link to={`/admin/invoices/${issued.invoice._id}`}>
+                <Button variant="secondary">Open invoice</Button>
+              </Link>
               <Button onClick={() => setIssued(null)}>Done</Button>
             </div>
           </div>
@@ -296,19 +284,11 @@ function SummaryRow({ label, value, muted }: { label: string; value: string; mut
   )
 }
 
-function Field({ label, value, mono, highlight }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
+function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
       <p className="text-xs text-text-subtle">{label}</p>
-      <p
-        className={[
-          'mt-0.5 text-sm text-text',
-          mono ? 'font-mono' : '',
-          highlight ? 'rounded bg-blue-50 px-2 py-1 text-base font-semibold tracking-widest text-blue-700' : '',
-        ].join(' ')}
-      >
-        {value}
-      </p>
+      <p className={mono ? 'mt-0.5 font-mono text-sm text-text' : 'mt-0.5 text-sm text-text'}>{value}</p>
     </div>
   )
 }

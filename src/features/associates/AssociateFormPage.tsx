@@ -5,6 +5,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import type { FieldErrors, UseFormRegister } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
+import toast from 'react-hot-toast'
 import {
   ASSOCIATE_TIERS,
   ASSOCIATE_TITLES,
@@ -298,6 +299,14 @@ export function AssociateFormPage() {
     }
   }
 
+  // A failed check scrolls to the first bad field, but on this long form the
+  // small red text under it is easy to miss after clicking Save at the bottom —
+  // so also say what's wrong in a toast.
+  function onInvalid(formErrors: FieldErrors<AssociateFormValues>) {
+    const first = Object.values(formErrors).find((error) => error?.message)
+    toast.error(first?.message ? String(first.message) : 'Please fix the highlighted fields.')
+  }
+
   const isSubmitting = createMutation.isPending || updateMutation.isPending
 
   if (isEdit && associateQuery.isLoading) {
@@ -325,7 +334,7 @@ export function AssociateFormPage() {
         </p>
       </div>
 
-      <form className="flex flex-col gap-6" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form className="flex flex-col gap-6" onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
         <Section title="Personal Details">
           <FormField label="Title" htmlFor="title" required error={errors.title?.message}>
             <Select id="title" invalid={!!errors.title} {...register('title')}>
@@ -386,7 +395,11 @@ export function AssociateFormPage() {
             htmlFor="password"
             required={!isEdit}
             error={errors.password?.message}
-            hint={isEdit ? 'Leave blank to keep the current password' : 'The associate signs in with this. You can view it later.'}
+            hint={
+              isEdit
+                ? 'Leave blank to keep the current password. At least 6 characters.'
+                : 'At least 6 characters. The associate signs in with this.'
+            }
           >
             <PasswordInput id="password" invalid={!!errors.password} {...register('password')} />
           </FormField>

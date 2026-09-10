@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
+import { PlaceMemberDialog } from '@/features/portal/PlaceMemberDialog'
+import type { PlaceableMember } from '@/features/portal/PlaceMemberDialog'
 import { formatShortDate } from '@/lib/datetime'
 
 const statusTone: Record<ReferralStatus, 'success' | 'info' | 'neutral'> = {
@@ -36,6 +38,14 @@ export function ReferralListPage() {
   const [status, setStatus] = useState('')
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState<ReferralInvoice | null>(null)
+  const [placing, setPlacing] = useState<PlaceableMember | null>(null)
+
+  // The sponsor can place a referred member straight from the list, as on
+  // Place Members. The admin places from the associate's Edit page instead.
+  const canPlace = (row: ReferralInvoice) =>
+    !isAdmin && row.status === 'unused' && row.member.treeStatus === 'unplaced'
+  const startPlacing = (row: ReferralInvoice) =>
+    setPlacing({ _id: row.member._id, memberCode: row.member.memberCode, fullName: row.member.name })
 
   const { data, isLoading } = useQuery({
     queryKey: ['referrals', { isAdmin, status, search }],
@@ -66,7 +76,7 @@ export function ReferralListPage() {
           <p className="mt-1 text-sm text-text-subtle">
             {isAdmin
               ? 'Every associate registered under a sponsor, the payment recorded, and its invoice.'
-              : 'Associates registered under you. Place the ones not in your tree yet from Place Members.'}
+              : 'Associates registered under you. Use Place on anyone not in your tree yet.'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -132,9 +142,16 @@ export function ReferralListPage() {
                     <Badge tone={statusTone[row.status]}>{REFERRAL_STATUS_LABEL[row.status]}</Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button size="sm" variant="ghost" onClick={() => setOpen(row)}>
-                      View
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {canPlace(row) && (
+                        <Button size="sm" onClick={() => startPlacing(row)}>
+                          Place
+                        </Button>
+                      )}
+                      <Button size="sm" variant="ghost" onClick={() => setOpen(row)}>
+                        View
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -178,7 +195,7 @@ export function ReferralListPage() {
             {open.status === 'unused' && (
               <div className="rounded-card border border-warning-border bg-warning-bg p-4 text-sm text-warning">
                 {open.member.memberCode} is not in the tree yet
-                {isAdmin ? ` — ${open.issuedTo.memberCode} can place them, or you can from Edit.` : ' — place them from Place Members.'}
+                {isAdmin ? ` — ${open.issuedTo.memberCode} can place them, or you can from Edit.` : ' — place them now.'}
               </div>
             )}
             {open.status === 'cancelled' && (
@@ -189,6 +206,16 @@ export function ReferralListPage() {
             )}
 
             <div className="flex flex-wrap gap-2">
+              {canPlace(open) && (
+                <Button
+                  onClick={() => {
+                    startPlacing(open)
+                    setOpen(null)
+                  }}
+                >
+                  Place member
+                </Button>
+              )}
               {/* The printable receipt lives in the Invoices section. */}
               <Link to={`${isAdmin ? '/admin' : '/portal'}/invoices/${open._id}`}>
                 <Button variant="secondary">Open invoice</Button>
@@ -202,6 +229,9 @@ export function ReferralListPage() {
           </div>
         )}
       </Modal>
+
+      {/* Keyed per member so every opening starts from a clean selection. */}
+      {placing && <PlaceMemberDialog key={placing._id} member={placing} onClose={() => setPlacing(null)} />}
     </div>
   )
 }

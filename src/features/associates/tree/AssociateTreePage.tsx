@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAssociates, useAssociateTree } from '../hooks'
 import { TreeCanvas } from './TreeCanvas'
-import { AssociateInfoPanel } from './AssociateInfoPanel'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
@@ -129,19 +128,16 @@ export function AssociateTreePage() {
       ) : (
         // Keyed by root so the selection resets when the tree's root changes,
         // without needing an effect to reset state in response to a prop change.
-        <TreeWithPanel key={rootId} root={treeQuery.data.data} onDrillDown={selectRoot} />
+        <TreeView key={rootId} root={treeQuery.data.data} onDrillDown={selectRoot} />
       )}
     </div>
   )
 }
 
-function TreeWithPanel({ root, onDrillDown }: { root: AssociateTreeNode; onDrillDown: (id: string) => void }) {
+// Full width — member details show in each node's hover card, so there is no
+// side panel. Selection only highlights the clicked node.
+function TreeView({ root, onDrillDown }: { root: AssociateTreeNode; onDrillDown: (id: string) => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-      <TreeCanvas root={root} selectedId={selectedId} onSelect={setSelectedId} onDrillDown={onDrillDown} />
-      <AssociateInfoPanel associateId={selectedId} />
-    </div>
-  )
+  return <TreeCanvas root={root} selectedId={selectedId} onSelect={setSelectedId} onDrillDown={onDrillDown} />
 }

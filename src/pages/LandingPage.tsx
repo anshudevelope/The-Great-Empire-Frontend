@@ -66,11 +66,6 @@ export function LandingPage() {
               Associate Portal
             </button>
           </Link>
-          <Link to="/admin/login">
-            <button className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-blue-800 transition-colors">
-              Admin Login
-            </button>
-          </Link>
         </nav>
       </header>
 
@@ -98,11 +93,6 @@ export function LandingPage() {
           <Link to="/associate/login">
             <button className="w-full sm:w-auto rounded-lg bg-blue-900 px-7 py-3 text-sm font-semibold text-white shadow-xs hover:bg-blue-800 transition-colors">
               Book Consultation
-            </button>
-          </Link>
-          <Link to="/admin/login">
-            <button className="w-full sm:w-auto rounded-lg border border-blue-200 bg-white px-7 py-3 text-sm font-semibold text-blue-900 hover:bg-blue-50 transition-colors">
-              Client Access
             </button>
           </Link>
         </div>

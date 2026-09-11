@@ -135,7 +135,8 @@ export function AssociateDetailPage() {
               </Button>
             </Link>
           </Tooltip>
-          <Tooltip label="Permanently delete this associate">
+          {/* Right-most button: an end-aligned tooltip stays inside the page. */}
+          <Tooltip label="Permanently delete this associate" align="end">
             <Button
               variant="danger"
               size="sm"

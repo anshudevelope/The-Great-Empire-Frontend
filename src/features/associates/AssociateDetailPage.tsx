@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { PasswordText } from '@/components/ui/PasswordText'
-import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon } from '@/components/icons/icons'
+import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
 import { formatDate } from '@/lib/datetime'
 
 type PendingAction = 'approve' | 'reject' | 'delete' | null
@@ -98,6 +98,7 @@ export function AssociateDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {associate.status !== 'approved' && (
+            <>
             <Tooltip label="Mark this associate as approved">
               <Button
                 variant="success"
@@ -108,9 +109,7 @@ export function AssociateDetailPage() {
                 Approve
               </Button>
             </Tooltip>
-          )}
-          {/* {associate.status !== 'rejected' && (
-            <Tooltip label="Mark this associate as rejected">
+             <Tooltip label="Mark this associate as rejected">
               <Button
                 variant="warning"
                 size="sm"
@@ -120,7 +119,8 @@ export function AssociateDetailPage() {
                 Reject
               </Button>
             </Tooltip>
-          )} */}
+            </>
+          )}
           <Tooltip label="View this associate's binary tree">
             <Link to={`/admin/associates/tree/${associate._id}`}>
               <Button variant="secondary" size="sm" leftIcon={<TreeIcon className="h-4 w-4" />}>

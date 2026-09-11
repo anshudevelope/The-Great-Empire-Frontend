@@ -12,7 +12,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IconButton, IconLink } from '@/components/ui/IconButton'
 import { Spinner } from '@/components/ui/Spinner'
-import { SecretText } from '@/components/ui/SecretText'
+import { PasswordText } from '@/components/ui/PasswordText'
 import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, RefreshIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
 import { formatShortDate } from '@/lib/datetime'
 
@@ -218,7 +218,19 @@ export function AssociatesListPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 align-middle">
-                      <SecretText value={associate.password} emptyLabel="Set from Edit" />
+                      {/* Every status. Accounts created before passwords were stored
+                          readably have none to show — the admin sets a new one. */}
+                      <PasswordText
+                        value={associate.password}
+                        emptyLabel={
+                          <Link
+                            to={`/admin/associates/${associate._id}/edit`}
+                            className="font-medium text-blue-700 hover:underline"
+                          >
+                            Set password
+                          </Link>
+                        }
+                      />
                     </td>
                     <td className="px-4 py-3 align-middle font-mono text-[13px] text-text-muted">
                       {associate.sponsorMemberCode ?? '—'}

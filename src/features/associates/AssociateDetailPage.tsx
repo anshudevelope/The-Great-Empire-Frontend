@@ -9,7 +9,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Tooltip } from '@/components/ui/Tooltip'
-import { SecretText } from '@/components/ui/SecretText'
+import { PasswordText } from '@/components/ui/PasswordText'
 import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
 import { formatDate } from '@/lib/datetime'
 
@@ -109,7 +109,7 @@ export function AssociateDetailPage() {
               </Button>
             </Tooltip>
           )}
-          {associate.status !== 'rejected' && (
+          {/* {associate.status !== 'rejected' && (
             <Tooltip label="Mark this associate as rejected">
               <Button
                 variant="warning"
@@ -120,7 +120,7 @@ export function AssociateDetailPage() {
                 Reject
               </Button>
             </Tooltip>
-          )}
+          )} */}
           <Tooltip label="View this associate's binary tree">
             <Link to={`/admin/associates/tree/${associate._id}`}>
               <Button variant="secondary" size="sm" leftIcon={<TreeIcon className="h-4 w-4" />}>
@@ -167,7 +167,20 @@ export function AssociateDetailPage() {
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-text-subtle">Password</dt>
             <dd className="mt-0.5">
-              <SecretText value={associate.password} emptyLabel="Not stored — set a new one from Edit" />
+              <PasswordText
+                value={associate.password}
+                emptyLabel={
+                  <>
+                    Not saved —{' '}
+                    <Link
+                      to={`/admin/associates/${associate._id}/edit`}
+                      className="font-medium text-blue-700 hover:underline"
+                    >
+                      Set password
+                    </Link>
+                  </>
+                }
+              />
             </dd>
           </div>
           <Field label="Address" value={associate.address} />

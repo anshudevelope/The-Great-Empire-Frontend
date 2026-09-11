@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchReferralSummary } from '@/api/referrals'
@@ -7,6 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/cn'
 import { BuildingIcon } from '@/components/icons/icons'
 import { Button } from '@/components/ui/Button'
+import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
 
 const NAV = [
   { label: 'Dashboard', to: '/portal/dashboard' },
@@ -24,6 +26,7 @@ export function PortalLayout() {
   const logout = useAuthStore((state) => state.logout)
   const company = useCompanyBrand()
   const navigate = useNavigate()
+  const [changingPassword, setChangingPassword] = useState(false)
 
   // Drives the unread badge on My Referrals.
   const { data: summary } = useQuery({ queryKey: ['referral-summary'], queryFn: fetchReferralSummary })
@@ -97,9 +100,13 @@ export function PortalLayout() {
             <p className="font-mono text-[11px] text-text-subtle">{user?.memberCode}</p>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <NavLink to="/change-password" className="text-sm text-text-muted hover:text-text">
+            <button
+              type="button"
+              onClick={() => setChangingPassword(true)}
+              className="cursor-pointer text-sm text-text-muted hover:text-text"
+            >
               Change password
-            </NavLink>
+            </button>
           </div>
         </header>
 
@@ -107,6 +114,9 @@ export function PortalLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* A popup over the current page — mounted only while open, so the form starts empty. */}
+      {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
     </div>
   )
 }

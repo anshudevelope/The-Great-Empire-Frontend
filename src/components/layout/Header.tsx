@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { LogoutIcon, MenuIcon } from '@/components/icons/icons'
+import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
 
 function getInitials(name: string | null): string {
   if (!name) return 'A'
@@ -21,6 +22,7 @@ export function Header() {
   const openMobileSidebar = useUIStore((state) => state.openMobileSidebar)
   const navigate = useNavigate()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   function handleLogout() {
     logout()
@@ -49,7 +51,7 @@ export function Header() {
           </div>
           <span className="text-sm font-medium text-text">{user?.fullName ?? 'Admin'}</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/change-password')}>
+        <Button variant="ghost" size="sm" onClick={() => setChangingPassword(true)}>
           Password
         </Button>
         <Button
@@ -71,6 +73,8 @@ export function Header() {
         onConfirm={handleLogout}
         onClose={() => setConfirmOpen(false)}
       />
+
+      {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
     </header>
   )
 }

@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { PasswordText } from '@/components/ui/PasswordText'
-import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
+import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon } from '@/components/icons/icons'
 import { formatDate } from '@/lib/datetime'
 
 type PendingAction = 'approve' | 'reject' | 'delete' | null

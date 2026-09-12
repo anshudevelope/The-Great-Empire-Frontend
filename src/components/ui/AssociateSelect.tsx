@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { searchAssociates } from '@/api/associates'
 import type { AssociateOption } from '@/api/associates'
 import { cn } from '@/lib/cn'
+import { formatTier } from '@/lib/tier'
 import { Input } from './Input'
 import { Spinner } from './Spinner'
 
@@ -129,7 +130,7 @@ export function AssociateSelect({
               <span className="text-sm font-medium text-text">{option.label}</span>
               <span className="text-xs text-text-subtle">
                 {option.email}
-                {option.tier ? ` · ${option.tier}` : ''}
+                {option.tier ? ` · ${formatTier(option.tier)}` : ''}
                 {option.treeStatus === 'unplaced' ? ' · not in tree' : ''}
               </span>
             </button>

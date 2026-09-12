@@ -15,6 +15,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { PasswordText } from '@/components/ui/PasswordText'
 import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, RefreshIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
 import { formatShortDate } from '@/lib/datetime'
+import { formatTier } from '@/lib/tier'
 
 const PAGE_SIZE = 10
 
@@ -119,8 +120,8 @@ export function AssociatesListPage() {
           containerClassName="sm:w-36"
         >
           <option value="">All tiers</option>
-          <option value="Tier I">Tier I</option>
-          <option value="Tier II">Tier II</option>
+          <option value="Tier I">Tier I (Insurance)</option>
+          <option value="Tier II">Tier II (Plots)</option>
         </Select>
         {/* Placement is optional now, so "waiting to be placed" is a real
             working list, not an error state. */}
@@ -261,7 +262,7 @@ export function AssociatesListPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 align-middle text-text">{associate.tier}</td>
+                    <td className="px-4 py-3 align-middle text-text">{formatTier(associate.tier)}</td>
                     <td className="px-4 py-3 align-middle">
                       <Badge tone={STATUS_TONE[associate.status]}>{associate.status}</Badge>
                     </td>

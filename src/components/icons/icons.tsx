@@ -9,6 +9,7 @@ import {
   FiChevronDown,
   FiChevronRight,
   FiClock,
+  FiCopy,
   FiEdit2,
   FiEye,
   FiEyeOff,
@@ -43,6 +44,7 @@ export const PencilIcon: IconType = FiEdit2
 export const TrashIcon: IconType = FiTrash2
 export const ClockIcon: IconType = FiClock
 export const CheckIcon: IconType = FiCheck
+export const CopyIcon: IconType = FiCopy
 export const AlertTriangleIcon: IconType = FiAlertTriangle
 export const UserCircleIcon: IconType = FiUser
 export const UploadIcon: IconType = FiUpload

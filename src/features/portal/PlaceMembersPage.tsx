@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatShortDate } from '@/lib/datetime'
+import { formatTier } from '@/lib/tier'
 import { PlaceMemberDialog } from './PlaceMemberDialog'
 
 /**
@@ -58,8 +59,7 @@ export function PlaceMembersPage() {
                     <span className="block text-xs text-text-subtle">{row.email}</span>
                   </td>
                   <td className="px-4 py-3 text-text-muted">
-                    {row.tier}
-                    {row.tierLabel ? ` — ${row.tierLabel}` : ''}
+                    {formatTier(row.tier)}
                   </td>
                   <td className="px-4 py-3 text-text-muted">{formatShortDate(row.joinedAt)}</td>
                   <td className="px-4 py-3 text-right">

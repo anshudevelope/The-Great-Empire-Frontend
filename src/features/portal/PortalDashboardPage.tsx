@@ -6,6 +6,7 @@ import { fetchLegsReport, fetchLevelsReport } from '@/api/reports'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { formatTier } from '@/lib/tier'
 
 const money = (value: number) => `₹${value.toLocaleString('en-IN')}`
 
@@ -26,7 +27,7 @@ export function PortalDashboardPage() {
         <div>
           <h1 className="text-xl font-semibold text-text">Welcome, {user?.fullName.split(' ')[0]}</h1>
           <p className="mt-1 text-sm text-text-subtle">
-            <span className="font-mono">{user?.memberCode}</span> · {user?.tier}
+            <span className="font-mono">{user?.memberCode}</span> · {formatTier(user?.tier)}
           </p>
         </div>
         {waiting > 0 && (

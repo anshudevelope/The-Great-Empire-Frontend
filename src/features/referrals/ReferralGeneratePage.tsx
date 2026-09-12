@@ -16,6 +16,7 @@ import { Modal } from '@/components/ui/Modal'
 import { AssociateSelect } from '@/components/ui/AssociateSelect'
 import { useAuthStore } from '@/store/authStore'
 import { todayIST } from '@/lib/datetime'
+import { formatTier } from '@/lib/tier'
 
 const today = todayIST
 
@@ -139,7 +140,7 @@ export function ReferralGeneratePage() {
               when they were registered. */}
           {member?.tier && (
             <p className="-mt-1 text-xs text-text-subtle">
-              Tier comes from the member: <span className="font-medium text-text">{member.tier}</span>
+              Tier comes from the member: <span className="font-medium text-text">{formatTier(member.tier)}</span>
             </p>
           )}
 
@@ -230,7 +231,7 @@ export function ReferralGeneratePage() {
           <dl className="mt-4 flex flex-col gap-3 text-sm">
             <SummaryRow label="Member" value={member ? member.label : 'Not selected'} muted={!member} />
             <SummaryRow label="Sponsor" value={issuedTo ? issuedTo.label : 'Not selected'} muted={!issuedTo} />
-            <SummaryRow label="Tier" value={member?.tier ? `${member.tier}` : 'From the member'} muted={!member?.tier} />
+            <SummaryRow label="Tier" value={member?.tier ? formatTier(member.tier) : 'From the member'} muted={!member?.tier} />
             <SummaryRow
               label="Placement"
               value={position ? `${position} leg, now` : 'Sponsor will place'}
@@ -266,7 +267,7 @@ export function ReferralGeneratePage() {
               <Field label="Invoice No" value={issued.invoice.invoiceNo} mono />
               <Field label="Member" value={`${issued.invoice.member.memberCode ?? '—'} — ${issued.invoice.member.name ?? ''}`} />
               <Field label="Sponsor" value={`${issued.invoice.issuedTo.memberCode ?? '—'} — ${issued.invoice.issuedTo.name ?? ''}`} />
-              <Field label="Tier" value={`${issued.invoice.tier} — ${issued.invoice.tierLabel}`} />
+              <Field label="Tier" value={formatTier(issued.invoice.tier)} />
               <Field label="Amount paid" value={`₹${issued.invoice.amountPaid.toLocaleString('en-IN')}`} />
             </div>
 

@@ -16,6 +16,7 @@ import { Modal } from '@/components/ui/Modal'
 import { PlaceMemberDialog } from '@/features/portal/PlaceMemberDialog'
 import type { PlaceableMember } from '@/features/portal/PlaceMemberDialog'
 import { formatShortDate } from '@/lib/datetime'
+import { formatTier } from '@/lib/tier'
 
 const statusTone: Record<ReferralStatus, 'success' | 'info' | 'neutral'> = {
   unused: 'info',
@@ -136,7 +137,7 @@ export function ReferralListPage() {
                     <span className="font-mono text-xs text-text">{row.issuedTo.memberCode}</span>
                     <span className="block text-xs text-text-subtle">{row.issuedTo.name}</span>
                   </td>
-                  <td className="px-4 py-3 text-text-muted">{row.tierLabel}</td>
+                  <td className="px-4 py-3 text-text-muted">{formatTier(row.tier)}</td>
                   <td className="px-4 py-3 font-medium text-text">{money(row.amountPaid)}</td>
                   <td className="px-4 py-3 text-xs text-text-subtle">
                     {row.payment.mode ?? 'Not recorded'}
@@ -174,7 +175,7 @@ export function ReferralListPage() {
               <Line label="Issued by" value={open.issuedBy ?? '—'} />
               <Line label="Referred member" value={`${open.member.memberCode ?? ''} — ${open.member.name ?? ''}`} />
               <Line label="Received from" value={`${open.issuedTo.memberCode ?? ''} — ${open.issuedTo.name ?? ''}`} />
-              <Line label="Tier" value={`${open.tier} — ${open.tierLabel}`} />
+              <Line label="Tier" value={formatTier(open.tier)} />
             </div>
 
             <div className="rounded-card border border-border bg-bg p-4">

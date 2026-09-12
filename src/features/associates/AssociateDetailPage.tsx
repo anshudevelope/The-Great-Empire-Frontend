@@ -12,6 +12,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { PasswordText } from '@/components/ui/PasswordText'
 import { CheckIcon, PencilIcon, TreeIcon, TrashIcon, UserCircleIcon, XIcon } from '@/components/icons/icons'
 import { formatDate } from '@/lib/datetime'
+import { formatTier } from '@/lib/tier'
 
 type PendingAction = 'approve' | 'reject' | 'delete' | null
 
@@ -93,7 +94,7 @@ export function AssociateDetailPage() {
                 {associate.memberCode ?? 'No ID'}
               </span>
               <Badge tone={STATUS_TONE[associate.status]}>{associate.status}</Badge>
-              <span className="text-sm text-text-subtle">{associate.tier}</span>
+              <span className="text-sm text-text-subtle">{formatTier(associate.tier)}</span>
             </div>
           </div>
         </div>
@@ -206,7 +207,7 @@ export function AssociateDetailPage() {
         <h2 className="mb-4 text-sm font-semibold text-text">Membership</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
           <Field label="Associate ID" value={associate.memberCode} />
-          <Field label="Tier" value={associate.tier} />
+          <Field label="Tier" value={formatTier(associate.tier)} />
           {/* Who holds the sponsor credit — can differ from who paid. */}
           <Field
             label="Sponsored by"

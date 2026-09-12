@@ -97,8 +97,8 @@ export function InvoiceListPage() {
         </Select>
         <Select value={tier} onChange={(event) => setTier(event.target.value)} containerClassName="w-44">
           <option value="">All tiers</option>
-          <option value="Tier I">Tier I — Insurance</option>
-          <option value="Tier II">Tier II — Plots</option>
+          <option value="Tier I">Tier I (Insurance)</option>
+          <option value="Tier II">Tier II (Plots)</option>
         </Select>
       </div>
 

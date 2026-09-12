@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatTier } from '@/lib/tier'
 
 const statusTone = (status: string) =>
   status === 'approved' ? 'success' : status === 'pending' ? 'warning' : status === 'rejected' ? 'danger' : 'neutral'
@@ -84,8 +85,8 @@ export function DownlineReportPage() {
         </Select>
         <Select value={filters.tier} onChange={set('tier')} containerClassName="w-44">
           <option value="">All tiers</option>
-          <option value="Tier I">Tier I — Insurance</option>
-          <option value="Tier II">Tier II — Plots</option>
+          <option value="Tier I">Tier I (Insurance)</option>
+          <option value="Tier II">Tier II (Plots)</option>
         </Select>
         <Select value={filters.leg} onChange={set('leg')} containerClassName="w-36">
           <option value="">Both legs</option>
@@ -124,7 +125,7 @@ export function DownlineReportPage() {
                       <span className="font-medium text-text">{row.fullName}</span>
                       <span className="block text-xs text-text-subtle">{row.email}</span>
                     </td>
-                    <td className="px-4 py-3 text-text-muted">{row.tierLabel}</td>
+                    <td className="px-4 py-3 text-text-muted">{formatTier(row.tier)}</td>
                     <td className="px-4 py-3 text-text-muted">{row.position ?? '—'}</td>
                     <td className="px-4 py-3 text-text-muted">{row.depth}</td>
                     <td className="px-4 py-3 font-mono text-xs text-text-muted">{row.sponsorMemberCode ?? '—'}</td>

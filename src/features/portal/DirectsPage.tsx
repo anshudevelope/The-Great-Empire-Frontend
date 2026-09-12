@@ -4,6 +4,7 @@ import { fetchDirects } from '@/api/tree'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatTier } from '@/lib/tier'
 
 /**
  * "My Directs" — everyone registered under this member's referral.
@@ -66,7 +67,7 @@ export function DirectsPage() {
                       <span className="font-medium text-text">{row.fullName}</span>
                       <span className="block text-xs text-text-subtle">{row.email}</span>
                     </td>
-                    <td className="px-4 py-3 text-text-muted">{row.tier}</td>
+                    <td className="px-4 py-3 text-text-muted">{formatTier(row.tier)}</td>
                     <td className="px-4 py-3">
                       {unplaced ? (
                         <Link

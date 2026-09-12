@@ -24,6 +24,7 @@ import type { AssociateOption } from '@/api/associates'
 import type { SponsorRef } from '@/types/associate'
 import { PAYMENT_MODES } from '@/types/referral'
 import { todayIST } from '@/lib/datetime'
+import { formatTier } from '@/lib/tier'
 import { useAuthStore } from '@/store/authStore'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
@@ -442,7 +443,7 @@ export function AssociateFormPage() {
             <Select id="tier" invalid={!!errors.tier} {...register('tier')}>
               {ASSOCIATE_TIERS.map((tier) => (
                 <option key={tier} value={tier}>
-                  {tier}
+                  {formatTier(tier)}
                 </option>
               ))}
             </Select>

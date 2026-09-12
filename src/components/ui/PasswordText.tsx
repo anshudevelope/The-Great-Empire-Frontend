@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/cn'
-import { CheckIcon, EyeIcon, EyeOffIcon } from '@/components/icons/icons'
+import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon } from '@/components/icons/icons'
 
 interface PasswordTextProps {
   value: string | null | undefined
@@ -50,9 +50,9 @@ export function PasswordText({ value, emptyLabel = 'Not set', className }: Passw
         onClick={copy}
         aria-label="Copy password"
         title="Copy password"
-        className="shrink-0 cursor-pointer rounded px-1 py-0.5 text-[11px] font-medium text-blue-600 hover:bg-neutral-hover"
+        className="shrink-0 cursor-pointer rounded p-1 text-text-subtle hover:bg-neutral-hover hover:text-blue-600"
       >
-        {copied ? <CheckIcon className="h-3.5 w-3.5" /> : 'Copy'}
+        {copied ? <CheckIcon className="h-3.5 w-3.5 text-success" /> : <CopyIcon className="h-3.5 w-3.5" />}
       </button>
     </span>
   )

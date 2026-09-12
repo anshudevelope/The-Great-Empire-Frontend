@@ -3,6 +3,7 @@ import type { RegisterAssociateResponse } from '@/api/associates'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { CheckIcon } from '@/components/icons/icons'
+import { formatTier } from '@/lib/tier'
 
 /**
  * Shown after a successful registration, in place of an automatic redirect.
@@ -30,7 +31,7 @@ export function RegistrationSuccessModal({ result }: { result: RegisterAssociate
       <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 rounded-card border border-border bg-bg p-4 text-sm">
         <Detail label="Associate ID" value={member.memberCode ?? '—'} mono />
         <Detail label="Sponsor" value={member.sponsorMemberCode ?? 'None — tree root'} mono={!!member.sponsorMemberCode} />
-        <Detail label="Tier" value={member.tier} />
+        <Detail label="Tier" value={formatTier(member.tier)} />
         <Detail label="Status" value={member.status === 'approved' ? 'Approved' : 'Pending until placed'} />
         {referral && <Detail label="Invoice" value={referral.invoiceNo} mono />}
         {referral && <Detail label="Referral" value={referral.referralNo} mono />}

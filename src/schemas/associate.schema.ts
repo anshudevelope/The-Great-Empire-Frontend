@@ -48,7 +48,7 @@ const associateBaseShape = {
   paymentMode: z.string().optional(),
   paymentRef: z.string().max(100, 'Too long').optional(),
   receivedOn: z.string().optional(),
-  receivedBy: z.string().optional(),
+  // No receivedBy: it is always the admin recording the payment, set server-side.
   notes: z.string().max(500, 'Too long').optional(),
 }
 

@@ -16,12 +16,15 @@ import {
 } from '@/schemas/associate.schema'
 import type { AssociateFormValues } from '@/schemas/associate.schema'
 import { useAssociate, useCreateAssociate, useUpdateAssociate } from './hooks'
+import { RegistrationSuccessModal } from './RegistrationSuccessModal'
+import type { RegisterAssociateResponse } from '@/api/associates'
 import { AssociateSelect } from '@/components/ui/AssociateSelect'
 import { fetchPlacementPreview } from '@/api/associates'
 import type { AssociateOption } from '@/api/associates'
 import type { SponsorRef } from '@/types/associate'
 import { PAYMENT_MODES } from '@/types/referral'
 import { todayIST } from '@/lib/datetime'
+import { useAuthStore } from '@/store/authStore'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Select } from '@/components/ui/Select'
@@ -59,12 +62,12 @@ const emptyDefaults: AssociateFormValues = {
   paymentMode: '',
   paymentRef: '',
   receivedOn: '',
-  receivedBy: '',
   notes: '',
 }
 
 // Sent as-is, blanks included, so clearing a field on Edit really clears it.
-const PAYMENT_KEYS = ['amountPaid', 'paymentMode', 'paymentRef', 'receivedOn', 'receivedBy', 'notes'] as const
+// Received by is not among them — the server always records the admin.
+const PAYMENT_KEYS = ['amountPaid', 'paymentMode', 'paymentRef', 'receivedOn', 'notes'] as const
 
 interface DocumentRow {
   id: string
@@ -114,6 +117,8 @@ export function AssociateFormPage() {
 
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [documentRows, setDocumentRows] = useState<DocumentRow[]>([createDocumentRow()])
+  // Register: the server's response, which opens the success popup.
+  const [registered, setRegistered] = useState<RegisterAssociateResponse | null>(null)
 
   const loaded = associateQuery.data?.data
   const isRoot = loaded?.treeStatus === 'root'
@@ -125,17 +130,19 @@ export function AssociateFormPage() {
   // On Register nothing is loaded, so they simply start empty.
   const loadedSponsor = useMemo(() => toOption(loaded?.sponsorId), [loaded])
   const loadedParent = useMemo(() => toOption(loaded?.parentId), [loaded])
-  const loadedReceivedBy = useMemo(() => toOption(loaded?.referral?.receivedBy), [loaded])
 
   const [sponsorOverride, setSponsor] = useState<AssociateOption | null | undefined>(undefined)
   const [parentOverride, setParentOption] = useState<AssociateOption | null | undefined>(undefined)
-  const [receivedByOverride, setReceivedBy] = useState<AssociateOption | null | undefined>(undefined)
 
   const sponsor = sponsorOverride === undefined ? loadedSponsor : sponsorOverride
   // Someone not in the tree yet usually goes straight under their sponsor.
   const parentOption =
     parentOverride === undefined ? (loadedParent ?? (isUnplaced ? loadedSponsor : null)) : parentOverride
-  const receivedBy = receivedByOverride === undefined ? loadedReceivedBy : receivedByOverride
+
+  // Received by is always the admin — read-only, the server sets it. An existing
+  // payment keeps whoever first recorded it; a new one gets the admin signed in.
+  const adminName = useAuthStore((state) => state.user?.fullName ?? 'Admin')
+  const receiverName = loaded?.referral?.receivedBy?.fullName ?? adminName
 
   const schema = isEdit ? editAssociateSchema : createAssociateSchema
 
@@ -193,7 +200,6 @@ export function AssociateFormPage() {
       paymentMode: referral?.paymentMode ?? '',
       paymentRef: referral?.paymentRef ?? '',
       receivedOn: referral?.receivedOn ? referral.receivedOn.slice(0, 10) : todayIST(),
-      receivedBy: idOf(referral?.receivedBy),
       notes: referral?.notes ?? '',
     })
   }, [isEdit, associateQuery.data, reset])
@@ -208,11 +214,6 @@ export function AssociateFormPage() {
     setSponsor(option)
     setValue('sponsorId', option?._id ?? '', { shouldValidate: true })
     if (!isEdit && !option) setValue('position', '')
-  }
-
-  function changeReceivedBy(option: AssociateOption | null) {
-    setReceivedBy(option)
-    setValue('receivedBy', option?._id ?? '')
   }
 
   function updateDocumentRow(rowId: string, patch: Partial<DocumentRow>) {
@@ -294,7 +295,7 @@ export function AssociateFormPage() {
       })
     } else {
       createMutation.mutate(formData, {
-        onSuccess: (response) => navigate(`/admin/associates/${response.data._id}`),
+        onSuccess: (response) => setRegistered(response),
       })
     }
   }
@@ -583,12 +584,7 @@ export function AssociateFormPage() {
                 )
               }
             >
-              <PaymentFields
-                register={register}
-                errors={errors}
-                receivedBy={receivedBy}
-                onReceivedByChange={changeReceivedBy}
-              />
+              <PaymentFields register={register} errors={errors} receiverName={receiverName} />
             </OptionalBox>
           )}
         </Section>
@@ -665,6 +661,8 @@ export function AssociateFormPage() {
           </Button>
         </div>
       </form>
+
+      {registered && <RegistrationSuccessModal result={registered} />}
     </div>
   )
 }
@@ -696,13 +694,12 @@ function OptionalBox({ title, description, children }: { title: string; descript
 function PaymentFields({
   register,
   errors,
-  receivedBy,
-  onReceivedByChange,
+  receiverName,
 }: {
   register: UseFormRegister<AssociateFormValues>
   errors: FieldErrors<AssociateFormValues>
-  receivedBy: AssociateOption | null
-  onReceivedByChange: (option: AssociateOption | null) => void
+  /** The admin shown as "Received by" — display only. */
+  receiverName: string
 }) {
   return (
     <>
@@ -733,14 +730,15 @@ function PaymentFields({
       <FormField label="Received on" htmlFor="receivedOn">
         <Input id="receivedOn" type="date" {...register('receivedOn')} />
       </FormField>
-      <FormField label="Received by" htmlFor="receivedBy" className="sm:col-span-2">
-        <input type="hidden" {...register('receivedBy')} />
-        <AssociateSelect
-          id="receivedBy"
-          value={receivedBy}
-          onChange={onReceivedByChange}
-          placeholder="Who took the payment…"
-        />
+      <FormField
+        label="Received by"
+        htmlFor="receivedBy"
+        hint="Always the admin recording the payment"
+        className="sm:col-span-2"
+      >
+        <div id="receivedBy" className={READONLY_BOX}>
+          {receiverName} (Admin)
+        </div>
       </FormField>
       <FormField label="Notes" htmlFor="notes" error={errors.notes?.message} className="sm:col-span-2 lg:col-span-3">
         <Textarea id="notes" rows={2} invalid={!!errors.notes} {...register('notes')} />

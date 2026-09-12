@@ -60,7 +60,8 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
 
       <section className="grid gap-6 border-b border-border py-6 sm:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Received from</p>
+          {/* The sponsor — who paid for the member. */}
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Received from (sponsor)</p>
           <p className="mt-2 font-medium">{billedTo.name}</p>
           {billedTo.memberCode && <p className="font-mono text-sm text-text-muted">{billedTo.memberCode}</p>}
           {billedTo.address && <p className="mt-1 max-w-xs text-sm text-text-muted">{billedTo.address}</p>}
@@ -134,7 +135,8 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
             <p>Mode: {payment.mode ?? 'Not recorded'}</p>
             {payment.reference && <p>Reference: {payment.reference}</p>}
             <p>Received on: {day(payment.receivedOn)}</p>
-            <p>Received by: {payment.receivedBy ?? 'Not recorded'}</p>
+            {/* Always issued in the company's name. */}
+            <p>Received by: {payment.receivedBy ?? company.name}</p>
           </dl>
 
           {company.bank?.accountNumber && (

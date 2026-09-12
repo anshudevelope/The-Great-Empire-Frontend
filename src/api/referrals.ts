@@ -16,7 +16,6 @@ export interface CreateReferralPayload {
   paymentMode?: string
   paymentRef?: string
   receivedOn?: string
-  receivedBy?: string
   notes?: string
 }
 

@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { FormField } from '@/components/ui/FormField'
 import { Modal } from '@/components/ui/Modal'
 import { AssociateSelect } from '@/components/ui/AssociateSelect'
+import { useAuthStore } from '@/store/authStore'
 import { todayIST } from '@/lib/datetime'
 
 const today = todayIST
@@ -28,10 +29,11 @@ const today = todayIST
  */
 export function ReferralGeneratePage() {
   const queryClient = useQueryClient()
+  // The payment is always received by the admin recording it — the server sets it.
+  const adminName = useAuthStore((state) => state.user?.fullName ?? 'Admin')
 
   const [member, setMember] = useState<AssociateOption | null>(null)
   const [issuedTo, setIssuedTo] = useState<AssociateOption | null>(null)
-  const [receivedBy, setReceivedBy] = useState<AssociateOption | null>(null)
   const [position, setPosition] = useState('')
   const [amountPaid, setAmountPaid] = useState('')
   const [paymentMode, setPaymentMode] = useState('')
@@ -51,7 +53,6 @@ export function ReferralGeneratePage() {
       queryClient.invalidateQueries({ queryKey: ['associate-search'] })
       setMember(null)
       setIssuedTo(null)
-      setReceivedBy(null)
       setPosition('')
       setAmountPaid('')
       setPaymentRef('')
@@ -78,7 +79,6 @@ export function ReferralGeneratePage() {
       paymentMode: paymentMode || undefined,
       paymentRef: paymentRef || undefined,
       receivedOn: receivedOn || undefined,
-      receivedBy: receivedBy?._id,
       notes: notes || undefined,
     })
   }
@@ -181,8 +181,18 @@ export function ReferralGeneratePage() {
                 <Input id="receivedOn" type="date" value={receivedOn} onChange={(event) => setReceivedOn(event.target.value)} />
               </FormField>
 
-              <FormField label="Received by" htmlFor="receivedBy" className="md:col-span-1 xl:col-span-2">
-                <AssociateSelect id="receivedBy" value={receivedBy} onChange={setReceivedBy} placeholder="Who took the payment…" />
+              <FormField
+                label="Received by"
+                htmlFor="receivedBy"
+                hint="Always the admin recording the payment"
+                className="md:col-span-1 xl:col-span-2"
+              >
+                <div
+                  id="receivedBy"
+                  className="rounded-control border border-border-strong bg-neutral-hover px-3 py-2 text-sm text-text-muted"
+                >
+                  {adminName} (Admin)
+                </div>
               </FormField>
             </div>
           </div>
@@ -232,7 +242,7 @@ export function ReferralGeneratePage() {
               muted={!amountPaid}
             />
             <SummaryRow label="Payment mode" value={paymentMode || 'Not recorded'} muted={!paymentMode} />
-            <SummaryRow label="Received by" value={receivedBy ? receivedBy.label : 'Not recorded'} muted={!receivedBy} />
+            <SummaryRow label="Received by" value={`${adminName} (Admin)`} />
           </dl>
 
           <div className="mt-5 rounded-card border border-info-border bg-info-bg p-3">

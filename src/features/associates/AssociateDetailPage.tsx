@@ -47,6 +47,7 @@ export function AssociateDetailPage() {
   }
 
   const sponsor = typeof associate.sponsorId === 'object' ? associate.sponsorId : null
+  const referrer = associate.referredBy && typeof associate.referredBy === 'object' ? associate.referredBy : null
 
   function closeConfirm() {
     setPendingAction(null)
@@ -206,10 +207,19 @@ export function AssociateDetailPage() {
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
           <Field label="Associate ID" value={associate.memberCode} />
           <Field label="Tier" value={associate.tier} />
-          {/* Chosen by the admin at registration. */}
+          {/* Who holds the sponsor credit — can differ from who paid. */}
           <Field
             label="Sponsored by"
             value={sponsor ? `${sponsor.memberCode ?? '—'} — ${sponsor.fullName}` : 'No sponsor (tree root)'}
+          />
+          {/* Who paid — fixed at registration. */}
+          <Field
+            label="Referred by"
+            value={
+              referrer
+                ? `${referrer.memberCode ?? '—'} — ${referrer.fullName}`
+                : (associate.referredByCode ?? (sponsor ? 'Same as sponsor' : '—'))
+            }
           />
           <Field
             label="Tree"

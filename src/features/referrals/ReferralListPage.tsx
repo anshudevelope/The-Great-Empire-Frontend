@@ -111,7 +111,7 @@ export function ReferralListPage() {
                 <th className="px-4 py-3 font-semibold">Invoice</th>
                 <th className="px-4 py-3 font-semibold">Referral no</th>
                 <th className="px-4 py-3 font-semibold">Member</th>
-                <th className="px-4 py-3 font-semibold">Sponsor</th>
+                <th className="px-4 py-3 font-semibold">Referred by</th>
                 <th className="px-4 py-3 font-semibold">Tier</th>
                 <th className="px-4 py-3 font-semibold">Amount paid</th>
                 <th className="px-4 py-3 font-semibold">Payment</th>
@@ -127,6 +127,10 @@ export function ReferralListPage() {
                   <td className="px-4 py-3">
                     <span className="font-medium text-text">{row.member.memberCode}</span>
                     <span className="block text-xs text-text-subtle">{row.member.name}</span>
+                    {/* The referrer passed the sponsor credit on while placing. */}
+                    {row.member.sponsorMemberCode && row.member.sponsorMemberCode !== row.issuedTo.memberCode && (
+                      <span className="block text-[11px] text-warning">Sponsor: {row.member.sponsorMemberCode}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-text">{row.issuedTo.memberCode}</span>

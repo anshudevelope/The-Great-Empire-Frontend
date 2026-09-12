@@ -16,6 +16,8 @@ export interface ReferralParty {
   name: string | null
   memberCode: string | null
   treeStatus?: 'unplaced' | 'root' | 'placed' | null
+  /** On the member: who holds the sponsor credit now. */
+  sponsorMemberCode?: string | null
 }
 
 /** How the referred member got into the tree, once they did. */
@@ -42,7 +44,7 @@ export interface ReferralInvoice {
   referralNo: string
   issuedAt: string
   issuedBy: string | null
-  /** The sponsor — who paid, and who gets the referral credit. */
+  /** Referred by — who paid. Keeps the invoice even if the sponsor credit is passed on. */
   issuedTo: ReferralParty
   /** The associate registered under that sponsor. */
   member: ReferralParty

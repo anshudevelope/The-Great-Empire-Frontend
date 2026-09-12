@@ -129,6 +129,22 @@ export interface PlacementParent {
   rightOpen: boolean
 }
 
+/** Someone the referrer may pass the sponsor credit to: themselves or anyone below them. */
+export interface SponsorOption {
+  _id: string
+  memberCode: string
+  fullName: string
+  isSelf: boolean
+  /** 0 = the caller, 1 = directly below them, … */
+  levelsBelow: number
+}
+
+export function fetchSponsorOptions(q: string): Promise<{ success: true; count: number; data: SponsorOption[] }> {
+  return apiRequest<{ success: true; count: number; data: SponsorOption[] }>('/associates/sponsor-options', {
+    params: { q },
+  })
+}
+
 export function fetchPlacementParents(q: string): Promise<{ success: true; count: number; data: PlacementParent[] }> {
   return apiRequest<{ success: true; count: number; data: PlacementParent[] }>('/associates/placement-parents', {
     params: { q },
@@ -145,13 +161,17 @@ export interface PlaceMemberResponse {
     position: 'Left' | 'Right'
     depth: number
     placedUnder: { memberCode: string; fullName: string }
+    sponsor: { memberCode: string | null }
   }
 }
 
-/** Exact placement — no spillover. A taken slot comes back as an error. */
+/**
+ * Exact placement — no spillover. A taken slot comes back as an error.
+ * `sponsorId` optionally passes the sponsor credit to someone in your team.
+ */
 export function placeMember(
   memberId: string,
-  payload: { parentId: string; position: 'Left' | 'Right' },
+  payload: { parentId: string; position: 'Left' | 'Right'; sponsorId?: string },
 ): Promise<PlaceMemberResponse> {
   return apiRequest<PlaceMemberResponse>(`/associates/${memberId}/place`, { method: 'POST', body: payload })
 }

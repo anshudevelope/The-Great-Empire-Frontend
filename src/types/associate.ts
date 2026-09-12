@@ -44,8 +44,15 @@ export interface Associate {
   _id: string
   /** The one associate ID (TGE0001) — also what they are referred to by as a sponsor. Null only for admins. */
   memberCode: string | null
-  /** Associate ID of whoever sponsored them. Null only for the tree root. */
+  /**
+   * Associate ID of whoever holds the sponsor credit. Starts as the referrer and
+   * can be passed to someone in their team while placing. Null for the tree root.
+   */
   sponsorMemberCode: string | null
+  /** Who referred (paid for) them — fixed at registration. Populated on the admin's single-associate response. */
+  referredBy?: SponsorRef | string | null
+  /** Associate ID of the referrer. */
+  referredByCode?: string | null
   /**
    * Readable password — present on admin responses only. Null when the account
    * predates stored passwords; the admin sets a new one from Edit.

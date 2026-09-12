@@ -6,9 +6,9 @@ import { fetchPendingPlacement } from '@/api/associates'
 import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/cn'
-import { BuildingIcon } from '@/components/icons/icons'
-import { Button } from '@/components/ui/Button'
+import { BuildingIcon, LogoutIcon } from '@/components/icons/icons'
 import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
+import { ProfileMenu } from './ProfileMenu'
 
 const NAV = [
   { label: 'Dashboard', to: '/portal/dashboard' },
@@ -27,6 +27,12 @@ export function PortalLayout() {
   const company = useCompanyBrand()
   const navigate = useNavigate()
   const [changingPassword, setChangingPassword] = useState(false)
+
+  // Shared by the sidebar's Log out and the profile menu.
+  const signOut = () => {
+    logout()
+    navigate('/associate/login', { replace: true })
+  }
 
   // Drives the unread badge on My Referrals.
   const { data: summary } = useQuery({ queryKey: ['referral-summary'], queryFn: fetchReferralSummary })
@@ -76,20 +82,16 @@ export function PortalLayout() {
           ))}
         </nav>
 
+        {/* Pinned to the bottom, as in most CRMs. Also in the profile menu. */}
         <div className="border-t border-border p-3">
-          <p className="px-2 text-xs font-medium text-text">{user?.fullName}</p>
-          <p className="px-2 pb-2 font-mono text-[11px] text-text-subtle">{user?.memberCode}</p>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={() => {
-              logout()
-              navigate('/associate/login', { replace: true })
-            }}
+          <button
+            type="button"
+            onClick={signOut}
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-danger-bg hover:text-danger"
           >
-            Sign out
-          </Button>
+            <LogoutIcon className="h-4 w-4" />
+            Log out
+          </button>
         </div>
       </aside>
 
@@ -100,13 +102,12 @@ export function PortalLayout() {
             <p className="font-mono text-[11px] text-text-subtle">{user?.memberCode}</p>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setChangingPassword(true)}
-              className="cursor-pointer text-sm text-text-muted hover:text-text"
-            >
-              Change password
-            </button>
+            <ProfileMenu
+              name={user?.fullName ?? 'Associate'}
+              subtitle={user?.memberCode}
+              onChangePassword={() => setChangingPassword(true)}
+              onLogout={signOut}
+            />
           </div>
         </header>
 

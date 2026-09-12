@@ -60,8 +60,8 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
 
       <section className="grid gap-6 border-b border-border py-6 sm:grid-cols-2">
         <div>
-          {/* The sponsor — who paid for the member. */}
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Received from (sponsor)</p>
+          {/* Referred by — who paid for the member. */}
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Received from</p>
           <p className="mt-2 font-medium">{billedTo.name}</p>
           {billedTo.memberCode && <p className="font-mono text-sm text-text-muted">{billedTo.memberCode}</p>}
           {billedTo.address && <p className="mt-1 max-w-xs text-sm text-text-muted">{billedTo.address}</p>}

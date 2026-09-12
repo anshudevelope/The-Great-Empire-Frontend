@@ -32,6 +32,8 @@ export function AssociatesListPage() {
   const [status, setStatus] = useState<StatusFilter>('')
   const [tier, setTier] = useState<TierFilter>('')
   const [treeStatus, setTreeStatus] = useState('')
+  // 'true' = only members whose sponsor credit went to someone other than their referrer.
+  const [sponsorMismatch, setSponsorMismatch] = useState('')
   const [page, setPage] = useState(1)
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
@@ -43,7 +45,13 @@ export function AssociatesListPage() {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  const { data, isLoading, isFetching, refetch } = useAssociates({ search, status, tier, treeStatus })
+  const { data, isLoading, isFetching, refetch } = useAssociates({
+    search,
+    status,
+    tier,
+    treeStatus,
+    sponsorMismatch: sponsorMismatch || undefined,
+  })
   const statusMutation = useUpdateAssociateStatus()
   const deleteMutation = useDeleteAssociate()
 
@@ -127,6 +135,18 @@ export function AssociatesListPage() {
           <option value="">All placements</option>
           <option value="unplaced">Not in tree</option>
           <option value="placed">In tree</option>
+        </Select>
+        {/* Review list: sponsor credit passed on by the referrer while placing. */}
+        <Select
+          value={sponsorMismatch}
+          onChange={(event) => {
+            setSponsorMismatch(event.target.value)
+            setPage(1)
+          }}
+          containerClassName="sm:w-52"
+        >
+          <option value="">All sponsors</option>
+          <option value="true">Sponsor ≠ referred by</option>
         </Select>
         <IconButton
           icon={<RefreshIcon className={cn('h-4 w-4', isFetching && 'animate-spin')} />}
@@ -234,6 +254,12 @@ export function AssociatesListPage() {
                     </td>
                     <td className="px-4 py-3 align-middle font-mono text-[13px] text-text-muted">
                       {associate.sponsorMemberCode ?? '—'}
+                      {/* Shown only when the credit went to someone other than who paid. */}
+                      {associate.referredByCode && associate.referredByCode !== associate.sponsorMemberCode && (
+                        <span className="block truncate font-sans text-[11px] text-warning" title="Referred (paid) by">
+                          ref. by {associate.referredByCode}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 align-middle text-text">{associate.tier}</td>
                     <td className="px-4 py-3 align-middle">

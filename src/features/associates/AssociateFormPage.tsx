@@ -130,6 +130,7 @@ export function AssociateFormPage() {
   // On Register nothing is loaded, so they simply start empty.
   const loadedSponsor = useMemo(() => toOption(loaded?.sponsorId), [loaded])
   const loadedParent = useMemo(() => toOption(loaded?.parentId), [loaded])
+  const loadedReferrer = useMemo(() => toOption(loaded?.referredBy), [loaded])
 
   const [sponsorOverride, setSponsor] = useState<AssociateOption | null | undefined>(undefined)
   const [parentOverride, setParentOption] = useState<AssociateOption | null | undefined>(undefined)
@@ -319,9 +320,9 @@ export function AssociateFormPage() {
   }
 
   const sponsorHint = !isEdit
-    ? 'Search by associate ID or name. Leave empty only for the very first associate — the tree root.'
+    ? 'Who referred and paid for them. They start as sponsor and can pass the credit to someone in their team when placing. Leave empty only for the very first associate.'
     : loadedSponsor
-      ? 'Choosing someone else moves the referral and its invoice to them.'
+      ? 'Changes who gets the sponsor credit. The invoice stays with the person who referred them.'
       : 'Optional — this associate was registered without a sponsor.'
 
   return (
@@ -469,6 +470,15 @@ export function AssociateFormPage() {
             </FormField>
           )}
 
+          {/* Edit: who paid — fixed. The sponsor beside it can differ. */}
+          {isEdit && !isRoot && (
+            <FormField label="Referred by" htmlFor="referred-by-readonly" hint="Who paid — never changes">
+              <div id="referred-by-readonly" className={READONLY_BOX}>
+                {loadedReferrer?.label ?? loaded?.referredByCode ?? loadedSponsor?.label ?? '—'}
+              </div>
+            </FormField>
+          )}
+
           {/* Register: the leg is chosen relative to the sponsor. */}
           {!isEdit && sponsor && (
             <OptionalBox
@@ -574,7 +584,7 @@ export function AssociateFormPage() {
                   </>
                 ) : isEdit ? (
                   <>
-                    No payment recorded yet. Entering one creates the invoice for {sponsor.fullName}.
+                    No payment recorded yet. Entering one creates the invoice for {(loadedReferrer ?? sponsor).fullName}.
                   </>
                 ) : (
                   <>

@@ -320,7 +320,7 @@ export function AssociateFormPage() {
   }
 
   const sponsorHint = !isEdit
-    ? 'Who referred and paid for them. They start as sponsor and can pass the credit to someone in their team when placing. Leave empty only for the very first associate.'
+    ? 'The associate who referred them. Search by associate ID or name. Leave empty only for the very first associate — the tree root.'
     : loadedSponsor
       ? 'Changes who gets the sponsor credit. The invoice stays with the person who referred them.'
       : 'Optional — this associate was registered without a sponsor.'
@@ -455,7 +455,12 @@ export function AssociateFormPage() {
               </div>
             </FormField>
           ) : (
-            <FormField label="Sponsor" htmlFor="sponsorId" hint={sponsorHint} className="sm:col-span-1 lg:col-span-2">
+            <FormField
+              label={isEdit ? 'Sponsor' : 'Referred by'}
+              htmlFor="sponsorId"
+              hint={sponsorHint}
+              className="sm:col-span-1 lg:col-span-2"
+            >
               <input type="hidden" {...register('sponsorId')} />
               <AssociateSelect
                 id="sponsorId"

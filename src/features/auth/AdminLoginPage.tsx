@@ -14,6 +14,8 @@ export function AdminLoginPage() {
       otherLabel="Are you an associate?"
       otherCta="Associate Portal"
       otherTo="/associate/login"
+      userLabel="Admin Email"
+      placeholder="name@example.com"
     />
   )
 }

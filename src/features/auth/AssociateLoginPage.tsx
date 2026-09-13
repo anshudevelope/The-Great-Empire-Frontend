@@ -13,6 +13,8 @@ export function AssociateLoginPage() {
       otherLabel="Are you an administrator?"
       otherCta="Admin Login"
       otherTo="/admin/login"
+      userLabel="Associate ID/Email"
+      placeholder="TRG0001 or name@example.com"
     />
   )
 }

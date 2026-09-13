@@ -34,6 +34,44 @@ export interface InvoiceItem {
   amount: number
 }
 
+// export interface Invoice {
+//   _id: string
+//   invoiceNo: string
+//   invoiceDate: string
+//   status: 'Paid' | 'Cancelled'
+//   company: CompanyDetails
+//   billedTo: {
+//     memberCode: string | null
+//     name: string
+//     email: string
+//     phone: string
+//     address: string
+//   }
+//   transaction: {
+//     type: string
+//     referenceNo: string
+//     issuedAt: string
+//     /** The member this payment was for. Known when the referral is raised. */
+//     forMember: {
+//       memberCode: string
+//       name: string | null
+//       placedAt: string | null
+//       placedUnder: string | null
+//     } | null
+//   }
+//   items: InvoiceItem[]
+//   totals: { subtotal: number; total: number; amountPaid: number; balance: number }
+//   payment: {
+//     mode: string | null
+//     reference: string
+//     receivedOn: string
+//     receivedBy: string | null
+//   }
+//   cancelledAt: string | null
+//   cancelReason: string
+//   notes: string
+// }
+
 export interface Invoice {
   _id: string
   invoiceNo: string
@@ -55,6 +93,9 @@ export interface Invoice {
     forMember: {
       memberCode: string
       name: string | null
+      phone?: string | null
+      email?: string | null
+      address?: string | null
       placedAt: string | null
       placedUnder: string | null
     } | null

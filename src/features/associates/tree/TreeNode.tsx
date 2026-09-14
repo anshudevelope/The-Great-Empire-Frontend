@@ -2,11 +2,13 @@ import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
-import type { AssociateStatus, AssociateTreeNode } from '@/types/associate'
+import type { AssociateStatus, AssociateTreeNode, LegBusiness } from '@/types/associate'
 import { formatDate } from '@/lib/datetime'
 
 const TOOLTIP_WIDTH = 288 // w-72
-const TOOLTIP_HEIGHT = 240 // approximate; only used to decide flip direction
+const TOOLTIP_HEIGHT = 260 // approximate; only used to decide flip direction
+
+const EMPTY_LEG: LegBusiness = { count: 0, amount: 0 }
 
 const STATUS_RING: Record<string, string> = {
   approved: 'ring-blue-500',
@@ -82,19 +84,58 @@ const dateOnly = (value?: string) =>
   formatDate(value)
 
 /**
+ * Two decimals, grouped Indian-style. Not prefixed with ₹ — the table is dense
+ * and every cell is rupees, so the symbol would be four characters of noise per
+ * row without telling the reader anything.
+ */
+const amount = (value: number) =>
+  value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/** The "count / amount" cell the reference platform's business table uses. */
+const countAndAmount = (leg: LegBusiness) => `${leg.count} / ${amount(leg.amount)}`
+
+/**
  * Hover card, modelled on the reference platform's genealogy tooltip.
  *
- * Identity and placement are real. The per-leg business figures are structural
- * placeholders — there is no commission engine yet, so they read 0.00 rather
- * than pretending to be calculated.
+ * `business` is optional on the type because a cached or older response may not
+ * carry it; falling back to zeros keeps the table's shape stable rather than
+ * collapsing rows out of the layout when it is missing.
  */
 function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRect }) {
+  const b = node.business
   const rows = [
-    { label: 'Tier I (Carry)', carry: true },
-    { label: 'Tier I', carry: false },
-    { label: 'Tier II (Carry)', carry: true },
-    { label: 'Tier II', carry: false },
+    {
+      label: 'Tier I (Carry)',
+      carry: true,
+      left: amount(b?.tierI.carry.left ?? 0),
+      right: amount(b?.tierI.carry.right ?? 0),
+    },
+    {
+      label: 'Tier I',
+      carry: false,
+      left: countAndAmount(b?.tierI.left ?? EMPTY_LEG),
+      right: countAndAmount(b?.tierI.right ?? EMPTY_LEG),
+    },
+    {
+      label: 'Tier II (Carry)',
+      carry: true,
+      left: amount(b?.tierII.carry.left ?? 0),
+      right: amount(b?.tierII.carry.right ?? 0),
+    },
+    {
+      label: 'Tier II',
+      carry: false,
+      left: countAndAmount(b?.tierII.left ?? EMPTY_LEG),
+      right: countAndAmount(b?.tierII.right ?? EMPTY_LEG),
+    },
   ]
+
+  // Which leg the next pairing is waiting on. Only meaningful while one side
+  // holds carry and the other does not — once both hold volume the engine has
+  // already matched them down to a single-sided remainder.
+  const carryL = b?.tierI.carry.left ?? 0
+  const carryR = b?.tierI.carry.right ?? 0
+  const needs = carryL > 0 && carryR === 0 ? 'R' : carryR > 0 && carryL === 0 ? 'L' : null
 
   // Rendered in a portal with fixed positioning. The tree canvas scrolls, so
   // any absolutely-positioned tooltip inside it gets clipped by that overflow —
@@ -156,12 +197,18 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
           {rows.map((row) => (
             <tr key={row.label} className={cn('border-t border-border', row.carry && 'bg-success-bg/50')}>
               <td className={cn('px-2 py-1 text-text-muted', row.carry && 'italic')}>{row.label}</td>
-              <td className="px-2 py-1 text-text">{row.carry ? '0.00' : '0 / 0.00'}</td>
-              <td className="px-2 py-1 text-text">{row.carry ? '0.00' : '0 / 0.00'}</td>
+              <td className="px-2 py-1 tabular-nums text-text">{row.left}</td>
+              <td className="px-2 py-1 tabular-nums text-text">{row.right}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {needs && (
+        <p className="border-t border-border bg-warning-bg/40 px-2 py-1 text-[10px] text-text-muted">
+          Carry waiting on the {needs === 'L' ? 'left' : 'right'} leg to pair.
+        </p>
+      )}
 
       <div className="bg-linear-to-r from-blue-700 to-blue-900 px-3 py-1.5 text-[10px] text-white">
         <p>Sponsor PID : {node.sponsorMemberCode ?? '—'}</p>

@@ -98,6 +98,30 @@ export interface Associate {
  * `leftChild`/`rightChild` are the raw pointers — they tell an empty slot apart
  * from a child that exists but sits beyond the requested depth.
  */
+/** One leg's figures for a tier: how many members sit under it, and their volume. */
+export interface LegBusiness {
+  count: number
+  amount: number
+}
+
+/**
+ * Per-tier business for one node, as the genealogy tooltip shows it.
+ *
+ * `carry` is unmatched volume waiting for a counterpart on the other leg;
+ * `left`/`right` are the lifetime totals. Tier II carries real member counts but
+ * zero volume — the commission engine only recognises Tier I today.
+ */
+export interface TierBusiness {
+  carry: { left: number; right: number }
+  left: LegBusiness
+  right: LegBusiness
+}
+
+export interface NodeBusiness {
+  tierI: TierBusiness
+  tierII: TierBusiness
+}
+
 export interface AssociateTreeNode {
   _id: string
   memberCode: string
@@ -118,6 +142,8 @@ export interface AssociateTreeNode {
   joinedAt: string
   /** Sponsor ≠ placement parent: spillover moved this member down a leg. */
   isSpillover: boolean
+  /** Per-leg carry and volume. Absent on responses from before the commission engine. */
+  business?: NodeBusiness
   leftChild: string | null
   rightChild: string | null
   left: AssociateTreeNode | null

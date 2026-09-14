@@ -6,7 +6,7 @@ import type { AssociateStatus, AssociateTreeNode, LegBusiness } from '@/types/as
 import { formatDate } from '@/lib/datetime'
 
 const TOOLTIP_WIDTH = 288 // w-72
-const TOOLTIP_HEIGHT = 260 // approximate; only used to decide flip direction
+const TOOLTIP_HEIGHT = 320 // approximate; only used to decide flip direction
 
 const EMPTY_LEG: LegBusiness = { count: 0, amount: 0 }
 
@@ -209,6 +209,21 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
           Carry waiting on the {needs === 'L' ? 'left' : 'right'} leg to pair.
         </p>
       )}
+
+      <div className="grid grid-cols-3 border-t border-border text-[10px]">
+        <div className="px-2 py-1.5">
+          <p className="text-text-subtle">Direct (10%)</p>
+          <p className="tabular-nums font-medium text-text">₹{amount(node.income?.direct ?? 0)}</p>
+        </div>
+        <div className="border-l border-border px-2 py-1.5">
+          <p className="text-text-subtle">Matching (5%)</p>
+          <p className="tabular-nums font-medium text-text">₹{amount(node.income?.matching ?? 0)}</p>
+        </div>
+        <div className="border-l border-border bg-success-bg/60 px-2 py-1.5">
+          <p className="text-text-subtle">Total Earning</p>
+          <p className="tabular-nums font-semibold text-success">₹{amount(node.income?.total ?? 0)}</p>
+        </div>
+      </div>
 
       <div className="bg-linear-to-r from-blue-700 to-blue-900 px-3 py-1.5 text-[10px] text-white">
         <p>Sponsor PID : {node.sponsorMemberCode ?? '—'}</p>

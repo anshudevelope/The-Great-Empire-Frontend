@@ -122,6 +122,15 @@ export interface NodeBusiness {
   tierII: TierBusiness
 }
 
+/** Commission earned by a member, net of reversals. */
+export interface NodeIncome {
+  /** 10% direct referral bonus. */
+  direct: number
+  /** 5% binary matching bonus. */
+  matching: number
+  total: number
+}
+
 export interface AssociateTreeNode {
   _id: string
   memberCode: string
@@ -144,6 +153,8 @@ export interface AssociateTreeNode {
   isSpillover: boolean
   /** Per-leg carry and volume. Absent on responses from before the commission engine. */
   business?: NodeBusiness
+  /** Earned income. Absent on responses from before the commission engine. */
+  income?: NodeIncome
   leftChild: string | null
   rightChild: string | null
   left: AssociateTreeNode | null

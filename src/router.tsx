@@ -21,6 +21,7 @@ import { PayoutListPage } from '@/features/payouts/PayoutListPage'
 import { PayoutGeneratePage } from '@/features/payouts/PayoutGeneratePage'
 import { PayoutDetailPage } from '@/features/payouts/PayoutDetailPage'
 import { MyPayoutsPage } from '@/features/portal/MyPayoutsPage'
+import { MyIncomePage } from '@/features/portal/MyIncomePage'
 import { PortalDashboardPage } from '@/features/portal/PortalDashboardPage'
 import { PlaceMembersPage } from '@/features/portal/PlaceMembersPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
@@ -92,6 +93,7 @@ export const router = createBrowserRouter([
           { path: 'add-member', element: <Navigate to="/portal/place-members" replace /> },
           { path: 'tree', element: <PortalTreePage /> },
           { path: 'directs', element: <DirectsPage /> },
+          { path: 'income', element: <MyIncomePage /> },
           { path: 'payouts', element: <MyPayoutsPage /> },
           { path: 'downline', element: <DownlineReportPage /> },
         ],

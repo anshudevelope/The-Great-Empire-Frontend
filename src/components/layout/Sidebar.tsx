@@ -29,18 +29,26 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'Tree View', to: '/admin/associates/tree' },
     ],
   },
-  {
-    label: 'Referrals',
-    icon: UsersIcon,
-    children: [
-      { label: 'All Referrals', to: '/admin/referrals' },
-      { label: 'Generate', to: '/admin/referrals/generate' },
-    ],
-  },
+  // {
+  //   label: 'Referrals',
+  //   icon: UsersIcon,
+  //   children: [
+  //     { label: 'All Referrals', to: '/admin/referrals' },
+  //     { label: 'Generate', to: '/admin/referrals/generate' },
+  //   ],
+  // },
   {
     label: 'Invoices',
     icon: DashboardIcon,
     children: [{ label: 'All Invoices', to: '/admin/invoices' }],
+  },
+  {
+    label: 'Payouts',
+    icon: DashboardIcon,
+    children: [
+      { label: 'All Payouts', to: '/admin/payouts' },
+      { label: 'Create Payout', to: '/admin/payouts/generate' },
+    ],
   },
   {
     label: 'Reports',

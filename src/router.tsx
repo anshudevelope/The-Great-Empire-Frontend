@@ -17,6 +17,10 @@ import { ReferralGeneratePage } from '@/features/referrals/ReferralGeneratePage'
 import { DownlineReportPage } from '@/features/reports/DownlineReportPage'
 import { InvoiceListPage } from '@/features/invoices/InvoiceListPage'
 import { InvoiceDetailPage } from '@/features/invoices/InvoiceDetailPage'
+import { PayoutListPage } from '@/features/payouts/PayoutListPage'
+import { PayoutGeneratePage } from '@/features/payouts/PayoutGeneratePage'
+import { PayoutDetailPage } from '@/features/payouts/PayoutDetailPage'
+import { MyPayoutsPage } from '@/features/portal/MyPayoutsPage'
 import { PortalDashboardPage } from '@/features/portal/PortalDashboardPage'
 import { PlaceMembersPage } from '@/features/portal/PlaceMembersPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
@@ -59,6 +63,12 @@ export const router = createBrowserRouter([
           { path: 'referrals/generate', element: <ReferralGeneratePage /> },
           { path: 'invoices', element: <InvoiceListPage /> },
           { path: 'invoices/:id', element: <InvoiceDetailPage /> },
+          // 'generate' before ':id' — same shape, and Express-style ordering
+          // applies to react-router's ranked matching only for literal-vs-param
+          // ties, so keeping them in this order is the readable guarantee.
+          { path: 'payouts', element: <PayoutListPage /> },
+          { path: 'payouts/generate', element: <PayoutGeneratePage /> },
+          { path: 'payouts/:id', element: <PayoutDetailPage /> },
           { path: 'reports/downline', element: <DownlineReportPage /> },
         ],
       },
@@ -82,6 +92,7 @@ export const router = createBrowserRouter([
           { path: 'add-member', element: <Navigate to="/portal/place-members" replace /> },
           { path: 'tree', element: <PortalTreePage /> },
           { path: 'directs', element: <DirectsPage /> },
+          { path: 'payouts', element: <MyPayoutsPage /> },
           { path: 'downline', element: <DownlineReportPage /> },
         ],
       },

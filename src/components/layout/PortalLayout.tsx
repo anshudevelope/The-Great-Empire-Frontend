@@ -14,6 +14,7 @@ const NAV = [
   { label: 'Dashboard', to: '/portal/dashboard' },
   { label: 'My Referrals', to: '/portal/referrals' },
   { label: 'My Invoices', to: '/portal/invoices' },
+  { label: 'My Payouts', to: '/portal/payouts' },
   // The admin registers associates; the sponsor only decides where they sit.
   { label: 'Place Members', to: '/portal/place-members' },
   { label: 'My Tree', to: '/portal/tree' },

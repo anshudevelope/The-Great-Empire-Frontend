@@ -217,9 +217,14 @@ interface LoginFormProps {
   title: string
   subtitle: string
   icon: ReactNode
-  otherLabel: string
-  otherCta: string
-  otherTo: string
+  /**
+   * Link to the other door. Omit all three to show no cross-link at all —
+   * which is what the associate page does, since the admin console is shared
+   * by link rather than advertised.
+   */
+  otherLabel?: string
+  otherCta?: string
+  otherTo?: string
   userLabel?: string
   placeholder?: string
 }
@@ -238,6 +243,7 @@ export function LoginForm({
 }: LoginFormProps) {
   const company = useCompanyBrand()
   const scope = useAuthScope()
+  const showOther = Boolean(otherTo && otherCta)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const setSession = useAuthStore((state) => state.login)
   const navigate = useNavigate()
@@ -287,11 +293,13 @@ export function LoginForm({
           <span className="text-lg font-bold tracking-tight text-blue-950">{company.name}</span>
         </Link>
 
-        <Link to={otherTo}>
-          <button className="rounded-lg px-4 py-2 text-sm font-medium text-blue-800 transition-colors hover:bg-blue-50">
-            {otherCta}
-          </button>
-        </Link>
+        {showOther && (
+          <Link to={otherTo!}>
+            <button className="rounded-lg px-4 py-2 text-sm font-medium text-blue-800 transition-colors hover:bg-blue-50">
+              {otherCta}
+            </button>
+          </Link>
+        )}
       </header>
 
       <main className="flex flex-1 items-center justify-center px-6 py-16">
@@ -358,12 +366,14 @@ export function LoginForm({
             </form>
           </div>
 
-          <p className="mt-6 text-center text-sm text-blue-800/70">
-            {otherLabel}{' '}
-            <Link to={otherTo} className="font-semibold text-blue-700 hover:text-blue-800">
-              {otherCta}
-            </Link>
-          </p>
+          {showOther && (
+            <p className="mt-6 text-center text-sm text-blue-800/70">
+              {otherLabel}{' '}
+              <Link to={otherTo!} className="font-semibold text-blue-700 hover:text-blue-800">
+                {otherCta}
+              </Link>
+            </p>
+          )}
         </div>
       </main>
 

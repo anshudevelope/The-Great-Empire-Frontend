@@ -1,8 +1,11 @@
 import { LoginForm } from './LoginForm'
 import { ShieldIcon } from '@/components/icons/icons'
 
-/** Staff entrance. Signing in here as an associate still works — it just
- *  redirects to the portal rather than refusing a valid password. */
+/**
+ * Staff entrance, reached by direct link only — nothing in the app points
+ * here. An associate's credentials are refused outright rather than
+ * redirected; this door admits admins and no one else.
+ */
 export function AdminLoginPage() {
   return (
     <LoginForm

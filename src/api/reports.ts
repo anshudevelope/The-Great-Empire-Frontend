@@ -1,5 +1,5 @@
 import { apiRequest } from './fetchClient'
-import { useAuthStore } from '@/store/authStore'
+import { activeAuthStore } from '@/store/authStore'
 import type { ApiSingleResponse } from '@/types/api'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
@@ -114,7 +114,7 @@ export function fetchReferralReport(filters: ReportFilters = {}): Promise<ApiSin
  * unauthenticated. Fetch the blob, then hand it to a temporary anchor.
  */
 export async function downloadReportCsv(report: string, id?: string, filters: ReportFilters = {}): Promise<void> {
-  const token = useAuthStore.getState().token
+  const token = activeAuthStore().getState().token
   const url = new URL(BASE_URL.replace(/\/$/, '') + path(report, id))
   url.searchParams.set('format', 'csv')
   for (const [key, value] of Object.entries(filters)) {

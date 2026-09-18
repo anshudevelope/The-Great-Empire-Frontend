@@ -196,8 +196,7 @@ import { login as loginRequest } from '@/api/auth'
 import { ApiRequestError } from '@/api/fetchClient'
 import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
-import type { UserRole } from '@/types/auth'
-import { homeFor } from './routes'
+import { homeFor, useAuthScope, type AuthScope } from '@/store/authScope'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { BuildingIcon } from '@/components/icons/icons'
@@ -208,7 +207,12 @@ interface LocationState {
 }
 
 interface LoginFormProps {
-  audience: UserRole
+  /**
+   * Which door this is. Sent to the API as part of the credential check — a
+   * valid password for the other role fails here rather than redirecting.
+   * Must match the scope of the route this page is mounted on.
+   */
+  audience: AuthScope
   badge: string
   title: string
   subtitle: string
@@ -233,8 +237,8 @@ export function LoginForm({
   placeholder = "",
 }: LoginFormProps) {
   const company = useCompanyBrand()
+  const scope = useAuthScope()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const user = useAuthStore((state) => state.user)
   const setSession = useAuthStore((state) => state.login)
   const navigate = useNavigate()
   const location = useLocation()
@@ -249,23 +253,15 @@ export function LoginForm({
   })
 
   const mutation = useMutation({
-    mutationFn: loginRequest,
+    // The API only returns a session when the role matches the audience, so
+    // anything that reaches onSuccess belongs on this side of the app.
+    mutationFn: (values: LoginFormValues) => loginRequest({ ...values, audience }),
     onSuccess: (data) => {
       setSession(data.token, data.data)
 
-      const role = data.data.role
-
-      if (role !== audience) {
-        toast.success(
-          `Signed in as ${role} — taking you to your ${role === 'admin' ? 'console' : 'portal'}`
-        )
-        navigate(homeFor(role), { replace: true })
-        return
-      }
-
       toast.success(`Welcome back, ${data.data.fullName.split(' ')[0]}`)
       const state = location.state as LocationState | null
-      navigate(state?.from?.pathname ?? homeFor(role), { replace: true })
+      navigate(state?.from?.pathname ?? homeFor(audience), { replace: true })
     },
     onError: (error) => {
       toast.error(
@@ -274,8 +270,11 @@ export function LoginForm({
     },
   })
 
-  if (isAuthenticated && user) {
-    return <Navigate to={homeFor(user.role)} replace />
+  // Only this scope's session skips the form, and only to this scope's home.
+  // Being signed in as an admin must not redirect anyone away from the
+  // associate login — the two sessions are meant to coexist.
+  if (isAuthenticated) {
+    return <Navigate to={homeFor(scope)} replace />
   }
 
   return (

@@ -3,8 +3,8 @@ import { LandingPage } from '@/pages/LandingPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminLoginPage } from '@/features/auth/AdminLoginPage'
 import { AssociateLoginPage } from '@/features/auth/AssociateLoginPage'
-import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
+import { AuthScopeProvider } from '@/store/AuthScopeProvider'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { PortalLayout } from '@/components/layout/PortalLayout'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
@@ -27,26 +27,26 @@ import { PlaceMembersPage } from '@/features/portal/PlaceMembersPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
 import { DirectsPage } from '@/features/portal/DirectsPage'
 
+// Every route sits under AuthScopeProvider, which reads the path and decides
+// which of the two sessions this page belongs to. Nothing outside it may read
+// auth, because outside it there is no answer to "whose session?".
 export const router = createBrowserRouter([
+  {
+    element: <AuthScopeProvider />,
+    children: [
   { path: '/', element: <LandingPage /> },
 
-  // Separate doors for staff and members. Both post to the same endpoint —
-  // the split is branding and routing, never authorisation, which the API and
-  // the role-guarded branches below still enforce.
+  // Two separate doors, and genuinely separate logins: each posts its own
+  // audience, and the API refuses a valid password presented at the other
+  // door. Signing in at one leaves the other session untouched.
   { path: '/admin/login', element: <AdminLoginPage /> },
   { path: '/associate/login', element: <AssociateLoginPage /> },
   // Legacy links and bookmarks.
   { path: '/login', element: <Navigate to="/associate/login" replace /> },
 
-  // Either role.
-  {
-    element: <ProtectedRoute />,
-    children: [{ path: '/change-password', element: <ChangePasswordPage /> }],
-  },
-
   {
     path: '/admin',
-    element: <ProtectedRoute role="admin" loginPath="/admin/login" />,
+    element: <ProtectedRoute />,
     children: [
       {
         element: <AdminLayout />,
@@ -78,7 +78,7 @@ export const router = createBrowserRouter([
 
   {
     path: '/portal',
-    element: <ProtectedRoute role="associate" />,
+    element: <ProtectedRoute />,
     children: [
       {
         element: <PortalLayout />,
@@ -102,4 +102,6 @@ export const router = createBrowserRouter([
   },
 
   { path: '*', element: <NotFoundPage /> },
+    ],
+  },
 ])

@@ -1,5 +1,5 @@
 import { apiRequest } from './fetchClient'
-import { useAuthStore } from '@/store/authStore'
+import { activeAuthStore } from '@/store/authStore'
 import type { ApiSingleResponse } from '@/types/api'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
@@ -135,7 +135,7 @@ export function fetchInvoice(id: string): Promise<ApiSingleResponse<Invoice>> {
 
 /** CSV of the invoice register — for handing to an accountant. */
 export async function downloadInvoicesCsv(filters: InvoiceFilters = {}): Promise<void> {
-  const token = useAuthStore.getState().token
+  const token = activeAuthStore().getState().token
   const url = new URL(`${BASE_URL.replace(/\/$/, '')}/invoices`)
   url.searchParams.set('format', 'csv')
   for (const [key, value] of Object.entries(filters)) {

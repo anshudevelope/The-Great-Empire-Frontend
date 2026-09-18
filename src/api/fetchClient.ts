@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/store/authStore'
+import { activeAuthStore } from '@/store/authStore'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
 
@@ -38,7 +38,11 @@ function extractMessage(json: unknown): string | undefined {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, params } = options
-  const token = useAuthStore.getState().token
+  // Resolved per request, not once at module load: the token sent always
+  // belongs to the branch the caller is on, so a portal tab can never send the
+  // admin token or vice versa.
+  const session = activeAuthStore()
+  const token = session.getState().token
 
   const headers: Record<string, string> = {}
   if (token) headers.Authorization = token
@@ -53,8 +57,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   const response = await fetch(buildUrl(path, params), { method, headers, body: payload })
 
+  // Only this scope's session is cleared — an expiring admin token must not
+  // sign the member portal out in another tab.
   if (response.status === 401) {
-    useAuthStore.getState().logout()
+    session.getState().logout()
   }
 
   const text = await response.text()

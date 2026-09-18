@@ -1,5 +1,5 @@
 import { apiRequest } from './fetchClient'
-import { useAuthStore } from '@/store/authStore'
+import { activeAuthStore } from '@/store/authStore'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
 
@@ -208,7 +208,7 @@ export function fetchMyPayouts() {
  * endpoint needs an Authorization header.
  */
 export async function downloadPayoutCsv(id: string, batchNo: string): Promise<void> {
-  const token = useAuthStore.getState().token
+  const token = activeAuthStore().getState().token
   const url = new URL(`${BASE_URL.replace(/\/$/, '')}/payouts/${id}/lines`)
   url.searchParams.set('format', 'csv')
 

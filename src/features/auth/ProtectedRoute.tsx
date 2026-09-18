@@ -1,30 +1,24 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import type { UserRole } from '@/types/auth'
+import { loginPathFor, useAuthScope } from '@/store/authScope'
 
-interface ProtectedRouteProps {
-  /** Restrict this branch to one role. Omit to allow any signed-in user. */
-  role?: UserRole
-  /**
-   * Which login page to bounce to. Defaults to the associate portal, since
-   * that's who most signed-out visitors are — the admin branch overrides it so
-   * staff aren't sent to a member-facing screen.
-   */
-  loginPath?: string
-}
-
-export function ProtectedRoute({ role, loginPath = '/associate/login' }: ProtectedRouteProps) {
+/**
+ * Guards a branch with the session belonging to that branch.
+ *
+ * There is no cross-role fallback on purpose. Being signed in as an admin says
+ * nothing about the portal, so a failed check sends people to this branch's
+ * own login rather than bouncing them to the other side of the app.
+ */
+export function ProtectedRoute() {
+  const scope = useAuthScope()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const location = useLocation()
 
-  if (!isAuthenticated) {
-    return <Navigate to={loginPath} state={{ from: location }} replace />
-  }
-
-  if (role && user?.role !== role) {
-    // Send people to their own side of the app rather than showing a dead end.
-    return <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/portal/dashboard'} replace />
+  // The role is checked as well as the flag: a token for the wrong role in
+  // this scope's storage is a session that should never have been created.
+  if (!isAuthenticated || user?.role !== scope) {
+    return <Navigate to={loginPathFor(scope)} state={{ from: location }} replace />
   }
 
   return <Outlet />

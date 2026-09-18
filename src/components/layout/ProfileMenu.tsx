@@ -6,6 +6,8 @@ interface ProfileMenuProps {
   name: string
   /** Shown under the name — e.g. the associate ID. */
   subtitle?: string | null
+  /** Codes read better in mono; an email or a role doesn't. */
+  monoSubtitle?: boolean
   onChangePassword: () => void
   onLogout: () => void
 }
@@ -22,7 +24,15 @@ function initials(name: string): string {
  * Opens on hover, and on click too — hover alone doesn't exist on touch
  * screens or for keyboard users. Closes on leaving, clicking outside, or Esc.
  */
-export function ProfileMenu({ name, subtitle, onChangePassword, onLogout }: ProfileMenuProps) {
+export function ProfileMenu({
+  name,
+  subtitle,
+  monoSubtitle = true,
+  onChangePassword,
+  onLogout,
+}: ProfileMenuProps) {
+  const subtitleClass = cn('text-[11px] text-text-subtle', monoSubtitle && 'font-mono')
+
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   // A short grace period so moving the pointer from the button into the menu
@@ -75,7 +85,7 @@ export function ProfileMenu({ name, subtitle, onChangePassword, onLogout }: Prof
         </span>
         <span className="hidden text-left leading-tight sm:block">
           <span className="block max-w-40 truncate text-sm font-medium text-text">{name}</span>
-          {subtitle && <span className="block font-mono text-[11px] text-text-subtle">{subtitle}</span>}
+          {subtitle && <span className={cn('block max-w-40 truncate', subtitleClass)}>{subtitle}</span>}
         </span>
         <ChevronDownIcon className={cn('h-4 w-4 text-text-subtle transition-transform', open && 'rotate-180')} />
       </button>
@@ -86,7 +96,7 @@ export function ProfileMenu({ name, subtitle, onChangePassword, onLogout }: Prof
           <div role="menu" className="w-56 overflow-hidden rounded-card border border-border bg-white py-1 shadow-popover">
             <div className="border-b border-border px-4 py-2.5">
               <p className="truncate text-sm font-medium text-text">{name}</p>
-              {subtitle && <p className="font-mono text-[11px] text-text-subtle">{subtitle}</p>}
+              {subtitle && <p className={cn('truncate', subtitleClass)}>{subtitle}</p>}
             </div>
             <button
               type="button"

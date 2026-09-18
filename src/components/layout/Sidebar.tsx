@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn'
 import { useCompanyBrand } from '@/api/company'
 import { useUIStore } from '@/store/uiStore'
 import { Tooltip } from '@/components/ui/Tooltip'
-import { BuildingIcon, ChevronDownIcon, DashboardIcon, UsersIcon, XIcon } from '@/components/icons/icons'
+import { BuildingIcon, ChevronDownIcon, DashboardIcon, LogoutIcon, UsersIcon, XIcon } from '@/components/icons/icons'
 
 interface NavChild {
   label: string
@@ -169,7 +169,33 @@ function SidebarBrand() {
   )
 }
 
-export function Sidebar() {
+/** Pinned to the bottom, as in the associate portal. Also in the profile menu. */
+function SidebarFooter({ onLogout }: { onLogout: () => void }) {
+  const closeMobileSidebar = useUIStore((state) => state.closeMobileSidebar)
+
+  return (
+    <div className="border-t border-border p-3">
+      <button
+        type="button"
+        onClick={() => {
+          closeMobileSidebar()
+          onLogout()
+        }}
+        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-danger-bg hover:text-danger"
+      >
+        <LogoutIcon className="h-4 w-4" />
+        Log out
+      </button>
+    </div>
+  )
+}
+
+interface SidebarProps {
+  /** Opens the confirmation owned by AdminLayout — the topbar shares it. */
+  onLogout: () => void
+}
+
+export function Sidebar({ onLogout }: SidebarProps) {
   const mobileSidebarOpen = useUIStore((state) => state.mobileSidebarOpen)
   const closeMobileSidebar = useUIStore((state) => state.closeMobileSidebar)
 
@@ -180,6 +206,7 @@ export function Sidebar() {
           <SidebarBrand />
         </div>
         <SidebarContent />
+        <SidebarFooter onLogout={onLogout} />
       </aside>
 
       {mobileSidebarOpen && (
@@ -200,6 +227,7 @@ export function Sidebar() {
               </Tooltip>
             </div>
             <SidebarContent />
+            <SidebarFooter onLogout={onLogout} />
           </aside>
         </div>
       )}

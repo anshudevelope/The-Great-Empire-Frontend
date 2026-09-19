@@ -1,27 +1,14 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchReferralSummary } from '@/api/referrals'
 import { fetchPendingPlacement } from '@/api/associates'
 import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
-import { cn } from '@/lib/cn'
 import { BuildingIcon, LogoutIcon } from '@/components/icons/icons'
 import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
 import { ProfileMenu } from './ProfileMenu'
-
-const NAV = [
-  { label: 'Dashboard', to: '/portal/dashboard' },
-  { label: 'My Referrals', to: '/portal/referrals' },
-  { label: 'My Invoices', to: '/portal/invoices' },
-  { label: 'My Income', to: '/portal/income' },
-  { label: 'My Payouts', to: '/portal/payouts' },
-  // The admin registers associates; the sponsor only decides where they sit.
-  { label: 'Place Members', to: '/portal/place-members' },
-  { label: 'My Tree', to: '/portal/tree' },
-  { label: 'My Directs', to: '/portal/directs' },
-  { label: 'Downline', to: '/portal/downline' },
-]
+import { PortalSidebarNav } from './PortalSidebar'
 
 export function PortalLayout() {
   const user = useAuthStore((state) => state.user)
@@ -36,11 +23,10 @@ export function PortalLayout() {
     navigate('/associate/login', { replace: true })
   }
 
-  // Drives the unread badge on My Referrals.
+  // Drive the badges on My Referrals and Place Members.
   const { data: summary } = useQuery({ queryKey: ['referral-summary'], queryFn: fetchReferralSummary })
   const unread = summary?.data.unread ?? 0
 
-  // Drives the waiting count on Place Members.
   const { data: pending } = useQuery({ queryKey: ['pending-placement'], queryFn: fetchPendingPlacement })
   const waiting = pending?.count ?? 0
 
@@ -57,32 +43,7 @@ export function PortalLayout() {
           </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive ? 'bg-blue-50 text-blue-700' : 'text-text-muted hover:bg-neutral-hover hover:text-text',
-                )
-              }
-            >
-              {item.label}
-              {item.to === '/portal/referrals' && unread > 0 && (
-                <span className="ml-2 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  {unread}
-                </span>
-              )}
-              {item.to === '/portal/place-members' && waiting > 0 && (
-                <span className="ml-2 rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                  {waiting}
-                </span>
-              )}
-            </NavLink>
-          ))}
-        </nav>
+        <PortalSidebarNav counts={{ unread, waiting }} />
 
         {/* Pinned to the bottom, as in most CRMs. Also in the profile menu. */}
         <div className="border-t border-border p-3">

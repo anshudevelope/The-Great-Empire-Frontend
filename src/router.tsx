@@ -26,6 +26,7 @@ import { PortalDashboardPage } from '@/features/portal/PortalDashboardPage'
 import { PlaceMembersPage } from '@/features/portal/PlaceMembersPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
 import { DirectsPage } from '@/features/portal/DirectsPage'
+import { RewardsTierOnePage } from '@/features/portal/RewardsTierOnePage'
 
 // Every route sits under AuthScopeProvider, which reads the path and decides
 // which of the two sessions this page belongs to. Nothing outside it may read
@@ -96,6 +97,8 @@ export const router = createBrowserRouter([
           { path: 'income', element: <MyIncomePage /> },
           { path: 'payouts', element: <MyPayoutsPage /> },
           { path: 'downline', element: <DownlineReportPage /> },
+          { path: 'rewards', element: <Navigate to="tier-1" replace /> },
+          { path: 'rewards/tier-1', element: <RewardsTierOnePage /> },
         ],
       },
     ],

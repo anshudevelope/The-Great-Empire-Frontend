@@ -1,11 +1,19 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { cancelPayout, downloadPayoutCsv, fetchPayout, fetchPayoutLines } from '@/api/payouts'
+import {
+  cancelPayout,
+  discardPayout,
+  downloadPayoutCsv,
+  fetchPayout,
+  fetchPayoutLines,
+  finalizePayout,
+} from '@/api/payouts'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatShortDate } from '@/lib/datetime'
@@ -16,9 +24,11 @@ const day = (value?: string | null) => formatShortDate(value ?? undefined)
 /** One closing, read-only, with the CSV download and the cancel path. */
 export function PayoutDetailPage() {
   const { id = '' } = useParams()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [finalizing, setFinalizing] = useState(false)
   const [reason, setReason] = useState('')
 
   const { data: batchData, isLoading } = useQuery({
@@ -40,6 +50,33 @@ export function PayoutDetailPage() {
       setCancelling(false)
       setReason('')
       void queryClient.invalidateQueries({ queryKey: ['payouts'] })
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+
+  // A draft can be acted on from here as well as from Create Payout — an admin
+  // who reaches it through the payout list should not have to go looking for
+  // another page to finish the job.
+  const finalize = useMutation({
+    mutationFn: () => finalizePayout(id),
+    onSuccess: (res) => {
+      toast.success(res.message)
+      setFinalizing(false)
+      void queryClient.invalidateQueries({ queryKey: ['payouts'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
+      setFinalizing(false)
+    },
+  })
+
+  const discard = useMutation({
+    mutationFn: () => discardPayout(id),
+    onSuccess: (res) => {
+      toast.success(res.message)
+      void queryClient.invalidateQueries({ queryKey: ['payouts'] })
+      // The batch no longer exists, so this page has nothing left to show.
+      navigate('/admin/payouts')
     },
     onError: (error: Error) => toast.error(error.message),
   })
@@ -79,6 +116,14 @@ export function PayoutDetailPage() {
           <Button variant="secondary" onClick={() => void downloadPayoutCsv(batch._id, batch.batchNo)}>
             Download (Excel)
           </Button>
+          {batch.status === 'draft' && (
+            <>
+              <Button variant="secondary" onClick={() => discard.mutate()} isLoading={discard.isPending}>
+                Discard
+              </Button>
+              <Button onClick={() => setFinalizing(true)}>Finalize &amp; pay</Button>
+            </>
+          )}
           {batch.status === 'finalized' && (
             <Button variant="danger" onClick={() => setCancelling(true)}>
               Cancel payout
@@ -86,6 +131,16 @@ export function PayoutDetailPage() {
           )}
         </div>
       </header>
+
+      {batch.status === 'draft' && (
+        <div className="mb-5 rounded-card border border-warning/30 bg-warning-bg/40 p-4">
+          <p className="text-sm font-medium text-text">Nothing has been paid yet.</p>
+          <p className="mt-1 text-xs text-text-muted">
+            This is a preview. No commission is marked paid and no member's balance has changed
+            until you finalize it.
+          </p>
+        </div>
+      )}
 
       {batch.status === 'cancelled' && (
         <div className="mb-5 rounded-card border border-border bg-neutral-hover/60 p-4">
@@ -131,6 +186,23 @@ export function PayoutDetailPage() {
       ) : (
         <LinesTable lines={lines} label={rates.secondaryChargeLabel} />
       )}
+
+      <ConfirmModal
+        open={finalizing}
+        tone="danger"
+        title={`Finalize ${batch.batchNo}?`}
+        description={
+          `${money(totals.netPayable)} becomes payable to ${totals.members} member(s), and everyone's income resets to zero.` +
+          (rates.flushCarryOnClose && totals.carryFlushed > 0
+            ? ` ${money(totals.carryFlushed)} of unmatched carry will be cleared.`
+            : ' Unmatched carry is not affected.') +
+          ' This can only be undone by cancelling the payout.'
+        }
+        confirmLabel="Finalize"
+        isLoading={finalize.isPending}
+        onConfirm={() => finalize.mutate()}
+        onClose={() => setFinalizing(false)}
+      />
 
       <Modal open={cancelling} onClose={() => setCancelling(false)} size="sm">
         <h2 className="text-base font-semibold text-text">Cancel {batch.batchNo}?</h2>

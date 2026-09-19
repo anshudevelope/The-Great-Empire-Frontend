@@ -138,7 +138,9 @@ export function PayoutGeneratePage() {
             <p className="mt-4 text-xs text-text-subtle">
               Deductions: admin {pct(next.rates.adminChargePct)} and {next.rates.secondaryChargeLabel}{' '}
               {pct(next.rates.secondaryChargePct)}, each taken on the gross total.
-              {next.rates.flushCarryOnClose && ' Unmatched carry will be cleared at closing.'}
+              {next.rates.flushCarryOnClose
+                ? ' Unmatched carry will be cleared at closing.'
+                : ' Unmatched carry carries forward — only the money resets.'}
             </p>
           )}
 
@@ -194,16 +196,23 @@ export function PayoutGeneratePage() {
         <Stat label="Net payable" value={money(totals.netPayable)} tone="good" />
       </div>
 
-      {rates.flushCarryOnClose && totals.carryFlushed > 0 && (
-        <div className="mb-5 rounded-card border border-danger/30 bg-danger-bg/40 p-4">
-          <p className="text-sm font-medium text-danger">
-            Finalizing will clear {money(totals.carryFlushed)} of unmatched carry.
-          </p>
-          <p className="mt-1 text-xs text-text-muted">
-            That is roughly {money(totals.carryFlushed * 0.05)} of matching income members have already
-            earned the volume for. It cannot be recovered except by cancelling this payout.
-          </p>
-        </div>
+      {rates.flushCarryOnClose ? (
+        totals.carryFlushed > 0 && (
+          <div className="mb-5 rounded-card border border-danger/30 bg-danger-bg/40 p-4">
+            <p className="text-sm font-medium text-danger">
+              Finalizing will clear {money(totals.carryFlushed)} of unmatched carry.
+            </p>
+            <p className="mt-1 text-xs text-text-muted">
+              That is roughly {money(totals.carryFlushed * 0.05)} of matching income members have already
+              earned the volume for. It cannot be recovered except by cancelling this payout.
+            </p>
+          </div>
+        )
+      ) : (
+        <p className="mb-5 text-xs text-text-subtle">
+          Unmatched carry is not touched by this closing — it stays on each member's legs and can
+          still pair up in a later period. Only income resets.
+        </p>
       )}
 
       {lines.length === 0 ? (

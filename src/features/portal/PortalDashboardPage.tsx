@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatTier } from '@/lib/tier'
+import { formatShortDate } from '@/lib/datetime'
 
 const money = (value: number) => `₹${value.toLocaleString('en-IN')}`
 
@@ -59,53 +60,16 @@ export function PortalDashboardPage() {
             <Stat label="Members placed" value={String(summary.data?.data.used ?? 0)} hint="Referrals placed in your tree" />
             <Stat label="Total downline" value={String(levels.data?.totals.members ?? 0)} hint="Everyone below you" />
             <Stat label="Active members" value={String(levels.data?.totals.active ?? 0)} hint="Approved status" />
+            {/* The date is today's: realtime income is computed live on every
+                request, so there is no server-side cutoff to report and no
+                reason to ask the API for a date the browser already has. */}
+            <Stat
+              label="Realtime income"
+              value={money2(earnings?.totalIncome ?? 0)}
+              hint={`Till ${formatShortDate(new Date().toISOString())}`}
+              tone="success"
+            />
           </div>
-
-          {/* Realtime income — earned since the last closing, not yet paid.
-              Deliberately shows carry in RUPEES: the tree tooltip reports it the
-              same way, and the old member-count version of "carry" meant
-              something different under the same word. */}
-          <section className="rounded-card border border-border bg-white p-6">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-text">Realtime income</h2>
-              <Link to="/portal/payouts" className="text-xs font-medium text-blue-700 hover:underline">
-                Payout history →
-              </Link>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <IncomeCard label="Direct (10%)" value={money2(earnings?.directIncome ?? 0)} />
-              <IncomeCard label="Matching (5%)" value={money2(earnings?.matchingIncome ?? 0)} />
-              <IncomeCard label="Total earning" value={money2(earnings?.totalIncome ?? 0)} accent />
-            </div>
-
-            {earnings && (
-              <>
-                <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 border-t border-border pt-4 text-sm">
-                  <Meta label="Carry left" value={money2(earnings.carry.left)} />
-                  <Meta label="Carry right" value={money2(earnings.carry.right)} />
-                  <Meta
-                    label="Weaker leg"
-                    value={earnings.carry.weakerLeg ?? (earnings.carry.left === 0 ? 'none yet' : 'balanced')}
-                  />
-                  {earnings.reversals !== 0 && <Meta label="Reversals" value={money2(earnings.reversals)} />}
-                </div>
-
-                <p className="mt-3 text-xs text-text-subtle">
-                  {earnings.totalIncome > 0
-                    ? 'Earned since the last closing and not yet paid. It resets to zero once the company closes the books.'
-                    : 'Nothing earned yet this period. Income appears here as soon as someone joins under you.'}
-                  {earnings.carry.weakerLeg && (
-                    <>
-                      {' '}
-                      Your {earnings.carry.weakerLeg.toLowerCase()} leg is the smaller one — matching pays
-                      only where both sides pair up.
-                    </>
-                  )}
-                </p>
-              </>
-            )}
-          </section>
 
           {/* <section className="rounded-card border border-border bg-white p-6">
             <h2 className="mb-4 text-sm font-semibold text-text">Members by level</h2>
@@ -136,45 +100,34 @@ export function PortalDashboardPage() {
   )
 }
 
-function Stat({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  hint,
+  accent,
+  tone,
+}: {
+  label: string
+  value: string
+  hint?: string
+  accent?: boolean
+  /** Money reads green. Same tile, only the figure changes colour. */
+  tone?: 'success'
+}) {
+  const valueClass =
+    tone === 'success'
+      ? 'mt-1 text-2xl font-semibold tabular-nums text-success'
+      : accent
+        ? 'mt-1 text-2xl font-semibold text-blue-700'
+        : 'mt-1 text-2xl font-semibold text-text'
+
   return (
     <div className="rounded-card border border-border bg-white p-5">
       <p className="text-xs text-text-subtle">{label}</p>
-      <p className={accent ? 'mt-1 text-2xl font-semibold text-blue-700' : 'mt-1 text-2xl font-semibold text-text'}>
-        {value}
-      </p>
+      <p className={valueClass}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-text-subtle">{hint}</p>}
     </div>
   )
 }
 
-function IncomeCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div
-      className={
-        accent
-          ? 'rounded-card border border-success/30 bg-success-bg/40 p-4'
-          : 'rounded-card border border-border bg-bg p-4'
-      }
-    >
-      <p className="text-xs text-text-subtle">{label}</p>
-      <p
-        className={
-          accent
-            ? 'mt-1 text-2xl font-semibold tabular-nums text-success'
-            : 'mt-1 text-2xl font-semibold tabular-nums text-text'
-        }
-      >
-        {value}
-      </p>
-    </div>
-  )
-}
 
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="text-text-muted">
-      {label}: <span className="font-medium text-text">{value}</span>
-    </span>
-  )
-}

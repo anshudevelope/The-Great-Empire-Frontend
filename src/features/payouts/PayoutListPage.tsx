@@ -105,8 +105,10 @@ export function PayoutListPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link to={`/admin/payouts/${batch._id}`}>
-                        <Button size="sm" variant="ghost">
-                          View
+                        {/* A draft still needs finalizing or discarding, so it gets
+                            a label that says there is something to do. */}
+                        <Button size="sm" variant={batch.status === 'draft' ? 'secondary' : 'ghost'}>
+                          {batch.status === 'draft' ? 'Review' : 'View'}
                         </Button>
                       </Link>
                     </td>

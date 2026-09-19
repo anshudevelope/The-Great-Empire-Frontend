@@ -10,6 +10,9 @@ import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatTier } from '@/lib/tier'
 
+// The API caps `limit` at 200, so every option here is within range.
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
+
 const statusTone = (status: string) =>
   status === 'approved' ? 'success' : status === 'pending' ? 'warning' : status === 'rejected' ? 'danger' : 'neutral'
 
@@ -21,10 +24,13 @@ const statusTone = (status: string) =>
 export function DownlineReportPage() {
   const [filters, setFilters] = useState({ status: '', tier: '', leg: '', search: '' })
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
   const [exporting, setExporting] = useState(false)
 
   const query = useQuery({
-    queryKey: ['downline-report', filters, page],
+    // pageSize belongs in the key: paging happens server-side here, so a
+    // different size is a different request, not a different slice.
+    queryKey: ['downline-report', filters, page, pageSize],
     queryFn: () =>
       fetchDownlineReport(undefined, {
         status: filters.status || undefined,
@@ -32,7 +38,7 @@ export function DownlineReportPage() {
         leg: filters.leg || undefined,
         search: filters.search || undefined,
         page: String(page),
-        limit: '25',
+        limit: String(pageSize),
       }),
   })
 
@@ -92,6 +98,21 @@ export function DownlineReportPage() {
           <option value="">Both legs</option>
           <option value="Left">Left leg</option>
           <option value="Right">Right leg</option>
+        </Select>
+        <Select
+          value={String(pageSize)}
+          onChange={(event) => {
+            setPageSize(Number(event.target.value))
+            // Page 4 of 10 may not exist at 100 per page.
+            setPage(1)
+          }}
+          containerClassName="w-36"
+        >
+          {PAGE_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size} per page
+            </option>
+          ))}
         </Select>
       </div>
 

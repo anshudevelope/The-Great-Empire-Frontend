@@ -17,7 +17,7 @@ import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, RefreshIcon, SearchIcon, Tras
 import { formatShortDate } from '@/lib/datetime'
 import { formatTier } from '@/lib/tier'
 
-const PAGE_SIZE = 10
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 
 type StatusFilter = '' | AssociateStatus
 type TierFilter = '' | 'Tier I' | 'Tier II'
@@ -36,6 +36,7 @@ export function AssociatesListPage() {
   // 'true' = only members whose sponsor credit went to someone other than their referrer.
   const [sponsorMismatch, setSponsorMismatch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0])
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
   useEffect(() => {
@@ -57,8 +58,13 @@ export function AssociatesListPage() {
   const deleteMutation = useDeleteAssociate()
 
   const associates = useMemo(() => data?.data ?? [], [data])
-  const totalPages = Math.max(1, Math.ceil(associates.length / PAGE_SIZE))
-  const pageItems = useMemo(() => associates.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [associates, page])
+  const totalPages = Math.max(1, Math.ceil(associates.length / pageSize))
+  // The endpoint returns the whole filtered set, so paging is a slice rather
+  // than another request — changing the size costs nothing.
+  const pageItems = useMemo(
+    () => associates.slice((page - 1) * pageSize, page * pageSize),
+    [associates, page, pageSize],
+  )
 
   function closeConfirm() {
     setPendingAction(null)
@@ -148,6 +154,21 @@ export function AssociatesListPage() {
         >
           <option value="">All sponsors</option>
           <option value="true">Sponsor ≠ referred by</option>
+        </Select>
+        <Select
+          value={String(pageSize)}
+          onChange={(event) => {
+            setPageSize(Number(event.target.value))
+            // Page 4 of 10 may not exist at 100 per page.
+            setPage(1)
+          }}
+          containerClassName="sm:w-36"
+        >
+          {PAGE_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size} per page
+            </option>
+          ))}
         </Select>
         <IconButton
           icon={<RefreshIcon className={cn('h-4 w-4', isFetching && 'animate-spin')} />}

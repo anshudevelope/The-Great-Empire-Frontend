@@ -153,8 +153,15 @@ export function fetchPayoutLines(id: string, params: Record<string, string | und
   return apiRequest<PayoutLinesResponse>(`/payouts/${id}/lines`, { params })
 }
 
-/** Builds a draft. Stamps nothing and touches no member — safe to discard. */
-export function createPayoutDraft(body: { periodEnd?: string; note?: string } = {}) {
+/**
+ * Builds a draft. Stamps nothing and touches no member — safe to discard.
+ *
+ * `periodStart` labels the batch only; what gets paid is decided by unpaid
+ * status plus `periodEnd`.
+ */
+export function createPayoutDraft(
+  body: { periodStart?: string; periodEnd?: string; note?: string } = {},
+) {
   return apiRequest<{ success: true; message: string; data: PayoutBatch }>('/payouts/preview', {
     method: 'POST',
     body,

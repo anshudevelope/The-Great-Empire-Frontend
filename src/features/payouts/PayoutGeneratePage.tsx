@@ -20,11 +20,23 @@ import { LinesTable, Stat, money, pct } from './payoutBits'
 
 const day = (value?: string | null) => formatShortDate(value ?? undefined)
 
-/** `datetime-local` wants `YYYY-MM-DDTHH:mm` in LOCAL time, not an ISO string. */
-const toLocalInput = (date: Date) => {
+/** A `date` input wants YYYY-MM-DD in LOCAL time, not a slice of an ISO string. */
+const toDateInput = (date: Date) => {
   const offset = date.getTimezoneOffset() * 60000
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10)
 }
+
+// The admin picks plain dates; the times are filled in here so a period covers
+// whole days. No "T" suffix means local time, which is what was displayed.
+const startOfDay = (value: string) => new Date(`${value}T00:00:00`)
+
+/**
+ * The last instant of the chosen day — NOT midnight.
+ *
+ * Midnight would exclude everything earned during the day the admin picked, so
+ * "close on the 22nd" would quietly pay nothing from the 22nd.
+ */
+const endOfDay = (value: string) => new Date(`${value}T23:59:59.999`)
 
 /**
  * Create Payout — close the books for a period.
@@ -39,6 +51,7 @@ export function PayoutGeneratePage() {
   // null until the admin picks one, so the suggested default can come from the
   // period the API reports rather than being frozen at first render.
   const [closeDate, setCloseDate] = useState<string | null>(null)
+  const [startDate, setStartDate] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
 
   const { data: draftData, isLoading } = useQuery({
@@ -49,12 +62,20 @@ export function PayoutGeneratePage() {
   const draft = draftData?.data ?? null
 
   // Suggested close date only — the admin is free to move it either way.
-  const nowLocal = useMemo(() => toLocalInput(new Date()), [])
+  const today = useMemo(() => toDateInput(new Date()), [])
   // The picker allows a week ahead: closing "as of Friday" from midweek is a
   // normal thing to do. Backdating is unrestricted. The API itself accepts any
   // date — this is a guard rail, not a rule.
-  const maxClose = useMemo(() => toLocalInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)), [])
-  const effectiveClose = closeDate ?? nowLocal
+  const maxClose = useMemo(() => toDateInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)), [])
+  const effectiveClose = closeDate ?? today
+
+  // Defaults to the day after the last closing, as reported by the API.
+  const periodStartIso = draftData?.next?.periodStart
+  const suggestedStart = useMemo(
+    () => (periodStartIso ? toDateInput(new Date(periodStartIso)) : today),
+    [periodStartIso, today],
+  )
+  const effectiveStart = startDate ?? suggestedStart
 
   const { data: linesData } = useQuery({
     queryKey: ['payouts', 'draft', 'lines', draft?._id],
@@ -65,7 +86,11 @@ export function PayoutGeneratePage() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['payouts'] })
 
   const generate = useMutation({
-    mutationFn: () => createPayoutDraft({ periodEnd: new Date(effectiveClose).toISOString() }),
+    mutationFn: () =>
+      createPayoutDraft({
+        periodStart: startOfDay(effectiveStart).toISOString(),
+        periodEnd: endOfDay(effectiveClose).toISOString(),
+      }),
     onSuccess: (res) => {
       toast.success(res.message)
       void refresh()
@@ -121,10 +146,19 @@ export function PayoutGeneratePage() {
         <div className="rounded-card border border-border bg-white p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-xs text-text-subtle">Start date</p>
-              <p className="mt-1 text-sm font-medium text-text">{day(next?.periodStart)}</p>
+              <label className="text-xs text-text-subtle" htmlFor="startDate">
+                Start date
+              </label>
+              <Input
+                id="startDate"
+                type="date"
+                value={effectiveStart}
+                onChange={(event) => setStartDate(event.target.value)}
+                className="mt-1"
+              />
               <p className="mt-0.5 text-[11px] text-text-subtle">
-                Where the last closing ended. Not editable.
+                Defaults to the day after the last payout. Labels the period only — what gets paid
+                is every unpaid commission up to the close date.
               </p>
             </div>
             <div>
@@ -133,14 +167,14 @@ export function PayoutGeneratePage() {
               </label>
               <Input
                 id="closeDate"
-                type="datetime-local"
+                type="date"
                 value={effectiveClose}
                 max={maxClose}
                 onChange={(event) => setCloseDate(event.target.value)}
                 className="mt-1"
               />
               <p className="mt-0.5 text-[11px] text-text-subtle">
-                Commission earned after this moment rolls into the next payout.
+                This whole day is included. Anything earned after it rolls into the next payout.
               </p>
             </div>
           </div>

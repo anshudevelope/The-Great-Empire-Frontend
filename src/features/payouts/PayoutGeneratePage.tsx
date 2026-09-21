@@ -77,6 +77,15 @@ export function PayoutGeneratePage() {
   )
   const effectiveStart = startDate ?? suggestedStart
 
+  // Reaching back into a period that has already been paid. Worth flagging, but
+  // not worth blocking: the start date labels the batch and selects nothing, so
+  // an overlap cannot pay the same commission twice.
+  const previous = draftData?.next?.previous ?? null
+  const overlapsPrevious = useMemo(
+    () => (previous ? startOfDay(effectiveStart) <= new Date(previous.periodEnd) : false),
+    [previous, effectiveStart],
+  )
+
   const { data: linesData } = useQuery({
     queryKey: ['payouts', 'draft', 'lines', draft?._id],
     queryFn: () => fetchPayoutLines(draft!._id, { limit: '500' }),
@@ -178,6 +187,26 @@ export function PayoutGeneratePage() {
               </p>
             </div>
           </div>
+
+          {overlapsPrevious && previous && (
+            <div className="mt-4 rounded-card border border-warning/40 bg-warning-bg/50 p-4">
+              <p className="text-sm font-medium text-text">
+                This start date overlaps the last payout.
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
+                <span className="font-mono">{previous.batchNo}</span> covered{' '}
+                {day(previous.periodStart)} → <strong>{day(previous.periodEnd)}</strong>
+                {previous.finalizedAt && ` and was paid on ${day(previous.finalizedAt)}`}. Starting on{' '}
+                {day(startOfDay(effectiveStart).toISOString())} re-labels days that have already been
+                closed.
+              </p>
+              <p className="mt-1 text-xs text-text-subtle">
+                Nothing will be paid twice — the start date only labels the period, and commission
+                already paid is invisible to a new payout. Set it to{' '}
+                {day(next?.periodStart)} to follow on cleanly.
+              </p>
+            </div>
+          )}
 
           {next?.rates && (
             <p className="mt-4 text-xs text-text-subtle">

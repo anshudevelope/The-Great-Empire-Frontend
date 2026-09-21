@@ -86,11 +86,24 @@ export interface PayoutListResponse {
   pagination: Pagination
 }
 
+/** The last finalized closing, for detecting an overlapping start date. */
+export interface PreviousPayout {
+  batchNo: string
+  periodStart: string
+  periodEnd: string
+  finalizedAt: string | null
+}
+
 /** `data` is null when no draft is open — `next` then describes what one would cover. */
 export interface DraftResponse {
   success: true
   data: PayoutBatch | null
-  next?: { periodStart: string; rates: PayoutRates }
+  next?: {
+    periodStart: string
+    rates: PayoutRates
+    /** null before the first closing. */
+    previous: PreviousPayout | null
+  }
 }
 
 export interface PayoutLinesResponse {

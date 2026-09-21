@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -36,7 +36,9 @@ const toLocalInput = (date: Date) => {
 export function PayoutGeneratePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [closeDate, setCloseDate] = useState(() => toLocalInput(new Date()))
+  // null until the admin picks one, so the suggested default can come from the
+  // period the API reports rather than being frozen at first render.
+  const [closeDate, setCloseDate] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
 
   const { data: draftData, isLoading } = useQuery({
@@ -45,6 +47,14 @@ export function PayoutGeneratePage() {
   })
 
   const draft = draftData?.data ?? null
+
+  // Suggested close date only — the admin is free to move it either way.
+  const nowLocal = useMemo(() => toLocalInput(new Date()), [])
+  // The picker allows a week ahead: closing "as of Friday" from midweek is a
+  // normal thing to do. Backdating is unrestricted. The API itself accepts any
+  // date — this is a guard rail, not a rule.
+  const maxClose = useMemo(() => toLocalInput(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)), [])
+  const effectiveClose = closeDate ?? nowLocal
 
   const { data: linesData } = useQuery({
     queryKey: ['payouts', 'draft', 'lines', draft?._id],
@@ -55,7 +65,7 @@ export function PayoutGeneratePage() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['payouts'] })
 
   const generate = useMutation({
-    mutationFn: () => createPayoutDraft({ periodEnd: new Date(closeDate).toISOString() }),
+    mutationFn: () => createPayoutDraft({ periodEnd: new Date(effectiveClose).toISOString() }),
     onSuccess: (res) => {
       toast.success(res.message)
       void refresh()
@@ -124,7 +134,8 @@ export function PayoutGeneratePage() {
               <Input
                 id="closeDate"
                 type="datetime-local"
-                value={closeDate}
+                value={effectiveClose}
+                max={maxClose}
                 onChange={(event) => setCloseDate(event.target.value)}
                 className="mt-1"
               />

@@ -7,6 +7,7 @@ import { fetchMyCommissionSummary } from '@/api/commissions'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { QuickActions, type QuickAction } from '@/components/ui/QuickActions'
 import {
   BusinessIcon,
   ChevronRightIcon,
@@ -26,7 +27,7 @@ const money = (value: number) => `₹${value.toLocaleString('en-IN')}`
  * Deliberately not a copy of the whole menu: the sidebar is still the complete
  * index, and repeating every child here would make both harder to scan.
  */
-const QUICK_ACTIONS = [
+const QUICK_ACTIONS: readonly QuickAction[] = [
   { label: 'My Referrals', to: '/portal/referrals', icon: BusinessIcon },
   { label: 'My Tree', to: '/portal/tree', icon: TreeIcon },
   { label: 'My Income', to: '/portal/income', icon: EarningsIcon },
@@ -68,20 +69,7 @@ export function PortalDashboardPage() {
       {/* Outside the loading gate on purpose — these go somewhere regardless of
           what the figures below say, so there is no reason to withhold them
           while the queries are still in flight. */}
-      <nav aria-label="Quick actions" className="flex flex-wrap gap-2">
-        {QUICK_ACTIONS.map((action) => (
-          <Link
-            key={action.to}
-            to={action.to}
-            className="group inline-flex items-center gap-2 rounded-pill bg-surface py-2 pl-3 pr-4 text-sm font-medium text-text-muted shadow-card transition-all hover:text-text hover:shadow-card-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-          >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg text-info">
-              <action.icon className="h-3.5 w-3.5" />
-            </span>
-            {action.label}
-          </Link>
-        ))}
-      </nav>
+      <QuickActions actions={QUICK_ACTIONS} />
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -200,7 +188,7 @@ function Stat({
       to={to}
       // flex + h-full so the link row sits on the baseline of every tile in the
       // row, whatever height the tallest one ends up being.
-      className="group flex h-full flex-col rounded-card bg-surface p-5 shadow-card transition-shadow hover:shadow-card-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+      className="group flex h-full flex-col rounded-card bg-surface p-5 shadow-card transition-shadow hover:shadow-card-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
     >
       <p className="text-xs text-text-subtle">{label}</p>
       <p className={valueClass}>{value}</p>

@@ -7,11 +7,31 @@ import { fetchMyCommissionSummary } from '@/api/commissions'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { ChevronRightIcon } from '@/components/icons/icons'
+import {
+  BusinessIcon,
+  ChevronRightIcon,
+  EarningsIcon,
+  RewardsIcon,
+  TreeIcon,
+} from '@/components/icons/icons'
 import { formatTier } from '@/lib/tier'
 import { formatShortDate } from '@/lib/datetime'
 
 const money = (value: number) => `₹${value.toLocaleString('en-IN')}`
+
+/**
+ * One shortcut per sidebar group, pointing at that group's main page — the
+ * sections a member actually works in, reachable without opening a dropdown.
+ *
+ * Deliberately not a copy of the whole menu: the sidebar is still the complete
+ * index, and repeating every child here would make both harder to scan.
+ */
+const QUICK_ACTIONS = [
+  { label: 'My Referrals', to: '/portal/referrals', icon: BusinessIcon },
+  { label: 'My Tree', to: '/portal/tree', icon: TreeIcon },
+  { label: 'My Income', to: '/portal/income', icon: EarningsIcon },
+  { label: 'Rewards', to: '/portal/rewards/tier-1', icon: RewardsIcon },
+] as const
 
 /** Two decimals for anything that is actually payable. */
 const money2 = (value: number) =>
@@ -44,6 +64,24 @@ export function PortalDashboardPage() {
           </Link>
         )}
       </header>
+
+      {/* Outside the loading gate on purpose — these go somewhere regardless of
+          what the figures below say, so there is no reason to withhold them
+          while the queries are still in flight. */}
+      <nav aria-label="Quick actions" className="flex flex-wrap gap-2">
+        {QUICK_ACTIONS.map((action) => (
+          <Link
+            key={action.to}
+            to={action.to}
+            className="group inline-flex items-center gap-2 rounded-pill bg-surface py-2 pl-3 pr-4 text-sm font-medium text-text-muted shadow-card transition-all hover:text-text hover:shadow-card-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-info-bg text-info">
+              <action.icon className="h-3.5 w-3.5" />
+            </span>
+            {action.label}
+          </Link>
+        ))}
+      </nav>
 
       {loading ? (
         <div className="flex justify-center py-16">

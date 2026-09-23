@@ -160,7 +160,7 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
       }}
       className={cn(
         'pointer-events-none overflow-hidden',
-        'rounded-card border border-border bg-white text-left shadow-popover',
+        'rounded-card bg-surface text-left shadow-popover',
       )}
     >
       <div className="bg-linear-to-r from-blue-700 to-blue-900 px-3 py-2 text-white">
@@ -265,12 +265,12 @@ function NodeCard({
         title={onDrillDown ? 'Click to select · double-click to open this member’s tree' : undefined}
         className={cn(
           'flex w-28 shrink-0 cursor-pointer flex-col items-center gap-1.5 rounded-control px-2 py-2 text-center transition-all hover:-translate-y-0.5',
-          selected && 'bg-blue-50/70 ring-2 ring-blue-600 ring-offset-2 ring-offset-surface',
+          selected && 'bg-info-bg/70 ring-2 ring-blue-600 ring-offset-2 ring-offset-surface',
         )}
       >
         <span
           className={cn(
-            'relative flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-card ring-2',
+            'relative flex h-12 w-12 items-center justify-center rounded-full bg-surface shadow-card ring-2',
             STATUS_RING[node.status] ?? 'ring-border-strong',
           )}
         >
@@ -286,7 +286,7 @@ function NodeCard({
             )}
           />
         </span>
-        <span className="line-clamp-2 text-xs font-medium leading-tight text-text group-hover:text-blue-700">
+        <span className="line-clamp-2 text-xs font-medium leading-tight text-text group-hover:text-info">
           {node.fullName}
         </span>
         <span className="font-mono text-[10px] leading-none text-text-subtle">{node.memberCode}</span>
@@ -301,8 +301,8 @@ function NodeCard({
           title="Open this member's tree"
           className={cn(
             'absolute right-0 top-0 hidden h-5 w-5 cursor-pointer items-center justify-center rounded-full',
-            'border border-border bg-white text-[10px] text-blue-600 shadow-xs',
-            'hover:bg-blue-50 group-hover:flex',
+            'border border-border bg-surface text-[10px] text-blue-600 shadow-xs',
+            'hover:bg-info-bg group-hover:flex',
           )}
         >
           ⤢
@@ -317,7 +317,7 @@ function NodeCard({
 function OpenSlot() {
   return (
     <div className="flex w-28 shrink-0 flex-col items-center gap-1.5 px-2 py-2 text-center opacity-70">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-border-strong bg-white">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-border-strong bg-surface">
         <UserCircleIcon className="h-5 w-5 text-text-subtle" />
       </span>
       <span className="text-xs font-medium text-text-subtle">Open</span>
@@ -328,7 +328,7 @@ function OpenSlot() {
 function MoreSlot() {
   return (
     <div className="flex w-28 shrink-0 flex-col items-center gap-1.5 px-2 py-2 text-center opacity-80">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-blue-300 bg-blue-50/60 text-blue-500">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-blue-300 bg-info-bg/60 text-blue-500">
         <span className="text-base leading-none tracking-widest">&#8943;</span>
       </span>
       <span className="text-xs font-medium text-blue-500">More</span>

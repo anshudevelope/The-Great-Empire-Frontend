@@ -12,7 +12,7 @@ export function AssociateInfoPanel({ associateId }: { associateId: string | null
   const associate = data?.data
 
   return (
-    <aside className="flex h-fit w-full flex-col overflow-hidden rounded-card border border-border bg-white shadow-card lg:sticky lg:top-20 lg:w-80 lg:shrink-0">
+    <aside className="flex h-fit w-full flex-col overflow-hidden rounded-card bg-surface shadow-card lg:sticky lg:top-20 lg:w-80 lg:shrink-0">
       <div className="bg-linear-to-r from-blue-600 to-blue-800 px-4 py-3">
         <h2 className="text-sm font-semibold text-white">Associate Information</h2>
       </div>
@@ -36,7 +36,7 @@ export function AssociateInfoPanel({ associateId }: { associateId: string | null
                 className="h-12 w-12 rounded-full border border-border object-cover"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-400">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-info-bg text-blue-400">
                 <UserCircleIcon className="h-7 w-7" />
               </div>
             )}
@@ -64,7 +64,7 @@ export function AssociateInfoPanel({ associateId }: { associateId: string | null
 
           <Link
             to={`/admin/associates/${associate._id}`}
-            className="text-center text-sm font-medium text-blue-700 hover:underline"
+            className="text-center text-sm font-medium text-info hover:underline"
           >
             View full profile →
           </Link>

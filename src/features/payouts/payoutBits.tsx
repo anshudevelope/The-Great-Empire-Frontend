@@ -43,7 +43,7 @@ export function Stat({
         'rounded-card border p-4',
         tone === 'good' && 'border-success/30 bg-success-bg/40',
         tone === 'warn' && 'border-danger/30 bg-danger-bg/40',
-        tone === 'plain' && 'border-border bg-white',
+        tone === 'plain' && 'border-border bg-surface',
       )}
     >
       <p className="text-xs text-text-subtle">{label}</p>
@@ -79,7 +79,7 @@ export function HeldPill({ reason }: { reason: PayoutLine['heldReason'] }) {
 /** The payout table, shared by the generate page and the read-only detail view. */
 export function LinesTable({ lines, label }: { lines: PayoutLine[]; label: string }) {
   return (
-    <div className="overflow-x-auto rounded-card border border-border bg-white">
+    <div className="overflow-x-auto rounded-card bg-surface">
       <table className="w-full min-w-[980px] text-sm">
         <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
           <tr>

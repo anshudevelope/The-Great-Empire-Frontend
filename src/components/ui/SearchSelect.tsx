@@ -107,7 +107,7 @@ export function SearchSelect<T>({
             setActive(0)
             setOpen(true)
           }}
-          className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-control border border-border-strong bg-white px-3 py-2.5 text-left text-sm transition-colors hover:bg-neutral-hover"
+          className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-control border border-border-strong bg-surface px-3 py-2.5 text-left text-sm transition-colors hover:bg-neutral-hover"
         >
           <span className="min-w-0 flex-1">
             {value ? renderValue(value) : <span className="text-text-subtle">{placeholder}</span>}
@@ -140,7 +140,7 @@ export function SearchSelect<T>({
         <ul
           id={listId}
           role="listbox"
-          className="absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-card border border-border bg-white py-1 shadow-popover"
+          className="absolute left-0 right-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-card bg-surface py-1 shadow-popover"
         >
           {loading ? (
             <li className="flex items-center gap-2 px-3 py-2.5 text-sm text-text-subtle">
@@ -162,7 +162,7 @@ export function SearchSelect<T>({
                   onMouseEnter={() => setActive(index)}
                   className={cn(
                     'flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5',
-                    key === selectedKey ? 'bg-blue-50' : index === activeIndex && 'bg-neutral-hover',
+                    key === selectedKey ? 'bg-info-bg' : index === activeIndex && 'bg-neutral-hover',
                   )}
                 >
                   {renderOption(option)}

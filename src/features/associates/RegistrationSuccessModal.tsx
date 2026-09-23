@@ -28,7 +28,7 @@ export function RegistrationSuccessModal({ result }: { result: RegisterAssociate
         {result.message && <p className="mt-1 text-sm text-text-subtle">{result.message}</p>}
       </div>
 
-      <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 rounded-card border border-border bg-bg p-4 text-sm">
+      <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 rounded-card bg-bg p-4 text-sm">
         <Detail label="Associate ID" value={member.memberCode ?? '—'} mono />
         <Detail label="Sponsor" value={member.sponsorMemberCode ?? 'None — tree root'} mono={!!member.sponsorMemberCode} />
         <Detail label="Tier" value={formatTier(member.tier)} />

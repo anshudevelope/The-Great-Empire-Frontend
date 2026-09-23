@@ -79,7 +79,7 @@ export function AssociateDetailPage() {
               className="h-16 w-16 rounded-full border border-border object-cover"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-400">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-info-bg text-blue-400">
               <UserCircleIcon className="h-9 w-9" />
             </div>
           )}
@@ -90,7 +90,7 @@ export function AssociateDetailPage() {
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {/* The associate ID is how this member is referred to everywhere
                   else — on invoices, in the tree, and by other members. */}
-              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-blue-700">
+              <span className="rounded-full bg-info-bg px-2.5 py-0.5 font-mono text-xs font-semibold text-info">
                 {associate.memberCode ?? 'No ID'}
               </span>
               <Badge tone={STATUS_TONE[associate.status]}>{associate.status}</Badge>
@@ -151,7 +151,7 @@ export function AssociateDetailPage() {
         </div>
       </div>
 
-      <section className="rounded-card border border-border bg-white p-5 shadow-card">
+      <section className="rounded-card bg-surface p-5 shadow-card">
         <h2 className="mb-4 text-sm font-semibold text-text">Personal Details</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Field label="Father / Husband Name" value={associate.fatherOrHusbandName} />
@@ -162,7 +162,7 @@ export function AssociateDetailPage() {
         </dl>
       </section>
 
-      <section className="rounded-card border border-border bg-white p-5 shadow-card">
+      <section className="rounded-card bg-surface p-5 shadow-card">
         <h2 className="mb-4 text-sm font-semibold text-text">Contact & Address</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Field label="Phone" value={associate.phone} />
@@ -177,7 +177,7 @@ export function AssociateDetailPage() {
                     Not saved —{' '}
                     <Link
                       to={`/admin/associates/${associate._id}/edit`}
-                      className="font-medium text-blue-700 hover:underline"
+                      className="font-medium text-info hover:underline"
                     >
                       Set password
                     </Link>
@@ -194,7 +194,7 @@ export function AssociateDetailPage() {
         </dl>
       </section>
 
-      <section className="rounded-card border border-border bg-white p-5 shadow-card">
+      <section className="rounded-card bg-surface p-5 shadow-card">
         <h2 className="mb-4 text-sm font-semibold text-text">Nominee Details</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Field label="Nominee Name" value={associate.nomineeName} />
@@ -203,7 +203,7 @@ export function AssociateDetailPage() {
         </dl>
       </section>
 
-      <section className="rounded-card border border-border bg-white p-5 shadow-card">
+      <section className="rounded-card bg-surface p-5 shadow-card">
         <h2 className="mb-4 text-sm font-semibold text-text">Membership</h2>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
           <Field label="Associate ID" value={associate.memberCode} />
@@ -237,7 +237,7 @@ export function AssociateDetailPage() {
       </section>
 
       {associate.documents.length > 0 && (
-        <section className="rounded-card border border-border bg-white p-5 shadow-card">
+        <section className="rounded-card bg-surface p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold text-text">Documents</h2>
           <ul className="flex flex-col gap-2">
             {associate.documents.map((doc) => (
@@ -246,7 +246,7 @@ export function AssociateDetailPage() {
                 className="flex items-center justify-between rounded-control border border-border px-3 py-2 text-sm"
               >
                 <span className="text-text">{doc.docType}</span>
-                <a href={doc.url} target="_blank" rel="noreferrer" className="font-medium text-blue-700 hover:underline">
+                <a href={doc.url} target="_blank" rel="noreferrer" className="font-medium text-info hover:underline">
                   View
                 </a>
               </li>

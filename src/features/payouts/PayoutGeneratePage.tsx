@@ -152,7 +152,7 @@ export function PayoutGeneratePage() {
           </p>
         </header>
 
-        <div className="rounded-card border border-border bg-white p-5">
+        <div className="rounded-card bg-surface p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs text-text-subtle" htmlFor="startDate">
@@ -242,7 +242,7 @@ export function PayoutGeneratePage() {
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-text">
-            Draft <span className="font-mono text-base text-blue-700">{draft.batchNo}</span>
+            Draft <span className="font-mono text-base text-info">{draft.batchNo}</span>
           </h1>
           <p className="mt-1 text-sm text-text-subtle">
             {day(draft.periodStart)} → {day(draft.periodEnd)} · nothing has been paid yet

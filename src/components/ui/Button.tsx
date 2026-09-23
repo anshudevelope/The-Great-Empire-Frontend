@@ -15,7 +15,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-blue-600 text-white shadow-xs hover:bg-blue-700 disabled:bg-blue-200',
-  secondary: 'bg-white text-text border border-border-strong hover:bg-neutral-hover disabled:text-text-subtle',
+  secondary: 'bg-surface text-text border border-border-strong hover:bg-neutral-hover disabled:text-text-subtle',
   ghost: 'bg-transparent text-text-muted hover:bg-neutral-hover hover:text-text',
   danger: 'bg-danger text-white shadow-xs hover:brightness-95 disabled:opacity-60',
   // Semantic outline variants so an action's color matches what it does

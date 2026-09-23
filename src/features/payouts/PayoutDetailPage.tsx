@@ -103,7 +103,7 @@ export function PayoutDetailPage() {
             ← All payouts
           </Link>
           <h1 className="mt-1 flex items-center gap-2 text-xl font-semibold text-text">
-            <span className="font-mono text-blue-700">{batch.batchNo}</span>
+            <span className="font-mono text-info">{batch.batchNo}</span>
             <StatusPill status={batch.status} />
           </h1>
           <p className="mt-1 text-sm text-text-subtle">
@@ -143,7 +143,7 @@ export function PayoutDetailPage() {
       )}
 
       {batch.status === 'cancelled' && (
-        <div className="mb-5 rounded-card border border-border bg-neutral-hover/60 p-4">
+        <div className="mb-5 rounded-card bg-neutral-hover/60 p-4">
           <p className="text-sm font-medium text-text">
             Cancelled {day(batch.cancelledAt)}
             {batch.cancelledBy && ` by ${batch.cancelledBy.fullName}`}

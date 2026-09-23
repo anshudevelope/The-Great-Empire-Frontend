@@ -64,7 +64,7 @@ export function PayoutListPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-card border border-border bg-white">
+          <div className="overflow-x-auto rounded-card bg-surface">
             <table className="w-full min-w-[920px] text-sm">
               <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
                 <tr>
@@ -84,7 +84,7 @@ export function PayoutListPage() {
                     <td className="px-4 py-3">
                       <Link
                         to={`/admin/payouts/${batch._id}`}
-                        className="font-mono text-xs font-medium text-blue-700 hover:underline"
+                        className="font-mono text-xs font-medium text-info hover:underline"
                       >
                         {batch.batchNo}
                       </Link>

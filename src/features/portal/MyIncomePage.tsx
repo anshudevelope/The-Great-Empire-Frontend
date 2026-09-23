@@ -22,7 +22,7 @@ const TYPE_LABEL: Record<CommissionLedgerRow['type'], string> = {
 }
 
 const TYPE_STYLE: Record<CommissionLedgerRow['type'], string> = {
-  direct: 'bg-blue-50 text-blue-700',
+  direct: 'bg-info-bg text-info',
   matching: 'bg-success-bg text-success',
   reversal: 'bg-danger-bg text-danger',
 }
@@ -140,7 +140,7 @@ export function MyIncomePage() {
             />
           ) : (
             <>
-              <div className="overflow-x-auto rounded-card border border-border bg-white">
+              <div className="overflow-x-auto rounded-card bg-surface">
                 <table className="w-full min-w-[840px] text-sm">
                   <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
                     <tr>
@@ -234,7 +234,7 @@ function Tile({ label, value, hint, accent }: { label: string; value: string; hi
     <div
       className={cn(
         'rounded-card border p-4',
-        accent ? 'border-success/30 bg-success-bg/40' : 'border-border bg-white',
+        accent ? 'border-success/30 bg-success-bg/40' : 'border-border bg-surface',
       )}
     >
       <p className="text-xs text-text-subtle">{label}</p>

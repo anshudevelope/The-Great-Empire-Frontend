@@ -51,10 +51,10 @@ export function MyPayoutsPage() {
 
           <div className="space-y-3">
             {rows.map((row) => (
-              <div key={row.batchNo} className="rounded-card border border-border bg-white p-4">
+              <div key={row.batchNo} className="rounded-card bg-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="font-mono text-xs font-medium text-blue-700">{row.batchNo}</p>
+                    <p className="font-mono text-xs font-medium text-info">{row.batchNo}</p>
                     <p className="mt-0.5 text-xs text-text-subtle">
                       {day(row.periodStart)} → {day(row.periodEnd)}
                       {row.paidOn && ` · paid ${day(row.paidOn)}`}

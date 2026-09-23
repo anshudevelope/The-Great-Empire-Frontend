@@ -6,6 +6,11 @@ import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import './index.css'
 import { router } from './router'
+import { watchSystemTheme } from './store/uiStore'
+
+// The attribute is already set by the pre-paint script in index.html; this only
+// keeps a 'system' preference following the OS while the tab stays open.
+watchSystemTheme()
 
 const queryClient = new QueryClient({
   defaultOptions: {

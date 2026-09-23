@@ -20,8 +20,8 @@ export function TreeCanvas({ root, selectedId, onSelect, onDrillDown }: TreeCanv
   const [zoom, setZoom] = useState(1)
 
   return (
-    <div className="relative min-h-[420px] flex-1 overflow-hidden rounded-card border border-border bg-white shadow-card">
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-control border border-border bg-white/95 p-1 shadow-card backdrop-blur">
+    <div className="relative min-h-[420px] flex-1 overflow-hidden rounded-card bg-surface shadow-card">
+      <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-control border border-border bg-surface/95 p-1 shadow-card backdrop-blur">
         <IconButton
           icon={<MinusIcon className="h-4 w-4" />}
           label="Zoom out"

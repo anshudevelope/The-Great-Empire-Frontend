@@ -124,7 +124,7 @@ export function DownlineReportPage() {
         <EmptyState title="No members" description="Nothing matches these filters." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-card border border-border bg-white">
+          <div className="overflow-x-auto rounded-card bg-surface">
             <table className="w-full min-w-[880px] text-sm">
               <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
                 <tr>

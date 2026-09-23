@@ -8,6 +8,12 @@ interface ProfileMenuProps {
   subtitle?: string | null
   /** Codes read better in mono; an email or a role doesn't. */
   monoSubtitle?: boolean
+  /**
+   * The trigger sits on the solid blue topbar rather than a light surface, so
+   * it inverts. Only the trigger changes — the dropdown stays a light popover,
+   * because it opens over the content canvas, not the chrome.
+   */
+  onChrome?: boolean
   onChangePassword: () => void
   onLogout: () => void
 }
@@ -28,10 +34,14 @@ export function ProfileMenu({
   name,
   subtitle,
   monoSubtitle = true,
+  onChrome = false,
   onChangePassword,
   onLogout,
 }: ProfileMenuProps) {
-  const subtitleClass = cn('text-[11px] text-text-subtle', monoSubtitle && 'font-mono')
+  const subtitleClass = cn('text-[11px]', onChrome ? 'text-on-chrome-subtle' : 'text-text-subtle', monoSubtitle && 'font-mono')
+  // The menu panel always renders on the light canvas, so its own subtitles
+  // keep the light-surface colour even when the trigger is inverted.
+  const panelSubtitleClass = cn('text-[11px] text-text-subtle', monoSubtitle && 'font-mono')
 
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -78,25 +88,52 @@ export function ProfileMenu({
         aria-expanded={open}
         aria-label="Account menu"
         onClick={() => setOpen((current) => !current)}
-        className="flex cursor-pointer items-center gap-2 rounded-full border border-border bg-white py-1 pl-1 pr-2.5 transition-colors hover:bg-neutral-hover"
+        className={cn(
+          'flex cursor-pointer items-center gap-2.5 rounded-pill py-1 pl-1 pr-3 transition-colors',
+          // A *filled* pill rather than an outlined one: it reads as a contained
+          // control on the chrome without reintroducing a hairline.
+          onChrome
+            ? 'border-0 bg-chrome-hover hover:bg-chrome-active'
+            : 'border border-border bg-surface hover:bg-neutral-hover',
+        )}
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-blue-800 text-xs font-semibold text-white">
+        <span
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold',
+            // The accent, not a white overlay: inside a filled pill an overlay
+            // avatar would sit at almost the same value as the pill itself.
+            onChrome ? 'bg-chrome-selected text-on-chrome' : 'bg-linear-to-br from-blue-600 to-blue-800 text-white',
+          )}
+        >
           {initials(name)}
         </span>
         <span className="hidden text-left leading-tight sm:block">
-          <span className="block max-w-40 truncate text-sm font-medium text-text">{name}</span>
+          <span
+            className={cn(
+              'block max-w-40 truncate text-sm font-medium',
+              onChrome ? 'text-on-chrome' : 'text-text',
+            )}
+          >
+            {name}
+          </span>
           {subtitle && <span className={cn('block max-w-40 truncate', subtitleClass)}>{subtitle}</span>}
         </span>
-        <ChevronDownIcon className={cn('h-4 w-4 text-text-subtle transition-transform', open && 'rotate-180')} />
+        <ChevronDownIcon
+          className={cn(
+            'h-4 w-4 transition-transform',
+            onChrome ? 'text-on-chrome-subtle' : 'text-text-subtle',
+            open && 'rotate-180',
+          )}
+        />
       </button>
 
       {open && (
         // pt-2 is part of the hover area, so there's no gap to fall through.
         <div className="absolute right-0 top-full z-40 pt-2">
-          <div role="menu" className="w-56 overflow-hidden rounded-card border border-border bg-white py-1 shadow-popover">
+          <div role="menu" className="w-56 overflow-hidden rounded-card bg-surface py-1 shadow-popover">
             <div className="border-b border-border px-4 py-2.5">
               <p className="truncate text-sm font-medium text-text">{name}</p>
-              {subtitle && <p className={cn('truncate', subtitleClass)}>{subtitle}</p>}
+              {subtitle && <p className={cn('truncate', panelSubtitleClass)}>{subtitle}</p>}
             </div>
             <button
               type="button"

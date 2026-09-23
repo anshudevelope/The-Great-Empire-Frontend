@@ -5,6 +5,14 @@ import type { IconType } from 'react-icons'
 import {
   FiAlertTriangle,
   FiShield,
+  FiSun,
+  FiMoon,
+  FiBarChart2,
+  FiCreditCard,
+  FiFileText,
+  FiBriefcase,
+  FiTrendingUp,
+  FiAward,
   FiCheck,
   FiChevronDown,
   FiChevronRight,
@@ -53,3 +61,14 @@ export const TreeIcon: IconType = FiGitBranch
 export const MinusIcon: IconType = FiMinus
 export const RefreshIcon: IconType = FiRefreshCw
 export const ShieldIcon: IconType = FiShield
+
+export const SunIcon: IconType = FiSun
+export const MoonIcon: IconType = FiMoon
+// Sidebar section icons — each nav group needs its own, or the menu reads as
+// one undifferentiated list.
+export const InvoiceIcon: IconType = FiFileText
+export const PayoutIcon: IconType = FiCreditCard
+export const ReportIcon: IconType = FiBarChart2
+export const BusinessIcon: IconType = FiBriefcase
+export const EarningsIcon: IconType = FiTrendingUp
+export const RewardsIcon: IconType = FiAward

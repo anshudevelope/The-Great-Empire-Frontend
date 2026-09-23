@@ -171,8 +171,8 @@ export function PlaceMemberDialog({ member, onClose }: { member: PlaceableMember
                   className={cn(
                     'flex-1 rounded-control border px-4 py-2.5 text-sm font-medium transition-colors',
                     leg === side && available
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-border-strong bg-white text-text-muted',
+                      ? 'border-blue-600 bg-info-bg text-info'
+                      : 'border-border-strong bg-surface text-text-muted',
                     available ? 'cursor-pointer hover:bg-neutral-hover' : 'cursor-not-allowed opacity-50',
                   )}
                 >

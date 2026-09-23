@@ -94,7 +94,7 @@ export function AssociatesListPage() {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-card border border-border bg-white p-4 shadow-card sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-card bg-surface p-4 shadow-card sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
           <Input
@@ -197,10 +197,10 @@ export function AssociatesListPage() {
         />
       ) : (
         <>
-          <div className="rounded-card border border-border bg-white shadow-card">
+          <div className="rounded-card bg-surface shadow-card">
             <table className="w-full table-fixed text-left text-sm">
               <thead>
-                <tr className="border-b border-border bg-blue-50/60">
+                <tr className="border-b border-border bg-surface-sunken">
                   <th className="w-[9%] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-subtle">
                     Associate ID
                   </th>
@@ -231,7 +231,7 @@ export function AssociatesListPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border [&>tr]:transition-colors [&>tr:hover]:bg-neutral-hover">
                 {pageItems.map((associate) => (
                   <tr
                     key={associate._id}
@@ -240,7 +240,7 @@ export function AssociatesListPage() {
                     <td className="px-4 py-3 align-middle">
                       <Link
                         to={`/admin/associates/${associate._id}`}
-                        className="font-mono text-[13px] font-medium text-blue-700 hover:underline"
+                        className="font-mono text-[13px] font-medium text-info hover:underline"
                       >
                         {associate.memberCode ?? '—'}
                       </Link>
@@ -267,7 +267,7 @@ export function AssociatesListPage() {
                         emptyLabel={
                           <Link
                             to={`/admin/associates/${associate._id}/edit`}
-                            className="font-medium text-blue-700 hover:underline"
+                            className="font-medium text-info hover:underline"
                           >
                             Set password
                           </Link>

@@ -7,6 +7,7 @@ import { fetchMyCommissionSummary } from '@/api/commissions'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { ChevronRightIcon } from '@/components/icons/icons'
 import { formatTier } from '@/lib/tier'
 import { formatShortDate } from '@/lib/datetime'
 
@@ -56,10 +57,30 @@ export function PortalDashboardPage() {
               value={String(waiting)}
               hint={summary.data ? `${money(summary.data.data.unusedAmount)} paid` : undefined}
               accent
+              to="/portal/place-members"
+              linkLabel="Place members"
             />
-            <Stat label="Members placed" value={String(summary.data?.data.used ?? 0)} hint="Referrals placed in your tree" />
-            <Stat label="Total downline" value={String(levels.data?.totals.members ?? 0)} hint="Everyone below you" />
-            <Stat label="Active members" value={String(levels.data?.totals.active ?? 0)} hint="Approved status" />
+            <Stat
+              label="Members placed"
+              value={String(summary.data?.data.used ?? 0)}
+              hint="Referrals placed in your tree"
+              to="/portal/referrals"
+              linkLabel="View referrals"
+            />
+            <Stat
+              label="Total downline"
+              value={String(levels.data?.totals.members ?? 0)}
+              hint="Everyone below you"
+              to="/portal/downline"
+              linkLabel="View downline"
+            />
+            <Stat
+              label="Active members"
+              value={String(levels.data?.totals.active ?? 0)}
+              hint="Approved status"
+              to="/portal/downline"
+              linkLabel="View downline"
+            />
             {/* The date is today's: realtime income is computed live on every
                 request, so there is no server-side cutoff to report and no
                 reason to ask the API for a date the browser already has. */}
@@ -68,10 +89,12 @@ export function PortalDashboardPage() {
               value={money2(earnings?.totalIncome ?? 0)}
               hint={`Till ${formatShortDate(new Date().toISOString())}`}
               tone="success"
+              to="/portal/income"
+              linkLabel="View income"
             />
           </div>
 
-          {/* <section className="rounded-card border border-border bg-white p-6">
+          {/* <section className="rounded-card bg-surface p-6">
             <h2 className="mb-4 text-sm font-semibold text-text">Members by level</h2>
             {levels.data && levels.data.data.length > 0 ? (
               <div className="flex flex-col gap-2">
@@ -100,12 +123,22 @@ export function PortalDashboardPage() {
   )
 }
 
+/**
+ * A figure plus the page that figure comes from.
+ *
+ * The whole tile is the link — a card that reads as clickable but only responds
+ * on a small piece of text is a worse target than one big one. The "View …" row
+ * stays because the hover state alone never tells you *where* the tile goes, and
+ * on touch there is no hover at all.
+ */
 function Stat({
   label,
   value,
   hint,
   accent,
   tone,
+  to,
+  linkLabel,
 }: {
   label: string
   value: string
@@ -113,20 +146,32 @@ function Stat({
   accent?: boolean
   /** Money reads green. Same tile, only the figure changes colour. */
   tone?: 'success'
+  /** The section this figure is drawn from. */
+  to: string
+  linkLabel: string
 }) {
   const valueClass =
     tone === 'success'
       ? 'mt-1 text-2xl font-semibold tabular-nums text-success'
       : accent
-        ? 'mt-1 text-2xl font-semibold text-blue-700'
+        ? 'mt-1 text-2xl font-semibold text-info'
         : 'mt-1 text-2xl font-semibold text-text'
 
   return (
-    <div className="rounded-card border border-border bg-white p-5">
+    <Link
+      to={to}
+      // flex + h-full so the link row sits on the baseline of every tile in the
+      // row, whatever height the tallest one ends up being.
+      className="group flex h-full flex-col rounded-card bg-surface p-5 shadow-card transition-shadow hover:shadow-card-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+    >
       <p className="text-xs text-text-subtle">{label}</p>
       <p className={valueClass}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-text-subtle">{hint}</p>}
-    </div>
+      <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-info transition-colors group-hover:text-blue-600">
+        {linkLabel}
+        <ChevronRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </Link>
   )
 }
 

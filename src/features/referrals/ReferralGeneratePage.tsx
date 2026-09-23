@@ -91,7 +91,7 @@ export function ReferralGeneratePage() {
         <p className="mt-1 text-sm text-text-subtle">
           For an associate who is already registered but has no sponsor yet. New associates get their sponsor directly
           from{' '}
-          <Link to="/admin/associates/register" className="font-medium text-blue-700 hover:underline">
+          <Link to="/admin/associates/register" className="font-medium text-info hover:underline">
             Register
           </Link>
           .
@@ -99,7 +99,7 @@ export function ReferralGeneratePage() {
       </header>
 
       <div className="grid items-start gap-5 xl:grid-cols-3">
-        <div className="flex flex-col gap-5 rounded-card border border-border bg-white p-6 xl:col-span-2">
+        <div className="flex flex-col gap-5 rounded-card bg-surface p-6 xl:col-span-2">
           <div className="grid gap-4 md:grid-cols-2">
             <FormField
               label="Referred associate"
@@ -144,7 +144,7 @@ export function ReferralGeneratePage() {
             </p>
           )}
 
-          <div className="rounded-card border border-border bg-bg p-4">
+          <div className="rounded-card bg-bg p-4">
             <p className="mb-1 text-sm font-medium text-text">Payment received</p>
             <p className="mb-4 text-xs text-text-subtle">
               Money the sponsor paid to the company. Only the amount is required — the rest can be filled in later.
@@ -198,7 +198,7 @@ export function ReferralGeneratePage() {
             </div>
           </div>
 
-          <div className="rounded-card border border-border bg-bg p-4">
+          <div className="rounded-card bg-bg p-4">
             <p className="mb-1 text-sm font-medium text-text">Tree placement (optional)</p>
             <p className="mb-4 text-xs text-text-subtle">
               Leave this empty and the sponsor places the member from Place Members, choosing the parent and leg in their
@@ -226,7 +226,7 @@ export function ReferralGeneratePage() {
           </Button>
         </div>
 
-        <aside className="rounded-card border border-border bg-white p-6">
+        <aside className="rounded-card bg-surface p-6">
           <p className="text-sm font-semibold text-text">Summary</p>
           <dl className="mt-4 flex flex-col gap-3 text-sm">
             <SummaryRow label="Member" value={member ? member.label : 'Not selected'} muted={!member} />

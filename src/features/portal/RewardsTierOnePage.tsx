@@ -123,9 +123,9 @@ export function RewardsTierOnePage() {
 
 function Tile({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: boolean }) {
   return (
-    <div className="rounded-card border border-border bg-white p-5">
+    <div className="rounded-card bg-surface p-5">
       <p className="text-xs text-text-subtle">{label}</p>
-      <p className={cn('mt-1 text-2xl font-semibold tabular-nums', accent ? 'text-blue-700' : 'text-text')}>{value}</p>
+      <p className={cn('mt-1 text-2xl font-semibold tabular-nums', accent ? 'text-info' : 'text-text')}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-text-subtle">{hint}</p>}
     </div>
   )
@@ -139,8 +139,8 @@ function Tile({ label, value, hint, accent }: { label: string; value: string; hi
 //   const needRight = Math.max(0, target - right)
 //
 //   return (
-//     <section className="rounded-card border border-blue-200 bg-blue-50 p-5">
-//       <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Next reward · {milestone.stage}</p>
+//     <section className="rounded-card border border-blue-200 bg-info-bg p-5">
+//       <p className="text-xs font-semibold uppercase tracking-wider text-info">Next reward · {milestone.stage}</p>
 //       <p className="mt-1 text-lg font-semibold text-text">
 //         {milestone.reward} <span className="font-normal text-text-muted">({inr(milestone.rewardValue)})</span>
 //       </p>
@@ -167,7 +167,7 @@ function Tile({ label, value, hint, accent }: { label: string; value: string; hi
 //           {inr(Math.min(have, target))} / {inr(target)}
 //         </span>
 //       </div>
-//       <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white">
+//       <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-surface">
 //         <div
 //           className={cn('h-full rounded-full', need === 0 ? 'bg-success' : 'bg-blue-600')}
 //           style={{ width: `${pct}%` }}
@@ -186,7 +186,7 @@ function RewardTable({ left, right, pairs }: { left: number; right: number; pair
   const matched = Math.min(left, right)
 
   return (
-    <div className="overflow-x-auto rounded-card border border-border bg-white">
+    <div className="overflow-x-auto rounded-card bg-surface">
       <table className="w-full min-w-[760px] text-sm">
         <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
           <tr>

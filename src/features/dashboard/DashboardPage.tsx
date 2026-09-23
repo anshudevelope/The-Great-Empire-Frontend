@@ -4,8 +4,10 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
 import { CheckIcon, ClockIcon, PlusIcon, UsersIcon, XIcon } from '@/components/icons/icons'
 
+// Soft tinted tiles rather than one solid-filled card: a saturated tile fights
+// the navy chrome, and tinting all four keeps the row reading as one set.
 const STAT_CONFIG = [
-  { key: 'total', label: 'Total Associates', icon: UsersIcon, tone: 'bg-blue-600 text-white' },
+  { key: 'total', label: 'Total Associates', icon: UsersIcon, tone: 'bg-info-bg text-info' },
   { key: 'pending', label: 'Pending Approval', icon: ClockIcon, tone: 'bg-warning-bg text-warning' },
   { key: 'approved', label: 'Approved', icon: CheckIcon, tone: 'bg-success-bg text-success' },
   { key: 'rejected', label: 'Rejected', icon: XIcon, tone: 'bg-danger-bg text-danger' },
@@ -39,7 +41,7 @@ export function DashboardPage() {
           ? // Same card shell as the real stats, so nothing shifts when the
             // numbers arrive.
             STAT_CONFIG.map((stat) => (
-              <div key={stat.key} className="rounded-card border border-border bg-white p-5 shadow-card">
+              <div key={stat.key} className="rounded-card bg-surface p-5 shadow-card">
                 <Skeleton className="mb-4 h-10 w-10 rounded-lg" />
                 <Skeleton className="h-9 w-16" />
                 <Skeleton className="mt-2 h-4 w-28" />
@@ -48,7 +50,7 @@ export function DashboardPage() {
           : STAT_CONFIG.map((stat) => (
               <div
                 key={stat.key}
-                className="group rounded-card border border-border bg-white p-5 shadow-card transition-shadow hover:shadow-card-hover"
+                className="group rounded-card bg-surface p-5 shadow-card transition-shadow hover:shadow-card-hover"
               >
                 <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${stat.tone}`}>
                   <stat.icon className="h-5 w-5" />
@@ -59,7 +61,7 @@ export function DashboardPage() {
             ))}
       </div>
 
-      <div className="rounded-card border border-border bg-white p-6 shadow-card">
+      <div className="rounded-card bg-surface p-6 shadow-card">
         <h2 className="text-sm font-semibold text-text">Quick actions</h2>
         <div className="mt-3 flex flex-wrap gap-3">
           <Link to="/admin/associates">

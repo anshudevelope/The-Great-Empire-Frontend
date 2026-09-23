@@ -608,7 +608,7 @@ export function AssociateFormPage() {
         <Section title="Documents">
           <div className={`flex flex-col gap-3 ${FULL_ROW}`}>
             <FormField label="Profile Image" hint="PNG or JPG, shown across the admin panel">
-              <label className="flex cursor-pointer items-center gap-3 rounded-control border border-dashed border-border-strong bg-blue-50/40 px-4 py-3 text-sm text-text-muted hover:bg-blue-50">
+              <label className="flex cursor-pointer items-center gap-3 rounded-control border border-dashed border-border-strong bg-info-bg/40 px-4 py-3 text-sm text-text-muted hover:bg-info-bg">
                 <UploadIcon className="h-4 w-4 shrink-0" />
                 <span className="truncate">{profileImageFile ? profileImageFile.name : 'Choose a profile image'}</span>
                 <input
@@ -644,7 +644,7 @@ export function AssociateFormPage() {
                     value={row.docType}
                     onChange={(event) => updateDocumentRow(row.id, { docType: event.target.value })}
                   />
-                  <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-control border border-dashed border-border-strong px-3 py-2 text-sm text-text-muted hover:bg-blue-50">
+                  <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-control border border-dashed border-border-strong px-3 py-2 text-sm text-text-muted hover:bg-info-bg">
                     <UploadIcon className="h-4 w-4 shrink-0" />
                     <span className="truncate">{row.file ? row.file.name : 'Choose file'}</span>
                     <input
@@ -685,7 +685,7 @@ export function AssociateFormPage() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-card border border-border bg-white p-5 shadow-card">
+    <div className="rounded-card bg-surface p-5 shadow-card">
       <h2 className="mb-4 text-sm font-semibold text-text">{title}</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{children}</div>
     </div>
@@ -696,7 +696,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function OptionalBox({ title, description, children }: { title: string; description: ReactNode; children: ReactNode }) {
   return (
     <div className={FULL_ROW}>
-      <div className="rounded-card border border-border bg-bg p-4">
+      <div className="rounded-card bg-bg p-4">
         <p className="text-sm font-medium text-text">
           {title} <span className="font-normal text-text-subtle">(optional)</span>
         </p>

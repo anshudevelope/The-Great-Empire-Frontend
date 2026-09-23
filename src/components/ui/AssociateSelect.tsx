@@ -73,7 +73,7 @@ export function AssociateSelect({
 
   if (value) {
     return (
-      <div className="flex items-center justify-between gap-2 rounded-control border border-border-strong bg-white px-3 py-2">
+      <div className="flex items-center justify-between gap-2 rounded-control border border-border-strong bg-surface px-3 py-2">
         <span className="truncate text-sm text-text">{value.label}</span>
         <button
           type="button"
@@ -81,7 +81,7 @@ export function AssociateSelect({
             onChange(null)
             setTerm('')
           }}
-          className="cursor-pointer text-xs font-medium text-blue-600 hover:text-blue-700"
+          className="cursor-pointer text-xs font-medium text-blue-600 hover:text-info"
         >
           Change
         </button>
@@ -105,7 +105,7 @@ export function AssociateSelect({
       />
 
       {open && (
-        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-card border border-border bg-white py-1 shadow-popover">
+        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-card bg-surface py-1 shadow-popover">
           {isFetching && (
             <div className="flex items-center gap-2 px-3 py-2 text-sm text-text-subtle">
               <Spinner className="h-3.5 w-3.5" /> Searching…

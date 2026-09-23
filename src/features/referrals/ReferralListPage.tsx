@@ -105,7 +105,7 @@ export function ReferralListPage() {
       ) : rows.length === 0 ? (
         <EmptyState title="No referrals" description="Nothing matches these filters yet." />
       ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-white">
+        <div className="overflow-x-auto rounded-card bg-surface">
           <table className="w-full min-w-[820px] text-sm">
             <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
               <tr>
@@ -178,7 +178,7 @@ export function ReferralListPage() {
               <Line label="Tier" value={formatTier(open.tier)} />
             </div>
 
-            <div className="rounded-card border border-border bg-bg p-4">
+            <div className="rounded-card bg-bg p-4">
               <p className="mb-3 text-sm font-medium text-text">Payment received</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Line label="Amount paid" value={money(open.amountPaid)} />

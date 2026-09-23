@@ -113,7 +113,7 @@ export function InvoiceListPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-card border border-border bg-white">
+          <div className="overflow-x-auto rounded-card bg-surface">
             <table className="w-full min-w-[880px] text-sm">
               <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
                 <tr>
@@ -131,7 +131,7 @@ export function InvoiceListPage() {
                 {rows.map((invoice) => (
                   <tr key={invoice._id} className="border-b border-border last:border-0 hover:bg-neutral-hover/60">
                     <td className="px-4 py-3">
-                      <Link to={`${base}/${invoice._id}`} className="font-mono text-xs font-medium text-blue-700 hover:underline">
+                      <Link to={`${base}/${invoice._id}`} className="font-mono text-xs font-medium text-info hover:underline">
                         {invoice.invoiceNo}
                       </Link>
                     </td>
@@ -185,9 +185,9 @@ export function InvoiceListPage() {
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="rounded-card border border-border bg-white p-4">
+    <div className="rounded-card bg-surface p-4">
       <p className="text-xs text-text-subtle">{label}</p>
-      <p className={accent ? 'mt-1 text-xl font-semibold text-blue-700' : 'mt-1 text-xl font-semibold text-text'}>
+      <p className={accent ? 'mt-1 text-xl font-semibold text-info' : 'mt-1 text-xl font-semibold text-text'}>
         {value}
       </p>
     </div>

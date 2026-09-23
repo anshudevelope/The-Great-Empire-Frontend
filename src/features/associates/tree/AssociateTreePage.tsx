@@ -67,7 +67,7 @@ export function AssociateTreePage() {
         <p className="mt-1 text-sm text-text-subtle">Binary placement structure — left and right legs.</p>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-card border border-border bg-white p-4 shadow-card sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-card bg-surface p-4 shadow-card sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-subtle" />
           <Input
@@ -77,7 +77,7 @@ export function AssociateTreePage() {
             onChange={(event) => setSearchInput(event.target.value)}
           />
           {searchResults.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-control border border-border bg-white shadow-popover">
+            <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-control border border-border bg-surface shadow-popover">
               {searchResults.map((associate) => (
                 <button
                   key={associate._id}

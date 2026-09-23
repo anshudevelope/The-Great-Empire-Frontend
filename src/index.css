@@ -1,61 +1,179 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 
+/* Dark mode is driven by a `data-theme` attribute on <html> rather than the
+   media query alone, so the user's explicit choice can override the OS. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
-  /* Brand — a confident cobalt blue, used for the sidebar/header accents,
-     primary actions, links and active states across the whole app. */
-  --color-blue-950: #0b2054;
-  --color-blue-900: #142f6b;
-  --color-blue-800: #163e94;
-  --color-blue-700: #1d4fd1;
-  --color-blue-600: #2f6fed;
-  --color-blue-500: #5586f5;
-  --color-blue-400: #7fa2f8;
-  --color-blue-300: #a9c1fa;
-  --color-blue-200: #cbdcfc;
-  --color-blue-100: #dce7fe;
-  --color-blue-50: #eff4ff;
+  /* Brand — a confident cobalt blue. Ramp positions stay conventional (600 is
+     the action blue, 50 the faintest tint) so every existing `blue-*` usage
+     keeps the meaning it already had. */
+  --color-blue-950: #0b1030;
+  --color-blue-900: #131a47;
+  --color-blue-800: #1e2a63;
+  --color-blue-700: #29388a;
+  --color-blue-600: #3348b0;
+  --color-blue-500: #4f66d6;
+  --color-blue-400: #7f90e6;
+  --color-blue-300: #a8b4f0;
+  --color-blue-200: #c9d1f7;
+  --color-blue-100: #dfe4fb;
+  --color-blue-50: #f0f2fe;
 
-  /* Neutrals */
-  --color-bg: #f6f7fa;
-  --color-surface: #ffffff;
-  --color-border: #e6e9ef;
-  --color-border-strong: #d3d8e1;
-  --color-text: #12141a;
-  --color-text-muted: #5b6472;
-  --color-text-subtle: #8b93a1;
-  --color-neutral-hover: #f1f3f7;
+  /* Chrome — the solid fill behind the sidebar and topbar, which together form
+     one continuous L-shaped frame around the content.
 
-  /* Semantic status colors */
-  --color-success: #157f4a;
-  --color-success-bg: #e8f7ee;
-  --color-success-border: #b7e6c9;
-  --color-warning: #a15c07;
-  --color-warning-bg: #fdf3e3;
-  --color-warning-border: #f2d9a6;
-  --color-danger: #b3261e;
-  --color-danger-bg: #fdecec;
-  --color-danger-border: #f3c3c0;
-  /* Info is an alias of the brand blue — one blue in the system, not two competing shades. */
-  --color-info: #2f6fed;
-  --color-info-bg: #eff4ff;
-  --color-info-border: #dce7fe;
+     Deliberately deeper than the action blue below: a bright cobalt spread
+     across two large, permanently-visible surfaces is tiring over a full
+     working day, and it would leave primary buttons with no affordance left.
+     Chrome states are white overlays rather than separate hues, so they hold up
+     wherever the fill lands. */
+  --color-chrome: #24389c;
+  --color-chrome-hover: rgba(255, 255, 255, 0.10);
+  --color-chrome-active: rgba(255, 255, 255, 0.14);
+  --color-on-chrome: #ffffff;
+  --color-on-chrome-muted: rgba(255, 255, 255, 0.72);
+  --color-on-chrome-subtle: rgba(255, 255, 255, 0.52);
+  /* Destructive text that stays legible on the chrome, where danger-bg can't. */
+  --color-on-chrome-danger: #ff9b9b;
+  /* The current page reads as a lifted accent tile, not a white rule. Hairlines
+     on a coloured field are what make an admin panel look a decade old, so the
+     chrome carries no dividers at all — grouping comes from spacing, and
+     separation from elevation. */
+  --color-chrome-selected: #3a50c4;
+  --shadow-chrome-selected: 0 4px 12px -4px rgba(6, 10, 34, 0.55);
+
+  /* Overlay behind modals and the mobile drawer. Fixed in both themes rather
+     than derived from the text colour, which inverts and would turn it pale. */
+  --color-scrim: rgba(8, 12, 32, 0.55);
 
   /* Type */
   --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
 
-  /* Radius / shadow — one consistent scale for the whole app */
-  --radius-card: 0.875rem;
-  --radius-control: 0.625rem;
-  --shadow-xs: 0 1px 2px rgba(15, 23, 41, 0.05);
-  --shadow-card: 0 1px 2px rgba(15, 23, 41, 0.04), 0 1px 1px rgba(15, 23, 41, 0.03), 0 0 0 1px rgba(15, 23, 41, 0.03);
-  --shadow-card-hover: 0 8px 20px -6px rgba(15, 23, 41, 0.12), 0 2px 6px -2px rgba(15, 23, 41, 0.06);
-  --shadow-popover: 0 20px 40px -12px rgba(10, 15, 30, 0.28), 0 6px 16px -4px rgba(10, 15, 30, 0.12);
+  /* Radius / shadow — one consistent scale for the whole app. Shadows are a
+     three-stop recipe (contact, diffusion, hairline ring) rather than a single
+     flat drop, which is what gives cards their lift. */
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --radius-pill: 9999px;
 
   /* Motion */
   --animate-modal-in: modal-in 0.15s ease-out;
   --animate-fade-in: fade-in 0.15s ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   Theme-varying values.
+
+   These live on :root (and flip under [data-theme="dark"]) rather than inside
+   @theme, because @theme copies a value into every utility it generates. The
+   `@theme inline` block below points the utilities at these variables instead,
+   which is what lets one attribute on <html> re-theme the whole app.
+   --------------------------------------------------------------------------- */
+:root {
+  /* Neutrals — a cool, slightly deeper canvas so a borderless white card reads
+     as a distinct surface on its own, with no outline needed to define it. */
+  --ge-bg: #eef2f8;
+  --ge-surface: #ffffff;
+  /* Recessed surface — table headers, inset panels, disabled fields. */
+  --ge-surface-sunken: #f2f5fa;
+  /* Kept for the few places an actual line still earns its keep: inputs,
+     selects and table row separators. Cards no longer use it. */
+  --ge-border: #e1e7f0;
+  --ge-border-strong: #c9d2e0;
+  --ge-text: #1a1c1f;
+  --ge-text-muted: #5a6472;
+  --ge-text-subtle: #858fa0;
+  --ge-neutral-hover: #f3f6fb;
+
+  /* Status — a touch less saturated than before so they sit calmly beside the
+     strong chrome blue. */
+  --ge-success: #17794b;
+  --ge-success-bg: #e9f6ee;
+  --ge-success-border: #bce3cb;
+  --ge-warning: #9a5c0c;
+  --ge-warning-bg: #fcf4e6;
+  --ge-warning-border: #efd9ac;
+  --ge-danger: #b32b23;
+  --ge-danger-bg: #fcedec;
+  --ge-danger-border: #f0c6c3;
+  /* Info is an alias of the brand blue — one blue in the system, not two. */
+  --ge-info: #3348b0;
+  --ge-info-bg: #f0f2fe;
+  --ge-info-border: #dfe4fb;
+
+  /* Cards carry no outline at all — no `0 0 0 1px` ring, which was just a
+     border by another name. A soft, wide shadow over the cooler canvas does the
+     separating instead. */
+  --ge-shadow-xs: 0 1px 2px rgba(11, 18, 38, 0.06);
+  --ge-shadow-card: 0 1px 3px rgba(20, 28, 48, 0.06), 0 6px 16px -6px rgba(20, 28, 48, 0.08);
+  --ge-shadow-card-hover: 0 2px 6px rgba(20, 28, 48, 0.08), 0 16px 32px -12px rgba(20, 28, 48, 0.14);
+  --ge-shadow-popover: 0 24px 48px -16px rgba(8, 12, 28, 0.30), 0 8px 20px -6px rgba(8, 12, 28, 0.14);
+}
+
+[data-theme="dark"] {
+  --ge-bg: #0b0f1a;
+  --ge-surface: #141a28;
+  --ge-surface-sunken: #0f1522;
+  --ge-border: #232b3d;
+  --ge-border-strong: #333d53;
+  --ge-text: #e8ecf4;
+  --ge-text-muted: #9ba6b8;
+  --ge-text-subtle: #6f7b90;
+  --ge-neutral-hover: #1c2334;
+
+  /* Lifted so each tone still clears AA against the dark surface. */
+  --ge-success: #3dd68c;
+  --ge-success-bg: #10261b;
+  --ge-success-border: #1e4733;
+  --ge-warning: #f5b54a;
+  --ge-warning-bg: #2a1f0c;
+  --ge-warning-border: #4a3617;
+  --ge-danger: #f87171;
+  --ge-danger-bg: #2a1414;
+  --ge-danger-border: #4d2323;
+  --ge-info: #7f90e6;
+  --ge-info-bg: #161d3d;
+  --ge-info-border: #26306b;
+
+  /* A drop shadow is nearly invisible on a dark canvas, so cards regain the
+     hairline ring here — on dark it reads as a highlight, not a border. */
+  --ge-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --ge-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --ge-shadow-card-hover: 0 12px 28px -10px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.10);
+  --ge-shadow-popover: 0 24px 48px -16px rgba(0, 0, 0, 0.70), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+@theme inline {
+  --color-bg: var(--ge-bg);
+  --color-surface: var(--ge-surface);
+  --color-surface-sunken: var(--ge-surface-sunken);
+  --color-border: var(--ge-border);
+  --color-border-strong: var(--ge-border-strong);
+  --color-text: var(--ge-text);
+  --color-text-muted: var(--ge-text-muted);
+  --color-text-subtle: var(--ge-text-subtle);
+  --color-neutral-hover: var(--ge-neutral-hover);
+
+  --color-success: var(--ge-success);
+  --color-success-bg: var(--ge-success-bg);
+  --color-success-border: var(--ge-success-border);
+  --color-warning: var(--ge-warning);
+  --color-warning-bg: var(--ge-warning-bg);
+  --color-warning-border: var(--ge-warning-border);
+  --color-danger: var(--ge-danger);
+  --color-danger-bg: var(--ge-danger-bg);
+  --color-danger-border: var(--ge-danger-border);
+  --color-info: var(--ge-info);
+  --color-info-bg: var(--ge-info-bg);
+  --color-info-border: var(--ge-info-border);
+
+  --shadow-xs: var(--ge-shadow-xs);
+  --shadow-card: var(--ge-shadow-card);
+  --shadow-card-hover: var(--ge-shadow-card-hover);
+  --shadow-popover: var(--ge-shadow-popover);
 }
 
 @keyframes modal-in {
@@ -78,8 +196,13 @@
   }
 }
 
+/* Native scrollbars, date pickers and form widgets follow the app's theme. */
 html {
   color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 body {
@@ -132,6 +255,27 @@ button{
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Same slim scrollbar, but for the chrome — the default thumb is a light grey
+   that all but vanishes against the solid blue sidebar. */
+.scrollbar-chrome {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
+}
+
+.scrollbar-chrome::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-chrome::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+}
+
+.scrollbar-chrome::-webkit-scrollbar-track {
   background: transparent;
 }
 
@@ -219,6 +363,21 @@ button{
   @page {
     size: A4;
     margin: 14mm;
+  }
+
+  /* An invoice printed from dark mode would come out as a black slab, so the
+     printed page is forced back to light values regardless of the theme. */
+  html[data-theme='dark'] {
+    color-scheme: light;
+    --ge-bg: #ffffff;
+    --ge-surface: #ffffff;
+    --ge-surface-sunken: #f2f5fa;
+    --ge-border: #e1e7f0;
+    --ge-border-strong: #c9d2e0;
+    --ge-text: #1a1c1f;
+    --ge-text-muted: #5a6472;
+    --ge-text-subtle: #858fa0;
+    --ge-neutral-hover: #f3f6fb;
   }
 
   body * {

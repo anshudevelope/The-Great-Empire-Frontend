@@ -50,7 +50,7 @@ export function LandingPage() {
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-blue-950">
       
       {/* Header Navigation */}
-      <header className="flex items-center justify-between border-b border-blue-100 bg-white px-6 py-5 sm:px-12">
+      <header className="flex items-center justify-between border-b border-blue-100 bg-surface px-6 py-5 sm:px-12">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-900 text-white shadow-xs">
             <BuildingIcon className="h-5 w-5" />
@@ -62,7 +62,7 @@ export function LandingPage() {
 
         <nav className="flex items-center gap-3">
           <Link to="/associate/login">
-            <button className="rounded-lg px-4 py-2 text-sm font-medium text-blue-800 hover:bg-blue-50 transition-colors">
+            <button className="rounded-lg px-4 py-2 text-sm font-medium text-info hover:bg-info-bg transition-colors">
               Associate Portal
             </button>
           </Link>
@@ -73,7 +73,7 @@ export function LandingPage() {
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center sm:py-28">
         
         {/* Subtle Badge Tag */}
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-blue-50 px-3.5 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-info-bg px-3.5 py-1 text-xs font-semibold uppercase tracking-wide text-info">
           <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
           Real Estate Advisory & Consulting
         </div>
@@ -84,7 +84,7 @@ export function LandingPage() {
         </h1>
 
         {/* Hero Description */}
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-blue-800/80 sm:text-lg">
+        <p className="mt-6 max-w-2xl text-base leading-relaxed text-info/80 sm:text-lg">
           Great Empire provides premier real estate advisory, market intelligence, and portfolio optimization for private clients, developers, and institutional investors.
         </p>
 
@@ -102,20 +102,20 @@ export function LandingPage() {
           {SERVICES.map((service) => (
             <div 
               key={service.label} 
-              className="rounded-xl border border-blue-100 bg-white p-7 shadow-xs transition-shadow hover:shadow-md"
+              className="rounded-xl border border-blue-100 bg-surface p-7 shadow-xs transition-shadow hover:shadow-md"
             >
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-info-bg text-info">
                 <service.icon className="h-5 w-5" />
               </div>
               <h3 className="text-base font-semibold text-blue-950">{service.label}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-blue-800/70">{service.description}</p>
+              <p className="mt-2 text-sm leading-relaxed text-info/70">{service.description}</p>
             </div>
           ))}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-blue-100 bg-white px-6 py-6 text-center text-xs text-blue-700/70 sm:px-10">
+      <footer className="border-t border-blue-100 bg-surface px-6 py-6 text-center text-xs text-info/70 sm:px-10">
         © {new Date().getFullYear()} Great Empire Consulting Group. All rights reserved.
       </footer>
     </div>

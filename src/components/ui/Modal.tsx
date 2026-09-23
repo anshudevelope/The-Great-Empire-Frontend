@@ -34,13 +34,13 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-blue-950/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-scrim backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'relative w-full animate-modal-in rounded-card bg-white shadow-popover',
+          'relative w-full animate-modal-in rounded-card bg-surface shadow-popover',
           sizeClasses[size],
         )}
       >
@@ -52,7 +52,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="cursor-pointer rounded-control p-1 text-text-subtle hover:bg-blue-50 hover:text-text"
+                className="cursor-pointer rounded-control p-1 text-text-subtle hover:bg-info-bg hover:text-text"
               >
                 <XIcon className="h-4 w-4" />
               </button>

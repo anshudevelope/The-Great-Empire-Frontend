@@ -58,12 +58,12 @@ export function PortalTreePage() {
             <button
               type="button"
               onClick={() => setRootId(undefined)}
-              className="cursor-pointer rounded-control border border-border-strong bg-white px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-neutral-hover"
+              className="cursor-pointer rounded-control border border-border-strong bg-surface px-3 py-1.5 text-sm font-medium text-text-muted hover:bg-neutral-hover"
             >
               ← Back to my tree
             </button>
           )}
-          <div className="flex rounded-control border border-border-strong bg-white p-0.5">
+          <div className="flex rounded-control border border-border-strong bg-surface p-0.5">
             {(['binary', 'sponsor'] as View[]).map((option) => (
               <button
                 key={option}
@@ -104,7 +104,7 @@ export function PortalTreePage() {
           <EmptyState title="No tree yet" description="Add your first member to start building your network." />
         )
       ) : sponsor.data ? (
-        <div className="flex-1 overflow-auto rounded-card border border-border bg-white p-6">
+        <div className="flex-1 overflow-auto rounded-card bg-surface p-6">
           <SponsorBranch node={sponsor.data.data} />
         </div>
       ) : (

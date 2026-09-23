@@ -49,7 +49,7 @@ export function InvoiceDetailPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-card border border-border bg-white">
+      <div className="overflow-x-auto rounded-card bg-surface">
         <InvoiceDocument invoice={invoice} />
       </div>
     </div>

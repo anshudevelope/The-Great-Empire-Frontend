@@ -27,7 +27,7 @@ export function DirectsPage() {
           {waiting > 0 && (
             <>
               , {waiting} not placed yet.{' '}
-              <Link to="/portal/place-members" className="font-medium text-blue-700 hover:underline">
+              <Link to="/portal/place-members" className="font-medium text-info hover:underline">
                 Place them →
               </Link>
             </>
@@ -45,7 +45,7 @@ export function DirectsPage() {
           description="Associates the admin registers under you will appear here."
         />
       ) : (
-        <div className="overflow-x-auto rounded-card border border-border bg-white">
+        <div className="overflow-x-auto rounded-card bg-surface">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
               <tr>

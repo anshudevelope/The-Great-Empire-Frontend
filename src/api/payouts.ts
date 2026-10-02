@@ -23,6 +23,8 @@ export interface PayoutTotals {
   adminCharge: number
   secondaryCharge: number
   netPayable: number
+  /** Registration money behind this period — full amountPaid, ratings included. */
+  business: number
   /** Unmatched volume destroyed by the closing. Cannot be recovered. */
   carryFlushed: number
   ledgerRows: number

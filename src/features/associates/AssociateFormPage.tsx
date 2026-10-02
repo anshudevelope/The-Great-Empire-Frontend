@@ -60,6 +60,7 @@ const emptyDefaults: AssociateFormValues = {
   parentId: '',
   position: '',
   amountPaid: '',
+  rating: '100',
   paymentMode: '',
   paymentRef: '',
   receivedOn: '',
@@ -68,7 +69,7 @@ const emptyDefaults: AssociateFormValues = {
 
 // Sent as-is, blanks included, so clearing a field on Edit really clears it.
 // Received by is not among them — the server always records the admin.
-const PAYMENT_KEYS = ['amountPaid', 'paymentMode', 'paymentRef', 'receivedOn', 'notes'] as const
+const PAYMENT_KEYS = ['amountPaid', 'rating', 'paymentMode', 'paymentRef', 'receivedOn', 'notes'] as const
 
 interface DocumentRow {
   id: string
@@ -199,6 +200,7 @@ export function AssociateFormPage() {
       parentId: idOf(associate.parentId) || (associate.treeStatus === 'unplaced' ? sponsorId : ''),
       position: associate.position ?? '',
       amountPaid: referral ? String(referral.amountPaid) : '',
+      rating: referral ? String(referral.rating ?? 100) : '100',
       paymentMode: referral?.paymentMode ?? '',
       paymentRef: referral?.paymentRef ?? '',
       receivedOn: referral?.receivedOn ? referral.receivedOn.slice(0, 10) : todayIST(),
@@ -728,6 +730,23 @@ function PaymentFields({
           placeholder="25000"
           invalid={!!errors.amountPaid}
           {...register('amountPaid')}
+        />
+      </FormField>
+      <FormField
+        label="Rating (%)"
+        htmlFor="rating"
+        hint="Share of the amount that earns commission. The rest still counts as business."
+        error={errors.rating?.message}
+      >
+        <Input
+          id="rating"
+          type="number"
+          min="0"
+          max="100"
+          inputMode="decimal"
+          placeholder="100"
+          invalid={!!errors.rating}
+          {...register('rating')}
         />
       </FormField>
       <FormField label="Payment mode" htmlFor="paymentMode">

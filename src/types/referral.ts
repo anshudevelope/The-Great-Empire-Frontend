@@ -50,8 +50,15 @@ export interface ReferralInvoice {
   member: ReferralParty
   tier: string
   tierLabel: string
-  /** Money the sponsor PAID to the company. Recorded only — never a payout. */
+  /**
+   * Money the sponsor PAID to the company — the business amount, and what the
+   * receipt shows. Never reduced by the rating.
+   */
   amountPaid: number
+  /** Percentage of amountPaid that earns commission. 100 on older referrals. */
+  rating: number
+  /** amountPaid × rating. What the 10% direct and the leg carry are computed on. */
+  commissionBase: number
   payment: ReferralPayment
   status: ReferralStatus
   usedAt: string | null

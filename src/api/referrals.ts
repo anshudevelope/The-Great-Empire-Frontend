@@ -13,6 +13,8 @@ export interface CreateReferralPayload {
   /** Optional — place the member under the sponsor now instead of leaving it to the sponsor. */
   position?: string
   amountPaid: number
+  /** Percentage of amountPaid that earns commission. Omitted means 100. */
+  rating?: number
   paymentMode?: string
   paymentRef?: string
   receivedOn?: string

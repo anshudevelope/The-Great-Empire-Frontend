@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import type { PayoutLine, PayoutStatus } from '@/api/payouts'
 
@@ -6,6 +7,15 @@ export const money = (value: number) =>
   `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export const pct = (fraction: number) => `${+(fraction * 100).toFixed(2)}%`
+
+/**
+ * What share of the period's turnover is going out as payout.
+ *
+ * Business can legitimately be zero — a period made only of reversals, say — so
+ * this returns a dash rather than dividing by it.
+ */
+export const payoutShare = (netPayable: number, business: number) =>
+  business > 0 ? `${((netPayable / business) * 100).toFixed(1)}%` : '—'
 
 const STATUS_STYLE: Record<PayoutStatus, string> = {
   draft: 'bg-warning-bg text-warning',
@@ -34,7 +44,8 @@ export function Stat({
 }: {
   label: string
   value: string
-  hint?: string
+  /** ReactNode, not string — some hints need their own line breaks. */
+  hint?: ReactNode
   tone?: 'plain' | 'good' | 'warn'
 }) {
   return (

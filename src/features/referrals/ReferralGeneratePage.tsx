@@ -37,6 +37,8 @@ export function ReferralGeneratePage() {
   const [issuedTo, setIssuedTo] = useState<AssociateOption | null>(null)
   const [position, setPosition] = useState('')
   const [amountPaid, setAmountPaid] = useState('')
+  // Share of the payment that earns commission. 100 = all of it, as before.
+  const [rating, setRating] = useState('100')
   const [paymentMode, setPaymentMode] = useState('')
   const [paymentRef, setPaymentRef] = useState('')
   const [receivedOn, setReceivedOn] = useState(today())
@@ -56,6 +58,7 @@ export function ReferralGeneratePage() {
       setIssuedTo(null)
       setPosition('')
       setAmountPaid('')
+      setRating('100')
       setPaymentRef('')
       setPaymentMode('')
       setNotes('')
@@ -71,12 +74,16 @@ export function ReferralGeneratePage() {
     if (!issuedTo) return setError('Choose the sponsor who paid for them.')
     const amount = Number(amountPaid)
     if (amountPaid === '' || !Number.isFinite(amount) || amount < 0) return setError('Enter the amount the sponsor paid.')
+    const ratingValue = rating === '' ? 100 : Number(rating)
+    if (!Number.isFinite(ratingValue) || ratingValue < 0 || ratingValue > 100)
+      return setError('Rating must be a percentage between 0 and 100.')
 
     mutation.mutate({
       member: member._id,
       issuedTo: issuedTo._id,
       position: position || undefined,
       amountPaid: amount,
+      rating: ratingValue,
       paymentMode: paymentMode || undefined,
       paymentRef: paymentRef || undefined,
       receivedOn: receivedOn || undefined,
@@ -160,6 +167,29 @@ export function ReferralGeneratePage() {
                   placeholder="25000"
                   value={amountPaid}
                   onChange={(event) => setAmountPaid(event.target.value)}
+                />
+              </FormField>
+
+              <FormField
+                label="Rating (%)"
+                htmlFor="rating"
+                hint={
+                  amountPaid && rating
+                    ? `Commission is calculated on ₹${(
+                        (Number(amountPaid) * Number(rating)) / 100
+                      ).toLocaleString('en-IN')} — the rest still counts as business`
+                    : 'Share of the payment that earns commission. 100 = all of it.'
+                }
+              >
+                <Input
+                  id="rating"
+                  type="number"
+                  min="0"
+                  max="100"
+                  inputMode="decimal"
+                  placeholder="100"
+                  value={rating}
+                  onChange={(event) => setRating(event.target.value)}
                 />
               </FormField>
 

@@ -32,7 +32,12 @@ export interface AssociateReferral {
   referralNo: string
   invoiceNo: string
   status: 'unused' | 'used' | 'cancelled'
+  /** The business amount, and what the receipt shows. Not reduced by rating. */
   amountPaid: number
+  /** Percentage of amountPaid that earns commission. 100 on older referrals. */
+  rating: number
+  /** amountPaid × rating — what the direct bonus and leg carry are computed on. */
+  commissionBase: number
   paymentMode: string | null
   paymentRef: string
   receivedOn: string | null

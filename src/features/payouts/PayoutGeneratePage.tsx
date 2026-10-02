@@ -16,7 +16,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { formatShortDate } from '@/lib/datetime'
-import { LinesTable, Stat, money, pct } from './payoutBits'
+import { LinesTable, Stat, money, payoutShare, pct } from './payoutBits'
 
 const day = (value?: string | null) => formatShortDate(value ?? undefined)
 
@@ -259,7 +259,7 @@ export function PayoutGeneratePage() {
         </div>
       </header>
 
-      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Members" value={String(totals.members)} hint="with income this period" />
         <Stat label="Gross" value={money(totals.gross)} hint={`direct ${money(totals.grossDirect)} + matching ${money(totals.grossMatching)}`} />
         <Stat
@@ -268,6 +268,18 @@ export function PayoutGeneratePage() {
           hint={`admin ${pct(rates.adminChargePct)} + ${rates.secondaryChargeLabel} ${pct(rates.secondaryChargePct)}`}
         />
         <Stat label="Net payable" value={money(totals.netPayable)} tone="good" />
+        <Stat
+          label="Payout vs business"
+          value={payoutShare(totals.netPayable, totals.business)}
+          hint={
+            <>
+              {/* The payout figure is already its own tile — repeating it here
+                  would say the same thing twice. Business is the number this
+                  tile adds, so it gets the weight. */}
+              <span className="text-sm font-semibold text-success">{money(totals.business)}</span> business
+            </>
+          }
+        />
       </div>
 
       {rates.flushCarryOnClose ? (

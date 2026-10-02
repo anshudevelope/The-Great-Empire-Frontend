@@ -45,6 +45,8 @@ const associateBaseShape = {
 
   // What the sponsor paid. Only sent when a sponsor is chosen.
   amountPaid: z.string().optional(),
+  /** Percentage of amountPaid that earns commission. Blank means 100. */
+  rating: z.string().optional(),
   paymentMode: z.string().optional(),
   paymentRef: z.string().max(100, 'Too long').optional(),
   receivedOn: z.string().optional(),
@@ -62,9 +64,19 @@ const associateObjectSchema = z.object({
 // AssociateFormPage swap the schema at runtime without the resolver type splitting.
 
 // Payment is optional (an empty amount is recorded as ₹0), but a typed amount must be valid.
-function validAmount(values: { sponsorId?: string; amountPaid?: string }, ctx: z.RefinementCtx) {
+function validAmount(
+  values: { sponsorId?: string; amountPaid?: string; rating?: string },
+  ctx: z.RefinementCtx,
+) {
   if (values.sponsorId && values.amountPaid && !/^\d+(\.\d{1,2})?$/.test(values.amountPaid)) {
     ctx.addIssue({ code: 'custom', message: 'Enter a valid amount', path: ['amountPaid'] })
+  }
+
+  if (values.rating) {
+    const rating = Number(values.rating)
+    if (!Number.isFinite(rating) || rating < 0 || rating > 100) {
+      ctx.addIssue({ code: 'custom', message: 'Rating must be between 0 and 100', path: ['rating'] })
+    }
   }
 }
 

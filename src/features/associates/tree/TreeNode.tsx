@@ -1,14 +1,23 @@
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
 import type { AssociateStatus, AssociateTreeNode, LegBusiness } from '@/types/associate'
 import { formatDate } from '@/lib/datetime'
 
-const TOOLTIP_WIDTH = 288 // w-72
-const TOOLTIP_HEIGHT = 320 // approximate; only used to decide flip direction
+const MIN_TOOLTIP_WIDTH = 288 // w-72; the card grows past this to fit its figures
+const EDGE = 8 // minimum gap between the card and the viewport edge
+const GAP = 8 // gap between the card and the node it describes
 
-const EMPTY_LEG: LegBusiness = { count: 0, amount: 0 }
+const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(n, max))
+
+/**
+ * Tier II is hidden, not removed: the engine pays nothing on it yet, so its
+ * rows would be all zeros. Flip this once Tier II generates volume.
+ */
+const SHOW_TIER_II = false
+
+const EMPTY_LEG: LegBusiness = { count: 0, amount: 0, rated: 0 }
 
 const STATUS_RING: Record<string, string> = {
   approved: 'ring-blue-500',
@@ -91,8 +100,12 @@ const dateOnly = (value?: string) =>
 const amount = (value: number) =>
   value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-/** The "count / amount" cell the reference platform's business table uses. */
-const countAndAmount = (leg: LegBusiness) => `${leg.count} / ${amount(leg.amount)}`
+type BusinessRow =
+  | { label: string; carry: false; left: LegBusiness; right: LegBusiness }
+  | { label: string; carry: true; left: number; right: number }
+
+/** The three figures shown under each leg. "Act. Amt" is the rated amount; "Bus. Amt" the full amount paid. */
+const LEG_COLUMNS = ['Member', 'Act. Amt', 'Bus. Amt'] as const
 
 /**
  * Hover card, modelled on the reference platform's genealogy tooltip.
@@ -103,31 +116,45 @@ const countAndAmount = (leg: LegBusiness) => `${leg.count} / ${amount(leg.amount
  */
 function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRect }) {
   const b = node.business
-  const rows = [
-    {
-      label: 'Tier I (Carry)',
-      carry: true,
-      left: amount(b?.tierI.carry.left ?? 0),
-      right: amount(b?.tierI.carry.right ?? 0),
-    },
+  const rows: BusinessRow[] = [
     {
       label: 'Tier I',
       carry: false,
-      left: countAndAmount(b?.tierI.left ?? EMPTY_LEG),
-      right: countAndAmount(b?.tierI.right ?? EMPTY_LEG),
+      left: b?.tierI.left ?? EMPTY_LEG,
+      right: b?.tierI.right ?? EMPTY_LEG,
     },
+    ...(SHOW_TIER_II
+      ? [
+          {
+            label: 'Tier II',
+            carry: false as const,
+            left: b?.tierII.left ?? EMPTY_LEG,
+            right: b?.tierII.right ?? EMPTY_LEG,
+          },
+        ]
+      : []),
     {
-      label: 'Tier II (Carry)',
+      label: 'Tier I (Carry)',
       carry: true,
-      left: amount(b?.tierII.carry.left ?? 0),
-      right: amount(b?.tierII.carry.right ?? 0),
+      left: b?.tierI.carry.left ?? 0,
+      right: b?.tierI.carry.right ?? 0,
     },
-    {
-      label: 'Tier II',
-      carry: false,
-      left: countAndAmount(b?.tierII.left ?? EMPTY_LEG),
-      right: countAndAmount(b?.tierII.right ?? EMPTY_LEG),
-    },
+    ...(SHOW_TIER_II
+      ? [
+          {
+            label: 'Tier II (Carry)',
+            carry: true as const,
+            left: b?.tierII.carry.left ?? 0,
+            right: b?.tierII.carry.right ?? 0,
+          },
+        ]
+      : []),
+  ]
+
+  const legCells = (leg: LegBusiness) => [
+    String(leg.count),
+    amount(leg.rated ?? 0),
+    amount(leg.amount),
   ]
 
   // Which leg the next pairing is waiting on. Only meaningful while one side
@@ -137,25 +164,49 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
   const carryR = b?.tierI.carry.right ?? 0
   const needs = carryL > 0 && carryR === 0 ? 'R' : carryR > 0 && carryL === 0 ? 'L' : null
 
+  // The card sizes to its content, so its real width and height are only known
+  // after it renders. Measure once, then place it — it can't be hovered or
+  // scrolled, so anything that lands off-screen is simply lost.
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+  useLayoutEffect(() => {
+    const el = cardRef.current
+    if (el) setSize({ w: el.offsetWidth, h: el.offsetHeight })
+  }, [])
+
   // Rendered in a portal with fixed positioning. The tree canvas scrolls, so
   // any absolutely-positioned tooltip inside it gets clipped by that overflow —
   // and no z-index can escape an ancestor's clipping box.
-  const flipBelow = anchor.top < TOOLTIP_HEIGHT + 12
-  const top = flipBelow ? anchor.bottom + 8 : anchor.top - 8
-  const left = Math.min(
-    Math.max(8, anchor.left + anchor.width / 2 - TOOLTIP_WIDTH / 2),
-    window.innerWidth - TOOLTIP_WIDTH - 8,
-  )
+  let top = 0
+  let left = 0
+  if (size) {
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    left = clamp(anchor.left + anchor.width / 2 - size.w / 2, EDGE, vw - size.w - EDGE)
+    // Above the node by default, below it if the top has no room, and pinned
+    // to the viewport when neither side fits whole.
+    const above = anchor.top - GAP - size.h
+    const below = anchor.bottom + GAP
+    top =
+      above >= EDGE
+        ? above
+        : below + size.h <= vh - EDGE
+          ? below
+          : clamp(below, EDGE, vh - size.h - EDGE)
+  }
 
   return createPortal(
     <div
+      ref={cardRef}
       role="tooltip"
       style={{
         position: 'fixed',
         top,
         left,
-        width: TOOLTIP_WIDTH,
-        transform: flipBelow ? undefined : 'translateY(-100%)',
+        width: 'max-content',
+        minWidth: MIN_TOOLTIP_WIDTH,
+        maxWidth: `calc(100vw - ${EDGE * 2}px)`,
+        visibility: size ? 'visible' : 'hidden',
         zIndex: 9999,
       }}
       className={cn(
@@ -188,17 +239,57 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
       <table className="w-full text-[10px]">
         <thead>
           <tr className="bg-neutral-hover text-text-muted">
-            <th className="px-2 py-1 text-left font-semibold">Business</th>
-            <th className="px-2 py-1 text-left font-semibold">L (Group A)</th>
-            <th className="px-2 py-1 text-left font-semibold">R (Group B)</th>
+            <th rowSpan={2} className="px-2 py-1 text-left align-bottom font-semibold">
+              Business
+            </th>
+            <th colSpan={3} className="border-l border-border px-2 py-1 text-center font-semibold">
+              L (Group A)
+            </th>
+            <th colSpan={3} className="border-l border-border px-2 py-1 text-center font-semibold">
+              R (Group B)
+            </th>
+          </tr>
+          <tr className="bg-neutral-hover text-text-subtle">
+            {['L', 'R'].flatMap((side) =>
+              LEG_COLUMNS.map((col, i) => (
+                <th
+                  key={`${side}-${col}`}
+                  className={cn('px-1.5 py-0.5 text-right font-medium', i === 0 && 'border-l border-border')}
+                >
+                  {col}
+                </th>
+              )),
+            )}
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.label} className={cn('border-t border-border', row.carry && 'bg-success-bg/50')}>
               <td className={cn('px-2 py-1 text-text-muted', row.carry && 'italic')}>{row.label}</td>
-              <td className="px-2 py-1 tabular-nums text-text">{row.left}</td>
-              <td className="px-2 py-1 tabular-nums text-text">{row.right}</td>
+              {row.carry ? (
+                <>
+                  <td colSpan={3} className="border-l border-border px-1.5 py-1 text-center tabular-nums text-text">
+                    {amount(row.left)}
+                  </td>
+                  <td colSpan={3} className="border-l border-border px-1.5 py-1 text-center tabular-nums text-text">
+                    {amount(row.right)}
+                  </td>
+                </>
+              ) : (
+                [row.left, row.right].flatMap((leg, side) =>
+                  legCells(leg).map((value, i) => (
+                    <td
+                      key={`${side}-${i}`}
+                      className={cn(
+                        'px-1.5 py-1 text-right tabular-nums text-text',
+                        i === 0 && 'border-l border-border',
+                      )}
+                    >
+                      {value}
+                    </td>
+                  )),
+                )
+              )}
             </tr>
           ))}
         </tbody>

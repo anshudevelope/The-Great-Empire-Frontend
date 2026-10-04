@@ -106,7 +106,10 @@ export interface Associate {
 /** One leg's figures for a tier: how many members sit under it, and their volume. */
 export interface LegBusiness {
   count: number
+  /** Business — the full amount paid. */
   amount: number
+  /** The rated share of `amount` (paid × rating) — what earns commission. */
+  rated: number
 }
 
 /**

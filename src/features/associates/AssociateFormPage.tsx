@@ -17,10 +17,11 @@ import {
 import type { AssociateFormValues } from '@/schemas/associate.schema'
 import { useAssociate, useCreateAssociate, useUpdateAssociate } from './hooks'
 import { RegistrationSuccessModal } from './RegistrationSuccessModal'
+import { ImportFromT1Modal } from './ImportFromT1Modal'
 import type { RegisterAssociateResponse } from '@/api/associates'
 import { AssociateSelect } from '@/components/ui/AssociateSelect'
 import { fetchPlacementPreview } from '@/api/associates'
-import type { AssociateOption } from '@/api/associates'
+import type { AssociateOption, ImportProfile } from '@/api/associates'
 import type { SponsorRef } from '@/types/associate'
 import { PAYMENT_MODES } from '@/types/referral'
 import { todayIST } from '@/lib/datetime'
@@ -36,7 +37,7 @@ import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { IconButton } from '@/components/ui/IconButton'
 import { Spinner } from '@/components/ui/Spinner'
-import { UploadIcon, XIcon } from '@/components/icons/icons'
+import { DownloadIcon, UploadIcon, XIcon } from '@/components/icons/icons'
 
 const emptyDefaults: AssociateFormValues = {
   title: '' as AssociateFormValues['title'],
@@ -71,7 +72,47 @@ const emptyDefaults: AssociateFormValues = {
 
 // Sent as-is, blanks included, so clearing a field on Edit really clears it.
 // Received by is not among them — the server always records the admin.
-const PAYMENT_KEYS = ['amountPaid', 'rating', 'paymentMode', 'paymentRef', 'receivedOn', 'notes'] as const
+// What "Import from T1" fills: every personal and contact field, plus the
+// password. Sponsor, placement and payment stay with the admin.
+const IMPORTED_KEYS = [
+  'title', 'fullName', 'fatherOrHusbandName', 'maritalStatus', 'gender', 'phone', 'email', 'password',
+  'dob', 'age', 'address', 'city', 'country', 'state', 'pinCode',
+  'nomineeName', 'nomineeRelation', 'nomineeAge',
+] as const
+
+function importedValues(profile: ImportProfile): Pick<AssociateFormValues, (typeof IMPORTED_KEYS)[number]> {
+  return {
+    title: profile.title as AssociateFormValues['title'],
+    fullName: profile.fullName,
+    fatherOrHusbandName: profile.fatherOrHusbandName ?? '',
+    maritalStatus: profile.maritalStatus as AssociateFormValues['maritalStatus'],
+    gender: profile.gender as AssociateFormValues['gender'],
+    phone: profile.phone,
+    email: profile.email,
+    password: profile.password ?? '',
+    dob: profile.dob ? profile.dob.slice(0, 10) : '',
+    age: profile.age != null ? String(profile.age) : '',
+    address: profile.address ?? '',
+    city: profile.city ?? '',
+    country: profile.country,
+    state: profile.state,
+    pinCode: profile.pinCode ?? '',
+    nomineeName: profile.nomineeName ?? '',
+    nomineeRelation: profile.nomineeRelation ?? '',
+    nomineeAge: profile.nomineeAge != null ? String(profile.nomineeAge) : '',
+  }
+}
+
+/** "photo and 2 documents will be copied" — what the server carries over from T1. */
+function importedMediaNote(profile: ImportProfile): string {
+  const parts = [
+    profile.profileImage ? 'photo' : null,
+    profile.documentCount ? `${profile.documentCount} document${profile.documentCount === 1 ? '' : 's'}` : null,
+  ].filter(Boolean)
+  return parts.length ? `${parts.join(' and ')} will be copied` : 'no photo or documents to copy'
+}
+
+const PAYMENT_KEYS =['amountPaid', 'rating', 'paymentMode', 'paymentRef', 'receivedOn', 'notes'] as const
 
 interface DocumentRow {
   id: string
@@ -124,6 +165,10 @@ export function AssociateFormPage() {
   const [documentRows, setDocumentRows] = useState<DocumentRow[]>([createDocumentRow()])
   // Register: the server's response, which opens the success popup.
   const [registered, setRegistered] = useState<RegisterAssociateResponse | null>(null)
+  // T2 Register: the T1 member the form was started from.
+  const [importOpen, setImportOpen] = useState(false)
+  const [imported, setImported] = useState<ImportProfile | null>(null)
+  const canImport = !isEdit && business === 't2'
 
   const loaded = associateQuery.data?.data
   const isRoot = loaded?.treeStatus === 'root'
@@ -211,6 +256,26 @@ export function AssociateFormPage() {
     })
   }, [isEdit, associateQuery.data, reset])
 
+  // Fills the personal fields only; whatever sponsor, placement and payment
+  // the admin already entered stays as it is. setValue rather than reset:
+  // reset with keepDefaultValues doesn't reliably repaint the inputs.
+  function fillPersonal(values: Pick<AssociateFormValues, (typeof IMPORTED_KEYS)[number]>) {
+    for (const key of IMPORTED_KEYS) {
+      setValue(key, values[key], { shouldDirty: true, shouldValidate: false })
+    }
+  }
+
+  function applyImport(profile: ImportProfile) {
+    fillPersonal(importedValues(profile))
+    setImported(profile)
+    toast.success(`Imported ${profile.memberCode ?? profile.fullName} from T1`)
+  }
+
+  function clearImport() {
+    fillPersonal(emptyDefaults)
+    setImported(null)
+  }
+
   function changeSponsor(option: AssociateOption | null) {
     // An unplaced member follows their sponsor as parent, unless the admin
     // already picked a different parent by hand.
@@ -289,6 +354,9 @@ export function AssociateFormPage() {
       formData.append('profileImage', profileImageFile)
     }
 
+    // The server copies the T1 photo and documents itself, from this id.
+    if (canImport && imported) formData.append('importFrom', imported._id)
+
     documentRows
       .filter((row) => row.file)
       .forEach((row, index) => {
@@ -333,14 +401,36 @@ export function AssociateFormPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-10">
-      <div>
-        <h1 className="text-xl font-semibold text-text">{isEdit ? 'Edit Associate Details' : 'Register Associate'}</h1>
-        <p className="mt-1 text-sm text-text-subtle">
-          {isEdit
-            ? 'Update the associate’s details, password, sponsor, placement and payment.'
-            : 'Fill in the associate’s details and choose their sponsor. Placement and payment are optional.'}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-text">{isEdit ? 'Edit Associate Details' : 'Register Associate'}</h1>
+          <p className="mt-1 text-sm text-text-subtle">
+            {isEdit
+              ? 'Update the associate’s details, password, sponsor, placement and payment.'
+              : 'Fill in the associate’s details and choose their sponsor. Placement and payment are optional.'}
+          </p>
+        </div>
+        {canImport && (
+          <Button variant="secondary" leftIcon={<DownloadIcon className="h-4 w-4" />} onClick={() => setImportOpen(true)}>
+            Import from T1
+          </Button>
+        )}
       </div>
+
+      {canImport && imported && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-info-border bg-info-bg px-4 py-3 text-sm">
+          <p className="text-text">
+            Imported from T1 <span className="font-mono font-medium">{imported.memberCode}</span> · {imported.fullName}
+            <span className="text-text-muted">
+              {' — '}
+              {importedMediaNote(imported)}
+            </span>
+          </p>
+          <button type="button" onClick={clearImport} className="cursor-pointer text-sm font-medium text-info hover:underline">
+            Clear
+          </button>
+        </div>
+      )}
 
       <form className="flex flex-col gap-6" onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
         <Section title="Personal Details">
@@ -693,6 +783,7 @@ export function AssociateFormPage() {
       </form>
 
       {registered && <RegistrationSuccessModal result={registered} />}
+      {canImport && <ImportFromT1Modal open={importOpen} onClose={() => setImportOpen(false)} onImport={applyImport} />}
     </div>
   )
 }

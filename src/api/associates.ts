@@ -80,6 +80,53 @@ export function searchAssociates(
   })
 }
 
+/** A T1 member in the "Import from T1" picker on T2's Register page. */
+export interface ImportCandidate {
+  _id: string
+  memberCode: string | null
+  fullName: string
+  email: string
+  phone: string
+  status: string
+  /** Their email already has an account in T2 — importing again would collide. */
+  alreadyImported: boolean
+}
+
+/** Everything the Register form takes from the T1 member, password included. */
+export interface ImportProfile {
+  _id: string
+  memberCode: string | null
+  title: string
+  fullName: string
+  fatherOrHusbandName?: string
+  maritalStatus: string
+  gender: string
+  phone: string
+  email: string
+  password: string | null
+  dob?: string | null
+  age?: number | null
+  address?: string
+  city?: string
+  country: string
+  state: string
+  pinCode?: string
+  nomineeName?: string
+  nomineeRelation?: string
+  nomineeAge?: number | null
+  /** URL of the photo that will be copied, if any. */
+  profileImage: string | null
+  documentCount: number
+}
+
+export function searchImportCandidates(q: string): Promise<ApiListResponse<ImportCandidate>> {
+  return apiRequest<ApiListResponse<ImportCandidate>>('/associates/import/t1', { params: { q } })
+}
+
+export function fetchImportProfile(id: string): Promise<ApiSingleResponse<ImportProfile>> {
+  return apiRequest<ApiSingleResponse<ImportProfile>>(`/associates/import/t1/${id}`)
+}
+
 export interface PlacementPreview {
   parent: { _id: string; memberCode: string; fullName: string }
   position: 'Left' | 'Right'

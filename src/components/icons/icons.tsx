@@ -31,6 +31,7 @@ import {
   FiSearch,
   FiTrash2,
   FiUpload,
+  FiDownload,
   FiUser,
   FiUsers,
   FiX,
@@ -56,6 +57,7 @@ export const CopyIcon: IconType = FiCopy
 export const AlertTriangleIcon: IconType = FiAlertTriangle
 export const UserCircleIcon: IconType = FiUser
 export const UploadIcon: IconType = FiUpload
+export const DownloadIcon: IconType = FiDownload
 export const BuildingIcon: IconType = HiOutlineBuildingOffice2
 export const TreeIcon: IconType = FiGitBranch
 export const MinusIcon: IconType = FiMinus

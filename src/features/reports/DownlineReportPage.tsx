@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatTier } from '@/lib/tier'
+import { useActiveBusiness } from '@/store/businessStore'
 
 // The API caps `limit` at 200, so every option here is within range.
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
@@ -22,6 +23,8 @@ const statusTone = (status: string) =>
  * which it is rendering.
  */
 export function DownlineReportPage() {
+  // T2 holds a single tier, so there's nothing to filter by.
+  const showTierFilter = useActiveBusiness() === 't1'
   const [filters, setFilters] = useState({ status: '', tier: '', leg: '', search: '' })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
@@ -89,11 +92,13 @@ export function DownlineReportPage() {
           <option value="rejected">Rejected</option>
           <option value="suspended">Suspended</option>
         </Select>
+        {showTierFilter && (
         <Select value={filters.tier} onChange={set('tier')} containerClassName="w-44">
           <option value="">All tiers</option>
           <option value="Tier I">Tier I (Insurance)</option>
           <option value="Tier II">Tier II (Plots)</option>
         </Select>
+        )}
         <Select value={filters.leg} onChange={set('leg')} containerClassName="w-36">
           <option value="">Both legs</option>
           <option value="Left">Left leg</option>

@@ -24,8 +24,8 @@ export function scopeFromPath(pathname: string): AuthScope {
   return pathname === '/admin' || pathname.startsWith('/admin/') ? 'admin' : 'associate'
 }
 
-/** Where each scope lands once signed in. */
-export const homeFor = (scope: AuthScope) => (scope === 'admin' ? '/admin/dashboard' : '/portal/dashboard')
+/** Where each scope lands once signed in. Admins pick a business first. */
+export const homeFor = (scope: AuthScope) => (scope === 'admin' ? '/admin/select' : '/portal/dashboard')
 
 /** Where each scope sends people who aren't signed in. */
 export const loginPathFor = (scope: AuthScope) => (scope === 'admin' ? '/admin/login' : '/associate/login')

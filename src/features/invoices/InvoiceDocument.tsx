@@ -193,6 +193,8 @@
 
 import type { Invoice } from '@/api/invoices'
 import { formatDate } from '@/lib/datetime'
+import { useActiveBusiness } from '@/store/businessStore'
+import { businessName } from '@/lib/business'
 
 const money = (value: number) =>
   `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -206,6 +208,7 @@ const day = (value?: string | null) => formatDate(value)
  * print stylesheet keeps. Sized for A4 at print time.
  */
 export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
+  const business = useActiveBusiness()
   const { company, billedTo, transaction, items, totals, payment } = invoice
   const cancelled = invoice.status === 'Cancelled'
 
@@ -214,6 +217,8 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
       <header className="flex flex-wrap items-start justify-between gap-6 border-b border-border pb-6">
         <div>
           <h2 className="text-lg font-semibold">{company.name}</h2>
+          {/* T1 and T2 number invoices independently; this says which register it's from. */}
+          <p className="text-xs font-medium uppercase tracking-wide text-text-subtle">{businessName(business)}</p>
           {/* The registered entity, when it differs from the trading name. */}
           {company.legalName && company.legalName !== company.name && (
             <p className="text-sm text-text-muted">{company.legalName}</p>

@@ -9,7 +9,7 @@ import { MoonIcon, SunIcon } from '@/components/icons/icons'
  * The icon shows the theme you'd switch *to*, which is the convention users
  * already read correctly — a sun means "go light".
  */
-export function ThemeToggle() {
+export function ThemeToggle({ tooltipAlign = 'center' }: { tooltipAlign?: 'center' | 'end' }) {
   // The resolved theme, not the preference: 'system' would tell us nothing
   // about which icon to show.
   const isDark = useUIStore((state) => state.resolvedTheme === 'dark')
@@ -18,7 +18,7 @@ export function ThemeToggle() {
   const label = isDark ? 'Switch to light mode' : 'Switch to dark mode'
 
   return (
-    <Tooltip label={label} side="bottom">
+    <Tooltip label={label} side="bottom" align={tooltipAlign}>
       <button
         type="button"
         onClick={toggleTheme}

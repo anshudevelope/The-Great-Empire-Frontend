@@ -184,7 +184,7 @@
 // }
 
 
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -192,11 +192,14 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { loginSchema } from '@/schemas/auth.schema'
 import type { LoginFormValues } from '@/schemas/auth.schema'
-import { login as loginRequest } from '@/api/auth'
+import { chooseLoginBusiness, login as loginRequest } from '@/api/auth'
+import type { ChooseBusinessResponse, LoginResponse } from '@/types/auth'
+import { BUSINESSES, type Business } from '@/lib/business'
 import { ApiRequestError } from '@/api/fetchClient'
 import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
 import { homeFor, useAuthScope, type AuthScope } from '@/store/authScope'
+import { useBusinessStore } from '@/store/businessStore'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { BuildingIcon } from '@/components/icons/icons'
@@ -246,6 +249,7 @@ export function LoginForm({
   const showOther = Boolean(otherTo && otherCta)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const setSession = useAuthStore((state) => state.login)
+  const clearBusiness = useBusinessStore((state) => state.clearBusiness)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -258,23 +262,48 @@ export function LoginForm({
     defaultValues: { identifier: '', password: '' },
   })
 
+  // Set when one password opened accounts in both businesses.
+  const [choice, setChoice] = useState<ChooseBusinessResponse | null>(null)
+
+  const loginError = (error: Error) => {
+    toast.error(error instanceof ApiRequestError ? error.message : 'Login failed. Please try again.')
+  }
+
   const mutation = useMutation({
     // The API only returns a session when the role matches the audience, so
     // anything that reaches onSuccess belongs on this side of the app.
     mutationFn: (values: LoginFormValues) => loginRequest({ ...values, audience }),
     onSuccess: (data) => {
-      setSession(data.token, data.data)
-
-      toast.success(`Welcome back, ${data.data.fullName.split(' ')[0]}`)
-      const state = location.state as LocationState | null
-      navigate(state?.from?.pathname ?? homeFor(audience), { replace: true })
+      if ('chooseBusiness' in data) setChoice(data)
+      else startSession(data)
     },
+    onError: loginError,
+  })
+
+  const choose = useMutation({
+    mutationFn: (business: Business) => chooseLoginBusiness(choice!.pickToken, business),
+    onSuccess: startSession,
     onError: (error) => {
-      toast.error(
-        error instanceof ApiRequestError ? error.message : 'Login failed. Please try again.'
-      )
+      // An expired pick sends them back to the password form.
+      setChoice(null)
+      loginError(error)
     },
   })
+
+  function startSession(data: LoginResponse) {
+    setSession(data.token, data.data)
+
+    toast.success(`Welcome back, ${data.data.fullName.split(' ')[0]}`)
+    // Every admin sign-in starts at the T1 / T2 chooser, even when it was
+    // triggered by an expired session on a deep link.
+    if (audience === 'admin') {
+      clearBusiness()
+      navigate(homeFor('admin'), { replace: true })
+      return
+    }
+    const state = location.state as LocationState | null
+    navigate(state?.from?.pathname ?? homeFor(audience), { replace: true })
+  }
 
   // Only this scope's session skips the form, and only to this scope's home.
   // Being signed in as an admin must not redirect anyone away from the
@@ -317,6 +346,36 @@ export function LoginForm({
           </div>
 
           <div className="rounded-xl border border-blue-100 bg-surface p-8 shadow-xs">
+            {choice ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-semibold text-text">You have an account in both businesses.</p>
+                <p className="-mt-1 text-sm text-text-muted">Which one do you want to open?</p>
+                {choice.options.map((option) => (
+                  <button
+                    key={option.business}
+                    type="button"
+                    disabled={choose.isPending}
+                    onClick={() => choose.mutate(option.business)}
+                    className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-border px-4 py-3 text-left transition-colors hover:border-border-strong hover:bg-info-bg disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <span>
+                      <span className="block text-sm font-semibold text-text">
+                        {BUSINESSES[option.business].code} · {option.label}
+                      </span>
+                      {option.memberCode && <span className="font-mono text-xs text-text-muted">{option.memberCode}</span>}
+                    </span>
+                    {choose.isPending && choose.variables === option.business && <Spinner className="h-4 w-4" />}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setChoice(null)}
+                  className="mt-1 cursor-pointer text-center text-sm font-medium text-info hover:underline"
+                >
+                  Use a different account
+                </button>
+              </div>
+            ) : (
             <form
               className="flex flex-col gap-5"
               onSubmit={handleSubmit((values) => mutation.mutate(values))}
@@ -364,6 +423,7 @@ export function LoginForm({
                 Sign in
               </button>
             </form>
+            )}
           </div>
 
           {showOther && (

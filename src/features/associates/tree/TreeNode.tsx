@@ -4,18 +4,14 @@ import { UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
 import type { AssociateStatus, AssociateTreeNode, LegBusiness } from '@/types/associate'
 import { formatDate } from '@/lib/datetime'
+import { useActiveBusiness } from '@/store/businessStore'
+import { BUSINESSES } from '@/lib/business'
 
 const MIN_TOOLTIP_WIDTH = 288 // w-72; the card grows past this to fit its figures
 const EDGE = 8 // minimum gap between the card and the viewport edge
 const GAP = 8 // gap between the card and the node it describes
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(n, max))
-
-/**
- * Tier II is hidden, not removed: the engine pays nothing on it yet, so its
- * rows would be all zeros. Flip this once Tier II generates volume.
- */
-const SHOW_TIER_II = false
 
 const EMPTY_LEG: LegBusiness = { count: 0, amount: 0, rated: 0 }
 
@@ -116,39 +112,25 @@ const LEG_COLUMNS = ['Member', 'Act. Amt', 'Bus. Amt'] as const
  */
 function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRect }) {
   const b = node.business
+  // One business, one tier: T1 shows Tier I rows, T2 shows Tier II rows.
+  const business = useActiveBusiness()
+  const rates = BUSINESSES[business].rates
+  const tierII = business === 't2'
+  const tier = tierII ? b?.tierII : b?.tierI
+  const tierLabel = tierII ? 'Tier II' : 'Tier I'
   const rows: BusinessRow[] = [
     {
-      label: 'Tier I',
+      label: tierLabel,
       carry: false,
-      left: b?.tierI.left ?? EMPTY_LEG,
-      right: b?.tierI.right ?? EMPTY_LEG,
+      left: tier?.left ?? EMPTY_LEG,
+      right: tier?.right ?? EMPTY_LEG,
     },
-    ...(SHOW_TIER_II
-      ? [
-          {
-            label: 'Tier II',
-            carry: false as const,
-            left: b?.tierII.left ?? EMPTY_LEG,
-            right: b?.tierII.right ?? EMPTY_LEG,
-          },
-        ]
-      : []),
     {
-      label: 'Tier I (Carry)',
+      label: `${tierLabel} (Carry)`,
       carry: true,
-      left: b?.tierI.carry.left ?? 0,
-      right: b?.tierI.carry.right ?? 0,
+      left: tier?.carry.left ?? 0,
+      right: tier?.carry.right ?? 0,
     },
-    ...(SHOW_TIER_II
-      ? [
-          {
-            label: 'Tier II (Carry)',
-            carry: true as const,
-            left: b?.tierII.carry.left ?? 0,
-            right: b?.tierII.carry.right ?? 0,
-          },
-        ]
-      : []),
   ]
 
   const legCells = (leg: LegBusiness) => [
@@ -303,11 +285,11 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
 
       <div className="grid grid-cols-3 border-t border-border text-[10px]">
         <div className="px-2 py-1.5">
-          <p className="text-text-subtle">Direct (10%)</p>
+          <p className="text-text-subtle">Direct ({rates.direct})</p>
           <p className="tabular-nums font-medium text-text">₹{amount(node.income?.direct ?? 0)}</p>
         </div>
         <div className="border-l border-border px-2 py-1.5">
-          <p className="text-text-subtle">Matching (5%)</p>
+          <p className="text-text-subtle">Matching ({rates.matching})</p>
           <p className="tabular-nums font-medium text-text">₹{amount(node.income?.matching ?? 0)}</p>
         </div>
         <div className="border-l border-border bg-success-bg/60 px-2 py-1.5">

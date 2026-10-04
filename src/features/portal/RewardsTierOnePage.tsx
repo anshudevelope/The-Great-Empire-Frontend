@@ -1,5 +1,7 @@
+import { Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchMyCommissionSummary } from '@/api/commissions'
+import { useActiveBusiness } from '@/store/businessStore'
 import { Spinner } from '@/components/ui/Spinner'
 import { CheckIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
@@ -62,10 +64,14 @@ function inr(value: number): string {
 const trim = (n: number) => String(Number(n.toFixed(2)))
 
 export function RewardsTierOnePage() {
+  const business = useActiveBusiness()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['commissions', 'me', 'summary'],
     queryFn: fetchMyCommissionSummary,
   })
+
+  // The Insurance reward ladder; Plots members have no plan here yet.
+  if (business !== 't1') return <Navigate to="/portal/dashboard" replace />
 
   if (isLoading) {
     return (

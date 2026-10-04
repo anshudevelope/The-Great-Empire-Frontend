@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { downloadInvoicesCsv, fetchInvoices } from '@/api/invoices'
 import { useAuthStore } from '@/store/authStore'
+import { useActiveBusiness } from '@/store/businessStore'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -22,6 +23,8 @@ const day = (value?: string | null) => formatShortDate(value)
  * the shape is transaction-agnostic so more can be added without touching this.
  */
 export function InvoiceListPage() {
+  // T2 holds a single tier, so there's nothing to filter by.
+  const showTierFilter = useActiveBusiness() === 't1'
   const isAdmin = useAuthStore((state) => state.user?.role === 'admin')
   const base = isAdmin ? '/admin/invoices' : '/portal/invoices'
 
@@ -95,11 +98,13 @@ export function InvoiceListPage() {
           <option value="paid">Paid</option>
           <option value="cancelled">Cancelled</option>
         </Select>
+        {showTierFilter && (
         <Select value={tier} onChange={(event) => setTier(event.target.value)} containerClassName="w-44">
           <option value="">All tiers</option>
           <option value="Tier I">Tier I (Insurance)</option>
           <option value="Tier II">Tier II (Plots)</option>
         </Select>
+        )}
       </div>
 
       {isLoading ? (

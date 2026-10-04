@@ -16,6 +16,7 @@ import { PasswordText } from '@/components/ui/PasswordText'
 import { CheckIcon, EyeIcon, PencilIcon, PlusIcon, RefreshIcon, SearchIcon, TrashIcon, XIcon } from '@/components/icons/icons'
 import { formatShortDate } from '@/lib/datetime'
 import { formatTier } from '@/lib/tier'
+import { useActiveBusiness } from '@/store/businessStore'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 
@@ -28,6 +29,8 @@ interface PendingAction {
 }
 
 export function AssociatesListPage() {
+  // T2 holds a single tier, so there's nothing to filter by.
+  const showTierFilter = useActiveBusiness() === 't1'
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('')
@@ -117,6 +120,7 @@ export function AssociatesListPage() {
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </Select>
+        {showTierFilter && (
         <Select
           value={tier}
           onChange={(event) => {
@@ -129,6 +133,7 @@ export function AssociatesListPage() {
           <option value="Tier I">Tier I (Insurance)</option>
           <option value="Tier II">Tier II (Plots)</option>
         </Select>
+        )}
         {/* Placement is optional now, so "waiting to be placed" is a real
             working list, not an error state. */}
         <Select

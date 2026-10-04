@@ -27,6 +27,8 @@ import { PlaceMembersPage } from '@/features/portal/PlaceMembersPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
 import { DirectsPage } from '@/features/portal/DirectsPage'
 import { RewardsTierOnePage } from '@/features/portal/RewardsTierOnePage'
+import { BusinessSelectPage } from '@/features/business/BusinessSelectPage'
+import { RequireBusiness } from '@/features/business/RequireBusiness'
 
 // Every route sits under AuthScopeProvider, which reads the path and decides
 // which of the two sessions this page belongs to. Nothing outside it may read
@@ -49,29 +51,36 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: <ProtectedRoute />,
     children: [
+      // Signed in, no business open yet — the T1 / T2 cards.
+      { path: 'select', element: <BusinessSelectPage /> },
       {
-        element: <AdminLayout />,
+        element: <RequireBusiness />,
         children: [
-          { index: true, element: <Navigate to="dashboard" replace /> },
-          { path: 'dashboard', element: <DashboardPage /> },
-          { path: 'associates', element: <AssociatesListPage /> },
-          { path: 'associates/register', element: <AssociateFormPage /> },
-          { path: 'associates/tree', element: <AssociateTreePage /> },
-          { path: 'associates/tree/:id', element: <AssociateTreePage /> },
-          { path: 'associates/:id', element: <AssociateDetailPage /> },
-          { path: 'associates/:id/edit', element: <AssociateFormPage /> },
-          { path: 'referrals', element: <ReferralListPage /> },
-          // For members registered without a sponsor — no PIN.
-          { path: 'referrals/generate', element: <ReferralGeneratePage /> },
-          { path: 'invoices', element: <InvoiceListPage /> },
-          { path: 'invoices/:id', element: <InvoiceDetailPage /> },
-          // 'generate' before ':id' — same shape, and Express-style ordering
-          // applies to react-router's ranked matching only for literal-vs-param
-          // ties, so keeping them in this order is the readable guarantee.
-          { path: 'payouts', element: <PayoutListPage /> },
-          { path: 'payouts/generate', element: <PayoutGeneratePage /> },
-          { path: 'payouts/:id', element: <PayoutDetailPage /> },
-          { path: 'reports/downline', element: <DownlineReportPage /> },
+          {
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: 'dashboard', element: <DashboardPage /> },
+              { path: 'associates', element: <AssociatesListPage /> },
+              { path: 'associates/register', element: <AssociateFormPage /> },
+              { path: 'associates/tree', element: <AssociateTreePage /> },
+              { path: 'associates/tree/:id', element: <AssociateTreePage /> },
+              { path: 'associates/:id', element: <AssociateDetailPage /> },
+              { path: 'associates/:id/edit', element: <AssociateFormPage /> },
+              { path: 'referrals', element: <ReferralListPage /> },
+              // For members registered without a sponsor — no PIN.
+              { path: 'referrals/generate', element: <ReferralGeneratePage /> },
+              { path: 'invoices', element: <InvoiceListPage /> },
+              { path: 'invoices/:id', element: <InvoiceDetailPage /> },
+              // 'generate' before ':id' — same shape, and Express-style ordering
+              // applies to react-router's ranked matching only for literal-vs-param
+              // ties, so keeping them in this order is the readable guarantee.
+              { path: 'payouts', element: <PayoutListPage /> },
+              { path: 'payouts/generate', element: <PayoutGeneratePage /> },
+              { path: 'payouts/:id', element: <PayoutDetailPage /> },
+              { path: 'reports/downline', element: <DownlineReportPage /> },
+            ],
+          },
         ],
       },
     ],

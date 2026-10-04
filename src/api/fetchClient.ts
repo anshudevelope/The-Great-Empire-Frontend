@@ -1,4 +1,6 @@
 import { activeAuthStore } from '@/store/authStore'
+import { scopeFromPath } from '@/store/authScope'
+import { businessHeaders, useBusinessStore } from '@/store/businessStore'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
 
@@ -44,7 +46,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const session = activeAuthStore()
   const token = session.getState().token
 
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = { ...businessHeaders() }
   if (token) headers.Authorization = token
 
   let payload: BodyInit | undefined
@@ -61,6 +63,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   // sign the member portal out in another tab.
   if (response.status === 401) {
     session.getState().logout()
+    // The next admin sign-in starts at the chooser, as every sign-in does.
+    if (scopeFromPath(window.location.pathname) === 'admin') useBusinessStore.getState().clearBusiness()
   }
 
   const text = await response.text()

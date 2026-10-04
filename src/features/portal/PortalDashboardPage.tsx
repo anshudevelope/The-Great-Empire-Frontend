@@ -5,6 +5,7 @@ import { fetchPendingPlacement } from '@/api/associates'
 import { fetchLevelsReport } from '@/api/reports'
 import { fetchMyCommissionSummary } from '@/api/commissions'
 import { useAuthStore } from '@/store/authStore'
+import { useActiveBusiness } from '@/store/businessStore'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { QuickActions, type QuickAction } from '@/components/ui/QuickActions'
@@ -40,6 +41,8 @@ const money2 = (value: number) =>
 
 export function PortalDashboardPage() {
   const user = useAuthStore((state) => state.user)
+  // The reward ladder is the Insurance plan; Plots has none yet.
+  const quickActions = useActiveBusiness() === 't1' ? QUICK_ACTIONS : QUICK_ACTIONS.filter((a) => a.label !== 'Rewards')
 
   const summary = useQuery({ queryKey: ['referral-summary'], queryFn: fetchReferralSummary })
   const levels = useQuery({ queryKey: ['levels'], queryFn: () => fetchLevelsReport() })
@@ -69,7 +72,7 @@ export function PortalDashboardPage() {
       {/* Outside the loading gate on purpose — these go somewhere regardless of
           what the figures below say, so there is no reason to withhold them
           while the queries are still in flight. */}
-      <QuickActions actions={QUICK_ACTIONS} />
+      <QuickActions actions={quickActions} />
 
       {loading ? (
         <div className="flex justify-center py-16">

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/cn'
+import { businessName } from '@/lib/business'
+import { useBusinessStore } from '@/store/businessStore'
 import { useCompanyBrand } from '@/api/company'
 import { useUIStore } from '@/store/uiStore'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -178,6 +180,7 @@ function SidebarContent() {
 function SidebarBrand() {
   // Name comes from the server's data/company.json — one file renames the app.
   const company = useCompanyBrand()
+  const business = useBusinessStore((state) => state.business)
 
   return (
     <div className="flex items-center gap-2.5">
@@ -187,7 +190,7 @@ function SidebarBrand() {
       </div>
       <div className="leading-tight">
         <p className="truncate text-[14px] font-semibold tracking-tight text-on-chrome">{company.name}</p>
-        <p className="text-[11px] text-on-chrome-subtle">Admin Console</p>
+        <p className="text-[11px] text-on-chrome-subtle">{business ? businessName(business) : 'Admin Console'}</p>
       </div>
     </div>
   )

@@ -8,6 +8,8 @@ import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
+import { useActiveBusiness } from '@/store/businessStore'
+import { BUSINESSES } from '@/lib/business'
 import { formatShortDate } from '@/lib/datetime'
 
 const money = (value: number) =>
@@ -36,6 +38,7 @@ const TYPE_STYLE: Record<CommissionLedgerRow['type'], string> = {
  * marker: without it the two views would look identical but total differently.
  */
 export function MyIncomePage() {
+  const rates = BUSINESSES[useActiveBusiness()].rates
   const [period, setPeriod] = useState<'current' | 'all'>('current')
   const [type, setType] = useState('')
   const [page, setPage] = useState(1)
@@ -81,8 +84,8 @@ export function MyIncomePage() {
       ) : (
         <>
           <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Tile label="Direct (10%)" value={money(shown?.directIncome ?? 0)} />
-            <Tile label="Matching (5%)" value={money(shown?.matchingIncome ?? 0)} />
+            <Tile label={`Direct (${rates.direct})`} value={money(shown?.directIncome ?? 0)} />
+            <Tile label={`Matching (${rates.matching})`} value={money(shown?.matchingIncome ?? 0)} />
             <Tile label={period === 'current' ? 'Realtime income' : 'Lifetime income'} value={money(shown?.totalIncome ?? 0)} accent />
             <Tile
               label="Carry waiting"

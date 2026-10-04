@@ -28,8 +28,9 @@
 
 import { apiRequest } from './fetchClient'
 import type { ApiSingleResponse } from '@/types/api'
-import type { AuthUser, ChangePasswordResponse, LoginResponse } from '@/types/auth'
+import type { AuthUser, ChangePasswordResponse, ChooseBusinessResponse, LoginResponse } from '@/types/auth'
 import type { AuthScope } from '@/store/authScope'
+import type { Business } from '@/lib/business'
 
 export interface LoginPayload {
   identifier: string
@@ -46,9 +47,18 @@ export interface ChangePasswordPayload {
   newPassword: string
 }
 
-/** Accepts email or Associate ID, and only for the matching audience. */
-export function login(payload: LoginPayload): Promise<LoginResponse> {
-  return apiRequest<LoginResponse>('/auth/login', { method: 'POST', body: payload })
+/**
+ * Accepts email or Associate ID, and only for the matching audience. An
+ * associate whose password opens accounts in both businesses gets a choice
+ * instead of a session.
+ */
+export function login(payload: LoginPayload): Promise<LoginResponse | ChooseBusinessResponse> {
+  return apiRequest<LoginResponse | ChooseBusinessResponse>('/auth/login', { method: 'POST', body: payload })
+}
+
+/** Second step of that choice: trade the pick token for a session in one business. */
+export function chooseLoginBusiness(pickToken: string, business: Business): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>('/auth/login/choose', { method: 'POST', body: { pickToken, business } })
 }
 
 export function changePassword(payload: ChangePasswordPayload): Promise<ChangePasswordResponse> {

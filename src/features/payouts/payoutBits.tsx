@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import type { PayoutLine, PayoutStatus } from '@/api/payouts'
+import { BUSINESSES } from '@/lib/business'
+import { useActiveBusiness } from '@/store/businessStore'
 
 /** Two decimals, grouped Indian-style, with the symbol. */
 export const money = (value: number) =>
@@ -89,6 +91,7 @@ export function HeldPill({ reason }: { reason: PayoutLine['heldReason'] }) {
 
 /** The payout table, shared by the generate page and the read-only detail view. */
 export function LinesTable({ lines, label }: { lines: PayoutLine[]; label: string }) {
+  const rates = BUSINESSES[useActiveBusiness()].rates
   return (
     <div className="overflow-x-auto rounded-card bg-surface">
       <table className="w-full min-w-[980px] text-sm">
@@ -97,8 +100,8 @@ export function LinesTable({ lines, label }: { lines: PayoutLine[]; label: strin
             <th className="px-3 py-3 font-semibold">Sno.</th>
             <th className="px-3 py-3 font-semibold">Member</th>
             <th className="px-3 py-3 font-semibold">PAN</th>
-            <th className="px-3 py-3 text-right font-semibold">Direct (10%)</th>
-            <th className="px-3 py-3 text-right font-semibold">Matching (5%)</th>
+            <th className="px-3 py-3 text-right font-semibold">Direct ({rates.direct})</th>
+            <th className="px-3 py-3 text-right font-semibold">Matching ({rates.matching})</th>
             <th className="px-3 py-3 text-right font-semibold">Total</th>
             <th className="px-3 py-3 text-right font-semibold">Admin</th>
             <th className="px-3 py-3 text-right font-semibold">{label}</th>

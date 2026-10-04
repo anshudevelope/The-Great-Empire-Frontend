@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/cn'
+import { useActiveBusiness } from '@/store/businessStore'
 import {
   BusinessIcon,
   ChevronDownIcon,
@@ -84,6 +85,9 @@ const NAV: NavEntry[] = [
   },
 ]
 
+// The reward ladder is the Insurance plan; Plots has none yet.
+const T1_ONLY = new Set(['Rewards'])
+
 const isGroup = (entry: NavEntry): entry is NavGroup => 'items' in entry
 
 /**
@@ -118,10 +122,12 @@ export function PortalSidebarNav({ counts }: { counts: Record<BadgeKey, number> 
   const [toggled, setToggled] = useState<Record<string, boolean>>({})
   // Hovering peeks a group open; leaving closes it again unless it was clicked open.
   const [hovered, setHovered] = useState<string | null>(null)
+  const business = useActiveBusiness()
+  const nav = business === 't1' ? NAV : NAV.filter((entry) => !T1_ONLY.has(entry.label))
 
   return (
     <nav className="scrollbar-chrome flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-      {NAV.map((entry) => {
+      {nav.map((entry) => {
         if (!isGroup(entry)) {
           return (
             <NavLink

@@ -26,6 +26,8 @@ import { PAYMENT_MODES } from '@/types/referral'
 import { todayIST } from '@/lib/datetime'
 import { formatTier } from '@/lib/tier'
 import { useAuthStore } from '@/store/authStore'
+import { useActiveBusiness } from '@/store/businessStore'
+import { BUSINESSES } from '@/lib/business'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Select } from '@/components/ui/Select'
@@ -109,6 +111,7 @@ const READONLY_BOX = 'rounded-control border border-border-strong bg-neutral-hov
  * payment record.
  */
 export function AssociateFormPage() {
+  const business = useActiveBusiness()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const navigate = useNavigate()
@@ -441,15 +444,24 @@ export function AssociateFormPage() {
         </Section>
 
         <Section title="Membership & Placement">
-          <FormField label="Tier" htmlFor="tier" required error={errors.tier?.message}>
-            <Select id="tier" invalid={!!errors.tier} {...register('tier')}>
-              {ASSOCIATE_TIERS.map((tier) => (
-                <option key={tier} value={tier}>
-                  {formatTier(tier)}
-                </option>
-              ))}
-            </Select>
-          </FormField>
+          {business === 't1' ? (
+            <FormField label="Tier" htmlFor="tier" required error={errors.tier?.message}>
+              <Select id="tier" invalid={!!errors.tier} {...register('tier')}>
+                {ASSOCIATE_TIERS.map((tier) => (
+                  <option key={tier} value={tier}>
+                    {formatTier(tier)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          ) : (
+            // The server sets the tier in T2; shown so the admin sees what it will be.
+            <FormField label="Tier" htmlFor="tier-readonly">
+              <div id="tier-readonly" className={READONLY_BOX}>
+                {formatTier(BUSINESSES[business].tier)}
+              </div>
+            </FormField>
+          )}
 
           {isEdit && isRoot ? (
             <FormField label="Sponsor" htmlFor="sponsor-readonly" className="sm:col-span-1 lg:col-span-2">

@@ -6,6 +6,7 @@ import { MenuIcon } from '@/components/icons/icons'
 import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
 import { ProfileMenu } from './ProfileMenu'
 import { ThemeToggle } from './ThemeToggle'
+import { BusinessSwitcher } from './BusinessSwitcher'
 
 interface HeaderProps {
   /** Opens the confirmation owned by AdminLayout — the sidebar shares it. */
@@ -34,6 +35,7 @@ export function Header({ onLogout }: HeaderProps) {
       </Tooltip>
       <div className="hidden md:block" />
       <div className="flex items-center gap-2">
+        <BusinessSwitcher />
         <ThemeToggle />
         <ProfileMenu
           name={user?.fullName ?? 'Admin'}

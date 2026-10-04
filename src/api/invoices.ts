@@ -1,5 +1,6 @@
 import { apiRequest } from './fetchClient'
 import { activeAuthStore } from '@/store/authStore'
+import { businessHeaders } from '@/store/businessStore'
 import type { ApiSingleResponse } from '@/types/api'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
@@ -142,7 +143,9 @@ export async function downloadInvoicesCsv(filters: InvoiceFilters = {}): Promise
     if (value) url.searchParams.set(key, value)
   }
 
-  const response = await fetch(url.toString(), { headers: token ? { Authorization: token } : {} })
+  const response = await fetch(url.toString(), {
+    headers: { ...businessHeaders(), ...(token ? { Authorization: token } : {}) },
+  })
   if (!response.ok) throw new Error('Export failed')
 
   const blob = await response.blob()

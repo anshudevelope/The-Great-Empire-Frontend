@@ -1,5 +1,6 @@
 import { apiRequest } from './fetchClient'
 import { activeAuthStore } from '@/store/authStore'
+import { businessHeaders } from '@/store/businessStore'
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
 
@@ -234,7 +235,9 @@ export async function downloadPayoutCsv(id: string, batchNo: string): Promise<vo
   const url = new URL(`${BASE_URL.replace(/\/$/, '')}/payouts/${id}/lines`)
   url.searchParams.set('format', 'csv')
 
-  const response = await fetch(url.toString(), { headers: token ? { Authorization: token } : {} })
+  const response = await fetch(url.toString(), {
+    headers: { ...businessHeaders(), ...(token ? { Authorization: token } : {}) },
+  })
   if (!response.ok) throw new Error('Export failed')
 
   const blob = await response.blob()

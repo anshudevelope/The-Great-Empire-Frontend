@@ -4,6 +4,8 @@ import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatShortDate } from '@/lib/datetime'
 import { HeldPill, Stat, money } from '@/features/payouts/payoutBits'
+import { useActiveBusiness } from '@/store/businessStore'
+import { BUSINESSES } from '@/lib/business'
 
 const day = (value?: string | null) => formatShortDate(value ?? undefined)
 
@@ -17,6 +19,7 @@ const day = (value?: string | null) => formatShortDate(value ?? undefined)
  */
 export function MyPayoutsPage() {
   const { data, isLoading } = useQuery({ queryKey: ['payouts', 'me'], queryFn: fetchMyPayouts })
+  const rates = BUSINESSES[useActiveBusiness()].rates
 
   if (isLoading) {
     return (
@@ -68,11 +71,11 @@ export function MyPayoutsPage() {
 
                 <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border pt-3 text-xs sm:grid-cols-4">
                   <div>
-                    <dt className="text-text-subtle">Direct (10%)</dt>
+                    <dt className="text-text-subtle">Direct ({rates.direct})</dt>
                     <dd className="tabular-nums text-text">{money(row.direct)}</dd>
                   </div>
                   <div>
-                    <dt className="text-text-subtle">Matching (5%)</dt>
+                    <dt className="text-text-subtle">Matching ({rates.matching})</dt>
                     <dd className="tabular-nums text-text">{money(row.matching)}</dd>
                   </div>
                   {row.openingAdjustment !== 0 && (

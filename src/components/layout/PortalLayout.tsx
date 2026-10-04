@@ -5,6 +5,8 @@ import { fetchReferralSummary } from '@/api/referrals'
 import { fetchPendingPlacement } from '@/api/associates'
 import { useCompanyBrand } from '@/api/company'
 import { useAuthStore } from '@/store/authStore'
+import { useActiveBusiness } from '@/store/businessStore'
+import { businessName } from '@/lib/business'
 import { BuildingIcon, LogoutIcon } from '@/components/icons/icons'
 import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
 import { ProfileMenu } from './ProfileMenu'
@@ -15,6 +17,7 @@ export function PortalLayout() {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const company = useCompanyBrand()
+  const business = useActiveBusiness()
   const navigate = useNavigate()
   const [changingPassword, setChangingPassword] = useState(false)
 
@@ -41,7 +44,7 @@ export function PortalLayout() {
           </div>
           <div className="leading-tight">
             <p className="truncate text-[14px] font-semibold tracking-tight text-on-chrome">{company.name}</p>
-            <p className="text-[11px] text-on-chrome-subtle">Associate Portal</p>
+            <p className="text-[11px] text-on-chrome-subtle">{businessName(business)}</p>
           </div>
         </div>
 

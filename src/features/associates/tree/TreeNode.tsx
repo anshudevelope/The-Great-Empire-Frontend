@@ -4,8 +4,14 @@ import { UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
 import type { AssociateStatus, AssociateTreeNode, LegBusiness } from '@/types/associate'
 import { formatDate } from '@/lib/datetime'
+import { useQuery } from '@tanstack/react-query'
 import { useActiveBusiness } from '@/store/businessStore'
+import { useAuthScope } from '@/store/authScope'
 import { BUSINESSES } from '@/lib/business'
+import { fetchPlotNodeSummary } from '@/api/plots'
+import { usePlotConfig } from '@/features/plots/hooks'
+
+const pctLabel = (fraction?: number) => (fraction === undefined ? '' : `${+(fraction * 100).toFixed(2)}%`)
 
 const MIN_TOOLTIP_WIDTH = 288 // w-72; the card grows past this to fit its figures
 const EDGE = 8 // minimum gap between the card and the viewport edge
@@ -133,6 +139,31 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
     },
   ]
 
+  // T2 console only: the plot business, from the plot module's own endpoint
+  // (separate pool, separate ledger). The member portal never asks for it.
+  const scope = useAuthScope()
+  const showPlots = tierII && scope === 'admin'
+  const plotQuery = useQuery({
+    queryKey: ['plot-commission', 'node', node._id],
+    queryFn: () => fetchPlotNodeSummary(node._id),
+    enabled: showPlots,
+    staleTime: 60_000,
+  })
+  const plotConfig = usePlotConfig(showPlots)
+  const plots = showPlots ? plotQuery.data?.data : undefined
+  if (plots) {
+    rows.push(
+      {
+        label: 'Plots',
+        carry: false,
+        left: { count: plots.sales.left, amount: plots.volume.left, rated: plots.ratedVolume.left },
+        right: { count: plots.sales.right, amount: plots.volume.right, rated: plots.ratedVolume.right },
+      },
+      { label: 'Plots (Carry)', carry: true, left: plots.carry.left, right: plots.carry.right },
+    )
+  }
+  const plotTotal = plots ? plots.earned.direct + plots.earned.matching : 0
+
   const legCells = (leg: LegBusiness) => [
     String(leg.count),
     amount(leg.rated ?? 0),
@@ -151,10 +182,13 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
   // scrolled, so anything that lands off-screen is simply lost.
   const cardRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+  // Measured again when the plot rows arrive — they make the card taller, and
+  // placing it with the old height could push its bottom off-screen.
+  const plotsLoaded = !!plots
   useLayoutEffect(() => {
     const el = cardRef.current
     if (el) setSize({ w: el.offsetWidth, h: el.offsetHeight })
-  }, [])
+  }, [plotsLoaded])
 
   // Rendered in a portal with fixed positioning. The tree canvas scrolls, so
   // any absolutely-positioned tooltip inside it gets clipped by that overflow —
@@ -293,10 +327,33 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
           <p className="tabular-nums font-medium text-text">₹{amount(node.income?.matching ?? 0)}</p>
         </div>
         <div className="border-l border-border bg-success-bg/60 px-2 py-1.5">
-          <p className="text-text-subtle">Total Earning</p>
+          <p className="text-text-subtle">{plots ? 'Registration Earning' : 'Total Earning'}</p>
           <p className="tabular-nums font-semibold text-success">₹{amount(node.income?.total ?? 0)}</p>
         </div>
       </div>
+
+      {plots && (
+        <>
+          <div className="grid grid-cols-3 border-t border-border text-[10px]">
+            <div className="px-2 py-1.5">
+              <p className="text-text-subtle">Plot Direct ({pctLabel(plotConfig.data?.commission.direct)})</p>
+              <p className="tabular-nums font-medium text-text">₹{amount(plots.earned.direct)}</p>
+            </div>
+            <div className="border-l border-border px-2 py-1.5">
+              <p className="text-text-subtle">Plot Matching ({pctLabel(plotConfig.data?.commission.matching)})</p>
+              <p className="tabular-nums font-medium text-text">₹{amount(plots.earned.matching)}</p>
+            </div>
+            <div className="border-l border-border bg-success-bg/60 px-2 py-1.5">
+              <p className="text-text-subtle">Plot Earning</p>
+              <p className="tabular-nums font-semibold text-success">₹{amount(plotTotal)}</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-border bg-success-bg px-2 py-1.5 text-[10px]">
+            <span className="font-medium text-text">Total Earning</span>
+            <span className="tabular-nums font-semibold text-success">₹{amount((node.income?.total ?? 0) + plotTotal)}</span>
+          </div>
+        </>
+      )}
 
       <div className="bg-linear-to-r from-blue-700 to-blue-900 px-3 py-1.5 text-[10px] text-white">
         <p>Sponsor PID : {node.sponsorMemberCode ?? '—'}</p>

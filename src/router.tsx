@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { LandingPage } from '@/pages/LandingPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminLoginPage } from '@/features/auth/AdminLoginPage'
@@ -29,6 +29,21 @@ import { DirectsPage } from '@/features/portal/DirectsPage'
 import { RewardsTierOnePage } from '@/features/portal/RewardsTierOnePage'
 import { BusinessSelectPage } from '@/features/business/BusinessSelectPage'
 import { RequireBusiness } from '@/features/business/RequireBusiness'
+import { RequireT2 } from '@/features/plots/PlotUi'
+import { CompaniesPage } from '@/features/plots/property/CompaniesPage'
+import { ProjectsPage } from '@/features/plots/property/ProjectsPage'
+import { ProjectFormPage } from '@/features/plots/property/ProjectFormPage'
+import { BlocksPage } from '@/features/plots/property/BlocksPage'
+import { PlotsPage } from '@/features/plots/property/PlotsPage'
+import { ClientsPage } from '@/features/plots/sales/ClientsPage'
+import { SellPlotPage } from '@/features/plots/sales/SellPlotPage'
+import { BookingsPage } from '@/features/plots/sales/BookingsPage'
+import { BookingDetailPage } from '@/features/plots/sales/BookingDetailPage'
+import { PaymentsPage } from '@/features/plots/sales/PaymentsPage'
+import { DuesPage } from '@/features/plots/sales/DuesPage'
+import { ReceiptPage } from '@/features/plots/sales/ReceiptPage'
+import { PlotCommissionPage } from '@/features/plots/commission/PlotCommissionPage'
+import { PlotPayoutsPage, PlotPayoutDetailPage } from '@/features/plots/commission/PlotPayoutsPage'
 
 // Every route sits under AuthScopeProvider, which reads the path and decides
 // which of the two sessions this page belongs to. Nothing outside it may read
@@ -79,6 +94,32 @@ export const router = createBrowserRouter([
               { path: 'payouts/generate', element: <PayoutGeneratePage /> },
               { path: 'payouts/:id', element: <PayoutDetailPage /> },
               { path: 'reports/downline', element: <DownlineReportPage /> },
+
+              // T2 only — property management, plot sales, plot commission.
+              {
+                element: (
+                  <RequireT2>
+                    <Outlet />
+                  </RequireT2>
+                ),
+                children: [
+                  { path: 'property/companies', element: <CompaniesPage /> },
+                  { path: 'property/projects', element: <ProjectsPage /> },
+                  { path: 'property/projects/:id', element: <ProjectFormPage /> },
+                  { path: 'property/blocks', element: <BlocksPage /> },
+                  { path: 'property/plots', element: <PlotsPage /> },
+                  { path: 'plot-sales/clients', element: <ClientsPage /> },
+                  { path: 'plot-sales/sell', element: <SellPlotPage /> },
+                  { path: 'plot-sales/bookings', element: <BookingsPage /> },
+                  { path: 'plot-sales/bookings/:id', element: <BookingDetailPage /> },
+                  { path: 'plot-sales/payments', element: <PaymentsPage /> },
+                  { path: 'plot-sales/dues', element: <DuesPage /> },
+                  { path: 'plot-sales/receipts/:id', element: <ReceiptPage /> },
+                  { path: 'plot-commission', element: <PlotCommissionPage /> },
+                  { path: 'plot-commission/payouts', element: <PlotPayoutsPage /> },
+                  { path: 'plot-commission/payouts/:id', element: <PlotPayoutDetailPage /> },
+                ],
+              },
             ],
           },
         ],

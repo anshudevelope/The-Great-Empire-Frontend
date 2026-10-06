@@ -8,8 +8,10 @@ import { useUIStore } from '@/store/uiStore'
 import { Tooltip } from '@/components/ui/Tooltip'
 import {
   BuildingIcon,
+  BusinessIcon,
   ChevronDownIcon,
   DashboardIcon,
+  EarningsIcon,
   InvoiceIcon,
   LogoutIcon,
   PayoutIcon,
@@ -69,6 +71,42 @@ const NAV_ITEMS: NavItem[] = [
   },
 ]
 
+// T2 (Plots) only — inserted after Associates when the console has T2 open.
+const T2_NAV_ITEMS: NavItem[] = [
+  {
+    label: 'Property Management',
+    icon: BuildingIcon,
+    children: [
+      { label: 'Companies', to: '/admin/property/companies' },
+      { label: 'Projects', to: '/admin/property/projects' },
+      { label: 'Blocks', to: '/admin/property/blocks' },
+      { label: 'Plots', to: '/admin/property/plots' },
+    ],
+  },
+  {
+    label: 'Plot Sales',
+    icon: BusinessIcon,
+    children: [
+      { label: 'Sell Plot', to: '/admin/plot-sales/sell' },
+      { label: 'Bookings', to: '/admin/plot-sales/bookings' },
+      { label: 'Clients', to: '/admin/plot-sales/clients' },
+      { label: 'Payments', to: '/admin/plot-sales/payments' },
+      { label: 'Dues', to: '/admin/plot-sales/dues' },
+    ],
+  },
+  {
+    label: 'Plot Commission',
+    icon: EarningsIcon,
+    children: [
+      { label: 'Commission', to: '/admin/plot-commission' },
+      { label: 'Plot Payouts', to: '/admin/plot-commission/payouts' },
+    ],
+  },
+]
+
+const navFor = (business: string | null): NavItem[] =>
+  business === 't2' ? [...NAV_ITEMS.slice(0, 2), ...T2_NAV_ITEMS, ...NAV_ITEMS.slice(2)] : NAV_ITEMS
+
 /**
  * On the solid chrome the icon carries no tile of its own — a filled square
  * behind each icon reads as damage against the blue, and the row's own hover
@@ -90,6 +128,7 @@ function NavIconTile({ icon: Icon, active }: { icon: typeof DashboardIcon; activ
 function SidebarContent() {
   const location = useLocation()
   const closeMobileSidebar = useUIStore((state) => state.closeMobileSidebar)
+  const business = useBusinessStore((state) => state.business)
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => ({
     Associates: location.pathname.startsWith('/admin/associates'),
   }))
@@ -97,7 +136,7 @@ function SidebarContent() {
   return (
     <nav className="scrollbar-chrome flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
       <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-on-chrome-subtle">Menu</p>
-      {NAV_ITEMS.map((item) => {
+      {navFor(business).map((item) => {
         if (!item.children) {
           return (
             <NavLink

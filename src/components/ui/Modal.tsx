@@ -11,11 +11,17 @@ interface ModalProps {
   title?: string
   children: ReactNode
   size?: 'sm' | 'md' | 'lg'
+  /**
+   * Let a dialog taller than the screen scroll down to its buttons. Opt-in so
+   * existing (T1) dialogs keep their original layout untouched; the T2 plot
+   * screens turn it on for their longer forms.
+   */
+  scrollable?: boolean
 }
 
 const sizeClasses = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
 
-export function Modal({ open, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal({ open, onClose, title, children, size = 'md', scrollable = false }: ModalProps) {
   useEffect(() => {
     if (!open) return
     const handleKey = (event: KeyboardEvent) => {
@@ -32,35 +38,52 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
 
   if (!open) return null
 
+  const dialog = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      className={cn(
+        'relative w-full animate-modal-in rounded-card bg-surface shadow-popover',
+        scrollable && 'pointer-events-auto',
+        sizeClasses[size],
+      )}
+    >
+      {title && (
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-base font-semibold text-text">{title}</h2>
+          <Tooltip label="Close" side="bottom">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="cursor-pointer rounded-control p-1 text-text-subtle hover:bg-info-bg hover:text-text"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          </Tooltip>
+        </div>
+      )}
+      <div className="p-6">{children}</div>
+    </div>
+  )
+
+  if (scrollable) {
+    // The overlay itself scrolls, not the dialog body, so a dropdown inside the
+    // dialog is never clipped by a scroll box.
+    return createPortal(
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-scrim backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+        <div className="pointer-events-none relative flex min-h-full items-center justify-center p-4">{dialog}</div>
+      </div>,
+      document.body,
+    )
+  }
+
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-scrim backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn(
-          'relative w-full animate-modal-in rounded-card bg-surface shadow-popover',
-          sizeClasses[size],
-        )}
-      >
-        {title && (
-          <div className="flex items-center justify-between border-b border-border px-6 py-4">
-            <h2 className="text-base font-semibold text-text">{title}</h2>
-            <Tooltip label="Close" side="bottom">
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="cursor-pointer rounded-control p-1 text-text-subtle hover:bg-info-bg hover:text-text"
-              >
-                <XIcon className="h-4 w-4" />
-              </button>
-            </Tooltip>
-          </div>
-        )}
-        <div className="p-6">{children}</div>
-      </div>
+      {dialog}
     </div>,
     document.body,
   )

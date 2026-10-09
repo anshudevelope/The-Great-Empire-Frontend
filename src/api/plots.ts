@@ -35,6 +35,8 @@ type Params = Record<string, string | undefined>
 // ---------------------------------------------------------------------------
 export interface PlotConfig {
   commission: { direct: number; matching: number }
+  /** Sales can be placed in the associate's own left / right leg. */
+  selfLeg: { enabled: boolean }
   payout: { adminChargePct: number; tdsPct: number }
   rating: { enabled: boolean; defaultPct: number }
   payment: {
@@ -320,6 +322,8 @@ export interface Booking {
   client: Client | { _id: string; code: string; fullName: string; mobile: string }
   associate: { _id: string; memberCode: string; fullName: string; phone?: string; email?: string }
   associateCode: string
+  /** Placed in the associate's own leg; null = upline only. */
+  leg: 'Left' | 'Right' | null
   plan: PaymentPlan
   price: number
   downPayment: number
@@ -350,6 +354,7 @@ export interface SchedulePreview {
 }
 
 export interface SellInput {
+  leg?: 'Left' | 'Right' | null
   plot: string
   client: string
   associate: string

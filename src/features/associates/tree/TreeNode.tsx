@@ -123,7 +123,10 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
   const rates = BUSINESSES[business].rates
   const tierII = business === 't2'
   const tier = tierII ? b?.tierII : b?.tierI
-  const tierLabel = tierII ? 'Tier II' : 'Tier I'
+  // T2 calls its registration business "ID Referral" (was "Tier II"), next to
+  // the Plots rows. T1 keeps "Tier I".
+  // const tierLabel = tierII ? 'Tier II' : 'Tier I'
+  const tierLabel = tierII ? 'ID Referral' : 'Tier I'
   const rows: BusinessRow[] = [
     {
       label: tierLabel,
@@ -199,16 +202,27 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
     const vw = window.innerWidth
     const vh = window.innerHeight
     left = clamp(anchor.left + anchor.width / 2 - size.w / 2, EDGE, vw - size.w - EDGE)
-    // Above the node by default, below it if the top has no room, and pinned
-    // to the viewport when neither side fits whole.
+    // Above the node by default, below it if the top has no room. When neither
+    // fits whole (the taller T2 card on a top-row node), go beside the node,
+    // and failing that, the roomier of above/below — never over the node itself.
     const above = anchor.top - GAP - size.h
     const below = anchor.bottom + GAP
-    top =
-      above >= EDGE
-        ? above
-        : below + size.h <= vh - EDGE
-          ? below
-          : clamp(below, EDGE, vh - size.h - EDGE)
+    const right = anchor.right + GAP
+    const leftSide = anchor.left - GAP - size.w
+    const besideTop = clamp(anchor.top + anchor.height / 2 - size.h / 2, EDGE, vh - size.h - EDGE)
+    if (above >= EDGE) {
+      top = above
+    } else if (below + size.h <= vh - EDGE) {
+      top = below
+    } else if (right + size.w <= vw - EDGE) {
+      top = besideTop
+      left = right
+    } else if (leftSide >= EDGE) {
+      top = besideTop
+      left = leftSide
+    } else {
+      top = anchor.top >= vh - anchor.bottom ? above : below
+    }
   }
 
   return createPortal(

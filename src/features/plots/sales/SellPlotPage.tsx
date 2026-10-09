@@ -31,6 +31,9 @@ import { usePlotConfig, useProjectOptions } from '../hooks'
 import { ClientModal } from './ClientsPage'
 import { ClientSelect } from './ClientSelect'
 
+// Set to true to offer "Upline only" again on the Sell page.
+const ALLOW_UPLINE_ONLY = false
+
 const errorText = (error: unknown) => (error instanceof ApiRequestError ? error.message : 'Something went wrong.')
 
 // Debounced copy of a value — the schedule preview shouldn't refetch per keystroke.
@@ -72,6 +75,11 @@ export function SellPlotPage() {
 
   // --- Associate -----------------------------------------------------------
   const [associate, setAssociate] = useState<AssociateOption | null>(null)
+  // '' = upline only (the original behaviour); Left / Right = their own leg.
+  const [leg, setLeg] = useState<'' | 'Left' | 'Right'>('')
+  // "Upline only" is hidden from the choice for now (ALLOW_UPLINE_ONLY), so
+  // the admin must pick the associate's Left or Right leg.
+  const legRequired = !!config.data?.selfLeg.enabled && !ALLOW_UPLINE_ONLY
 
   // --- Plan ------------------------------------------------------------------
   const emiEnabled = config.data?.payment.emi.enabled ?? false
@@ -94,7 +102,9 @@ export function SellPlotPage() {
   const preview = useQuery({
     queryKey: ['plot-schedule-preview', previewParams],
     queryFn: () => previewSchedule(previewParams),
-    enabled: !!plotId && !!plot && (previewParams.plan === 'one_time' || !!previewParams.tenureMonths),
+    // Keyed off the debounced params: right after a plot is picked, the
+    // debounced copy can still hold the old (empty) plot for a moment.
+    enabled: !!previewParams.plot && !!plot && (previewParams.plan === 'one_time' || !!previewParams.tenureMonths),
     retry: false,
   })
 
@@ -113,6 +123,7 @@ export function SellPlotPage() {
         plot: plotId,
         client: client!._id,
         associate: associate!._id,
+        leg: leg || null,
         plan: activePlan,
         downPayment: activePlan === 'emi' ? Number(downPayment) || 0 : undefined,
         tenureMonths: activePlan === 'emi' ? Number(tenureMonths) : undefined,
@@ -144,6 +155,8 @@ export function SellPlotPage() {
         ? 'Find or add the client.'
         : !associate
           ? 'Choose the associate this sale is credited to.'
+          : legRequired && !leg
+            ? "Choose the associate's left or right leg."
           : preview.isError
             ? errorText(preview.error)
             : null
@@ -199,6 +212,46 @@ export function SellPlotPage() {
             <AssociateSelect id="sp-associate" value={associate} onChange={setAssociate} role="associate" status="approved" inTree />
           </FormField>
         </div>
+        {config.data?.selfLeg.enabled && (
+          <div className="mt-5">
+            <p className="text-sm font-medium text-text">Place this sale in</p>
+            <div
+              role="radiogroup"
+              aria-label="Leg"
+              className={cn('mt-2 grid gap-2', ALLOW_UPLINE_ONLY ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}
+            >
+              {(
+                [
+                  ['', 'Upline only', "Counts for their upline's matching, as before."],
+                  ['Left', 'Their left leg', 'Counts in their own left leg and up the upline.'],
+                  ['Right', 'Their right leg', 'Counts in their own right leg and up the upline.'],
+                ] as const
+              )
+                .filter(([value]) => value !== '' || ALLOW_UPLINE_ONLY)
+                .map(([value, label, help]) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={leg === value}
+                  onClick={() => setLeg(value)}
+                  className={cn(
+                    'cursor-pointer rounded-control border px-3 py-2.5 text-left transition-colors',
+                    leg === value ? 'border-info bg-info-bg' : 'border-border hover:border-border-strong hover:bg-neutral-hover',
+                  )}
+                >
+                  <span className="block text-sm font-medium text-text">{label}</span>
+                  <span className="block text-xs text-text-subtle">{help}</span>
+                </button>
+              ))}
+            </div>
+            {leg && associate && (
+              <p className="mt-2 text-xs text-text-muted">
+                {associate.memberCode} earns direct on this sale and can also earn matching once their left and right plot business pair up.
+              </p>
+            )}
+          </div>
+        )}
       </Section>
 
       {/* 4. Plan */}

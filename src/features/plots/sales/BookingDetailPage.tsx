@@ -84,6 +84,7 @@ export function BookingDetailPage() {
         </Section>
         <Section title="Sale">
           <Info label="Credited to" value={`${b.associate.memberCode} · ${b.associate.fullName}`} />
+          <Info label="Placed in" value={b.leg ? `${b.associate.memberCode}'s ${b.leg.toLowerCase()} leg` : 'Upline only'} />
           <Info label="Plan" value={b.plan === 'emi' ? `EMI · ${inr(b.downPayment)} down + ${b.tenureMonths} × ${inr(b.emiAmount)}` : PLAN_LABEL[b.plan]} />
           <Info label="Status" value={<Badge tone={BOOKING_STATUS_TONE[b.status]}>{b.status}</Badge>} />
           {b.notes && <Info label="Notes" value={b.notes} />}

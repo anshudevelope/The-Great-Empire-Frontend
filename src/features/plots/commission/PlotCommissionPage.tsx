@@ -98,7 +98,13 @@ function SummaryTab() {
             {rows.map((r) => (
               <tr key={r.associate} className={rowClass}>
                 <Td>
-                  <span className="font-mono text-xs text-text">{r.memberCode}</span>
+                  <Link
+                    to={`/admin/plot-commission/tree/${r.associate}`}
+                    className="font-mono text-xs text-info hover:underline"
+                    title="View plot tree"
+                  >
+                    {r.memberCode}
+                  </Link>
                   <span className="block text-xs text-text-subtle">{r.fullName}</span>
                 </Td>
                 <Td right className="text-text-muted">

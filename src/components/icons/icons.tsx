@@ -4,6 +4,7 @@
 import type { IconType } from 'react-icons'
 import {
   FiAlertTriangle,
+  FiArrowLeft,
   FiShield,
   FiSun,
   FiMoon,
@@ -24,6 +25,7 @@ import {
   FiGitBranch,
   FiGrid,
   FiLogOut,
+  FiMap,
   FiMenu,
   FiMinus,
   FiPlus,
@@ -42,6 +44,7 @@ export const MenuIcon: IconType = FiMenu
 export const XIcon: IconType = FiX
 export const ChevronDownIcon: IconType = FiChevronDown
 export const ChevronRightIcon: IconType = FiChevronRight
+export const ArrowLeftIcon: IconType = FiArrowLeft
 export const SearchIcon: IconType = FiSearch
 export const LogoutIcon: IconType = FiLogOut
 export const DashboardIcon: IconType = FiGrid
@@ -63,6 +66,8 @@ export const TreeIcon: IconType = FiGitBranch
 export const MinusIcon: IconType = FiMinus
 export const RefreshIcon: IconType = FiRefreshCw
 export const ShieldIcon: IconType = FiShield
+// A plot of land — the T2 plot tree's sale nodes and its entry button.
+export const PlotIcon: IconType = FiMap
 
 export const SunIcon: IconType = FiSun
 export const MoonIcon: IconType = FiMoon

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { UserCircleIcon } from '@/components/icons/icons'
+import { Link } from 'react-router-dom'
+import { PlotIcon, UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
 import type { AssociateStatus, AssociateTreeNode, LegBusiness } from '@/types/associate'
 import { formatDate } from '@/lib/datetime'
@@ -394,6 +395,9 @@ function NodeCard({
   // doesn't move while a node is hovered, and re-measuring on scroll would be
   // needless work.
   const showTooltip = () => setAnchor(wrapperRef.current?.getBoundingClientRect() ?? null)
+  const business = useActiveBusiness()
+  const scope = useAuthScope()
+  const plotTree = business === 't2' && scope === 'admin'
 
   return (
     <div
@@ -451,6 +455,22 @@ function NodeCard({
         >
           ⤢
         </button>
+      )}
+
+      {/* T2 console only: this member's plot tree (own legs and plot sales). */}
+      {plotTree && (
+        <Link
+          to={`/admin/plot-commission/tree/${node._id}`}
+          aria-label={`Open ${node.fullName}'s plot tree`}
+          title="View this member's plot tree"
+          className={cn(
+            'absolute right-0 top-6 hidden h-5 w-5 items-center justify-center rounded-full',
+            'border border-border bg-surface text-blue-600 shadow-xs',
+            'hover:bg-info-bg group-hover:flex',
+          )}
+        >
+          <PlotIcon className="h-3 w-3" />
+        </Link>
       )}
 
       {anchor && <NodeTooltip node={node} anchor={anchor} />}

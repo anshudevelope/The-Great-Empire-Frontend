@@ -44,6 +44,7 @@ import { DuesPage } from '@/features/plots/sales/DuesPage'
 import { ReceiptPage } from '@/features/plots/sales/ReceiptPage'
 import { PlotCommissionPage } from '@/features/plots/commission/PlotCommissionPage'
 import { PlotPayoutsPage, PlotPayoutDetailPage } from '@/features/plots/commission/PlotPayoutsPage'
+import { PlotTreePage } from '@/features/plots/commission/PlotTreePage'
 
 // Every route sits under AuthScopeProvider, which reads the path and decides
 // which of the two sessions this page belongs to. Nothing outside it may read
@@ -118,6 +119,7 @@ export const router = createBrowserRouter([
                   { path: 'plot-commission', element: <PlotCommissionPage /> },
                   { path: 'plot-commission/payouts', element: <PlotPayoutsPage /> },
                   { path: 'plot-commission/payouts/:id', element: <PlotPayoutDetailPage /> },
+                  { path: 'plot-commission/tree/:id', element: <PlotTreePage /> },
                 ],
               },
             ],

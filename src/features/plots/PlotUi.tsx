@@ -1,19 +1,53 @@
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/cn'
 import { useActiveBusiness } from '@/store/businessStore'
 import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
+import { ArrowLeftIcon } from '@/components/icons/icons'
 
 // Layout pieces shared by the plot module's screens. Same tokens and shapes as
 // the rest of the console (cards, stats, pager), kept here so the module does
 // not reach into another feature's files.
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+/**
+ * `back` puts a back arrow beside the title — for internal (drill-in) pages.
+ * Goes to the previous page, or to `back` itself when the page was opened
+ * directly (no in-app history to return to).
+ */
+export function PageHeader({
+  title,
+  description,
+  actions,
+  back,
+}: {
+  title: string
+  description?: string
+  actions?: ReactNode
+  back?: string
+}) {
+  const navigate = useNavigate()
+  const goBack = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0
+    if (idx > 0) navigate(-1)
+    else if (back) navigate(back)
+  }
   return (
     <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-xl font-semibold text-text">{title}</h1>
-        {description && <p className="mt-1 text-sm text-text-subtle">{description}</p>}
+      <div className="flex items-start gap-2">
+        {back && (
+          <IconButton
+            icon={<ArrowLeftIcon className="h-5 w-5" />}
+            label="Back"
+            tooltipSide="bottom"
+            onClick={goBack}
+            className="-ml-1.5 mt-0.5"
+          />
+        )}
+        <div>
+          <h1 className="text-xl font-semibold text-text">{title}</h1>
+          {description && <p className="mt-1 text-sm text-text-subtle">{description}</p>}
+        </div>
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </header>

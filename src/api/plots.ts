@@ -486,6 +486,43 @@ export interface PlotNodeSummary {
 export const fetchPlotNodeSummary = (associateId: string) =>
   apiRequest<ApiSingleResponse<PlotNodeSummary>>(`/plot-commission/summary/${associateId}`)
 
+/** One live sale counted in a leg of the plot tree. */
+export interface PlotTreeSale {
+  _id: string
+  code: string
+  plot: { _id: string; code: string; name: string } | null
+  project: { _id: string; name: string } | null
+  client: { _id: string; code: string; fullName: string } | null
+  seller: { _id: string; memberCode: string; fullName: string }
+  /** Sold by the tree's associate into their own leg (vs. sold by their downline). */
+  own: boolean
+  plan: PaymentPlan
+  price: number
+  paidTotal: number
+  status: BookingStatus
+  bookedOn: string
+}
+export interface PlotTreeMember {
+  _id: string
+  memberCode: string
+  fullName: string
+  status: string
+  profileImage?: { url?: string } | null
+}
+export interface PlotTreeLeg {
+  /** The downline member heading this leg, if any. */
+  head: PlotTreeMember | null
+  bookings: PlotTreeSale[]
+}
+export interface PlotTree {
+  associate: PlotTreeMember
+  summary: PlotNodeSummary
+  left: PlotTreeLeg
+  right: PlotTreeLeg
+}
+export const fetchPlotTree = (associateId: string) =>
+  apiRequest<ApiSingleResponse<PlotTree>>(`/plot-commission/tree/${associateId}`)
+
 export const fetchPlotLedger =(params: Params = {}) => apiRequest<CommissionLedger>('/plot-commission/ledger', { params })
 export const fetchPlotSummary = (params: Params = {}) =>
   apiRequest<Paged<CommissionSummaryRow>>('/plot-commission/summary', { params })

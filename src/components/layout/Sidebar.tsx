@@ -129,14 +129,20 @@ function SidebarContent() {
   const location = useLocation()
   const closeMobileSidebar = useUIStore((state) => state.closeMobileSidebar)
   const business = useBusinessStore((state) => state.business)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => ({
-    Associates: location.pathname.startsWith('/admin/associates'),
-  }))
+  const items = navFor(business)
+
+  // One group open at a time: the one holding the current page. Clicking a
+  // header opens that group instead (or closes it), but only until the next
+  // navigation — the choice is tied to the path it was made on, so moving to
+  // another page shows just that page's group again.
+  const activeGroup = items.find((item) => item.children?.some((child) => location.pathname.startsWith(child.to)))?.label ?? null
+  const [choice, setChoice] = useState<{ path: string; open: string | null } | null>(null)
+  const openGroup = choice && choice.path === location.pathname ? choice.open : activeGroup
 
   return (
     <nav className="scrollbar-chrome flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
       <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-on-chrome-subtle">Menu</p>
-      {navFor(business).map((item) => {
+      {items.map((item) => {
         if (!item.children) {
           return (
             <NavLink
@@ -165,14 +171,14 @@ function SidebarContent() {
           )
         }
 
-        const isGroupActive = item.children.some((child) => location.pathname.startsWith(child.to))
-        const isExpanded = expanded[item.label] ?? isGroupActive
+        const isGroupActive = item.label === activeGroup
+        const isExpanded = item.label === openGroup
 
         return (
           <div key={item.label}>
             <button
               type="button"
-              onClick={() => setExpanded((prev) => ({ ...prev, [item.label]: !isExpanded }))}
+              onClick={() => setChoice({ path: location.pathname, open: isExpanded ? null : item.label })}
               className={cn(
                 'group flex w-full cursor-pointer items-center gap-3 rounded-control py-2 pl-3 pr-3 text-sm font-medium transition-colors',
                 isGroupActive

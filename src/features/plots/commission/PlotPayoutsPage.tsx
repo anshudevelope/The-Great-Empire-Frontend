@@ -122,11 +122,14 @@ function GenerateModal({ onClose }: { onClose: () => void }) {
   const next = useQuery({ queryKey: ['plot-payouts', 'next'], queryFn: fetchPlotPayoutNext })
   // null until the admin picks one, so the default can come from the API.
   const [startDate, setStartDate] = useState<string | null>(null)
-  const [periodEnd, setPeriodEnd] = useState(todayIso())
+  const [closeDate, setCloseDate] = useState<string | null>(null)
   const [note, setNote] = useState('')
 
   const suggestedStart = next.data ? localIsoDay(next.data.data.periodStart) : todayIso()
   const periodStart = startDate ?? suggestedStart
+  // Today, or the suggested start when the last payout already closed today —
+  // so the form never opens with the start after the close.
+  const periodEnd = closeDate ?? (suggestedStart > todayIso() ? suggestedStart : todayIso())
   // Reaching back into an already-closed period: flagged, not blocked — the
   // start only labels the payout, so nothing can be paid twice.
   const previous = next.data?.data.previous ?? null
@@ -159,7 +162,7 @@ function GenerateModal({ onClose }: { onClose: () => void }) {
             <Input id="gp-start" type="date" value={periodStart} onChange={(e) => setStartDate(e.target.value)} />
           </FormField>
           <FormField label="Close date" htmlFor="gp-date" hint="This whole day is included.">
-            <Input id="gp-date" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+            <Input id="gp-date" type="date" value={periodEnd} onChange={(e) => setCloseDate(e.target.value)} />
           </FormField>
         </div>
         {backwards && <p className="text-sm text-danger">The start date is after the close date.</p>}

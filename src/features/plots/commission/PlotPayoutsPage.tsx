@@ -6,6 +6,7 @@ import {
   cancelPlotPayout,
   discardPlotPayout,
   fetchPlotPayout,
+  fetchPlotPayoutNext,
   fetchPlotPayouts,
   finalizePlotPayout,
   generatePlotPayout,
@@ -22,7 +23,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { Textarea } from '@/components/ui/Textarea'
 import { DataTable, PageHeader, Pager, Stat, Td, Th } from '../PlotUi'
-import { day, inr, pct, rowClass, todayIso } from '../format'
+import { day, inr, localIsoDay, pct, rowClass, todayIso } from '../format'
 import { usePlotConfig } from '../hooks'
 
 const errorText = (error: unknown) => (error instanceof ApiRequestError ? error.message : 'Something went wrong.')
@@ -71,7 +72,7 @@ export function PlotPayoutsPage() {
             head={
               <tr>
                 <Th>Payout</Th>
-                <Th>Up to</Th>
+                <Th>Period</Th>
                 <Th right>Members</Th>
                 <Th right>Gross</Th>
                 <Th right>Net payable</Th>
@@ -83,7 +84,7 @@ export function PlotPayoutsPage() {
             {rows.map((p) => (
               <tr key={p._id} className={rowClass}>
                 <Td className="font-mono text-xs font-medium text-text">{p.payoutNo}</Td>
-                <Td className="text-text-muted">{day(p.periodEnd)}</Td>
+                <Td className="text-text-muted">{periodLabel(p)}</Td>
                 <Td right>{p.totals.members}</Td>
                 <Td right>{inr(p.totals.gross)}</Td>
                 <Td right className="font-semibold text-text">
@@ -111,13 +112,29 @@ export function PlotPayoutsPage() {
   )
 }
 
+/** "1/10/2026 → 31/10/2026", or "up to 31/10/2026" for payouts made before start dates existed. */
+const periodLabel = (p: { periodStart: string | null; periodEnd: string }) =>
+  p.periodStart ? `${day(p.periodStart)} → ${day(p.periodEnd)}` : `up to ${day(p.periodEnd)}`
+
 function GenerateModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const next = useQuery({ queryKey: ['plot-payouts', 'next'], queryFn: fetchPlotPayoutNext })
+  // null until the admin picks one, so the default can come from the API.
+  const [startDate, setStartDate] = useState<string | null>(null)
   const [periodEnd, setPeriodEnd] = useState(todayIso())
   const [note, setNote] = useState('')
+
+  const suggestedStart = next.data ? localIsoDay(next.data.data.periodStart) : todayIso()
+  const periodStart = startDate ?? suggestedStart
+  // Reaching back into an already-closed period: flagged, not blocked — the
+  // start only labels the payout, so nothing can be paid twice.
+  const previous = next.data?.data.previous ?? null
+  const overlaps = !!previous && periodStart <= localIsoDay(previous.periodEnd)
+  const backwards = periodStart > periodEnd
+
   const save = useMutation({
-    mutationFn: () => generatePlotPayout({ periodEnd, note }),
+    mutationFn: () => generatePlotPayout({ periodStart, periodEnd, note }),
     onSuccess: (res) => {
       toast.success(res.message)
       void queryClient.invalidateQueries({ queryKey: ['plot-payouts'] })
@@ -126,7 +143,7 @@ function GenerateModal({ onClose }: { onClose: () => void }) {
     onError: (error) => toast.error(errorText(error)),
   })
   return (
-    <Modal scrollable open onClose={onClose} title="Generate plot payout" size="sm">
+    <Modal scrollable open onClose={onClose} title="Generate plot payout">
       <form
         className="flex flex-col gap-4"
         onSubmit={(e) => {
@@ -134,10 +151,24 @@ function GenerateModal({ onClose }: { onClose: () => void }) {
           save.mutate()
         }}
       >
-        <p className="text-sm text-text-muted">Creates a draft from all unpaid plot commission up to the date. Nothing is paid until you finalize it.</p>
-        <FormField label="Include commission up to" htmlFor="gp-date">
-          <Input id="gp-date" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
-        </FormField>
+        <p className="text-sm text-text-muted">
+          Creates a draft from all unpaid plot commission up to the close date. Nothing is paid until you finalize it.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField label="Start date" htmlFor="gp-start" hint="Day after the last payout. Labels the period only.">
+            <Input id="gp-start" type="date" value={periodStart} onChange={(e) => setStartDate(e.target.value)} />
+          </FormField>
+          <FormField label="Close date" htmlFor="gp-date" hint="This whole day is included.">
+            <Input id="gp-date" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+          </FormField>
+        </div>
+        {backwards && <p className="text-sm text-danger">The start date is after the close date.</p>}
+        {overlaps && previous && (
+          <p className="rounded-control border border-warning/40 bg-warning-bg/50 px-3 py-2 text-xs text-text-muted">
+            This start overlaps <span className="font-mono">{previous.payoutNo}</span>, which covered {periodLabel(previous)}. Nothing is paid twice — the
+            start only labels the period. Use {day(next.data?.data.periodStart)} to follow on cleanly.
+          </p>
+        )}
         <FormField label="Note" htmlFor="gp-note">
           <Textarea id="gp-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
         </FormField>
@@ -145,7 +176,7 @@ function GenerateModal({ onClose }: { onClose: () => void }) {
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={save.isPending}>
+          <Button type="submit" isLoading={save.isPending} disabled={backwards || next.isLoading}>
             Generate draft
           </Button>
         </div>
@@ -211,7 +242,7 @@ export function PlotPayoutDetailPage() {
     <div className="flex flex-col gap-5 pb-10">
       <PageHeader
         title={`Plot payout ${p.payoutNo}`}
-        description={`Commission up to ${day(p.periodEnd)} · admin charge ${pct(p.rates.adminChargePct)} · TDS ${pct(p.rates.tdsPct)}`}
+        description={`Period ${periodLabel(p)} · admin charge ${pct(p.rates.adminChargePct)} · TDS ${pct(p.rates.tdsPct)}`}
         actions={
           <>
             <Link to="/admin/plot-commission/payouts">

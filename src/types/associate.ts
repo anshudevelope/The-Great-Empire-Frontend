@@ -161,6 +161,8 @@ export interface AssociateTreeNode {
   isSpillover: boolean
   /** Per-leg carry and volume. Absent on responses from before the commission engine. */
   business?: NodeBusiness
+  /** Joining amount paid on their own registration in the active business. */
+  packageAmount?: number
   /** Earned income. Absent on responses from before the commission engine. */
   income?: NodeIncome
   leftChild: string | null

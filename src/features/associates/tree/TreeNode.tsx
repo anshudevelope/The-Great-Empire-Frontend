@@ -257,10 +257,14 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-2 border-b border-border px-3 py-1.5 text-[10px] text-text-muted">
-        <span className="truncate">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 border-b border-border px-3 py-1.5 text-[10px] text-text-muted">
+        <span className="col-span-2 truncate">
           <span className="text-text-subtle">User ID : </span>
           {node.email || '—'}
+        </span>
+        <span className="truncate">
+          <span className="text-text-subtle">Package : </span>
+          {tierII ? 'T2' : 'T1'} ({amount(node.packageAmount ?? 0)})
         </span>
         <span className="truncate">
           <span className="text-text-subtle">PAN : </span>—

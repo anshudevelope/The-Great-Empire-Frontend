@@ -29,10 +29,13 @@ export const isoDay = (value?: string | Date | null) => {
   return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10)
 }
 
-export const todayIso = () => {
-  const d = new Date()
+/** yyyy-mm-dd of a moment in the browser's own day — local midnight stays on its date. */
+export const localIsoDay = (value: string | Date) => {
+  const d = new Date(value)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+export const todayIso = () => localIsoDay(new Date())
 
 export const pct = (fraction: number) => `${+(fraction * 100).toFixed(2)}%`
 

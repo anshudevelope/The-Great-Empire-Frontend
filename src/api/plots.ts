@@ -625,6 +625,8 @@ export interface PlotPayout {
   _id: string
   payoutNo: string
   status: PayoutStatus
+  /** Labels the period; null on payouts made before it existed. */
+  periodStart: string | null
   periodEnd: string
   rates: { adminChargePct: number; tdsPct: number }
   lines?: PlotPayoutLine[]
@@ -646,7 +648,12 @@ export interface PlotPayout {
 }
 export const fetchPlotPayouts = (params: Params = {}) => apiRequest<Paged<PlotPayout>>('/plot-commission/payouts', { params })
 export const fetchPlotPayout = (id: string) => apiRequest<ApiSingleResponse<PlotPayout>>(`/plot-commission/payouts/${id}`)
-export const generatePlotPayout = (body: { periodEnd: string; note: string }) =>
+export interface PlotPayoutNext {
+  periodStart: string
+  previous: { payoutNo: string; periodStart: string | null; periodEnd: string; finalizedAt: string | null } | null
+}
+export const fetchPlotPayoutNext = () => apiRequest<ApiSingleResponse<PlotPayoutNext>>('/plot-commission/payouts/next')
+export const generatePlotPayout = (body: { periodStart: string; periodEnd: string; note: string }) =>
   apiRequest<ApiSingleResponse<PlotPayout> & { message: string }>('/plot-commission/payouts', { method: 'POST', body })
 export const finalizePlotPayout = (id: string) =>
   apiRequest<ApiSingleResponse<PlotPayout> & { message: string }>(`/plot-commission/payouts/${id}/finalize`, { method: 'POST' })

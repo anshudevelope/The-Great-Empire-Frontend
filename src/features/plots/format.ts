@@ -1,4 +1,14 @@
-import type { BookingStatus, InstalmentKind, PaymentPlan, PlotStatus, ProjectStatus, RateUnit } from '@/api/plots'
+import type {
+  BookingStatus,
+  Instalment,
+  InstalmentKind,
+  PaymentAdjustment,
+  PaymentPlan,
+  PlotStatus,
+  ProjectStatus,
+  RateUnit,
+  ReceiptAdjustment,
+} from '@/api/plots'
 import { formatShortDate } from '@/lib/datetime'
 
 // Display helpers shared by the plot module's screens.
@@ -60,3 +70,38 @@ export const instalmentLabel = (kind: InstalmentKind, seq: number, tenure: numbe
 
 /** Table row styling shared by the module's lists. */
 export const rowClass = 'border-b border-border last:border-0 hover:bg-neutral-hover/60'
+
+export const ADJUSTMENT_LABEL: Record<PaymentAdjustment, string> = {
+  reduce_emi: 'Reduce EMI amount',
+  reduce_tenure: 'Reduce tenure',
+  pay_ahead: 'Pay upcoming EMIs',
+}
+
+export const ADJUSTMENT_HINT: Record<PaymentAdjustment, string> = {
+  reduce_emi: 'Same end date, smaller EMIs',
+  reduce_tenure: 'Same EMI, finishes earlier',
+  pay_ahead: 'Next EMIs marked paid',
+}
+
+/** "EMI 3", "Down payment", "Prepayment" — one line of a receipt. */
+export const allocationLabel = (a: { kind: InstalmentKind | 'prepayment'; seq: number | null }) =>
+  a.kind === 'prepayment' ? 'Prepayment' : a.kind === 'emi' ? `EMI ${a.seq}` : KIND_LABEL[a.kind]
+
+/** One line explaining what a payment's extra did, or '' when nothing. */
+export const adjustmentNote = (adj: ReceiptAdjustment | null) => {
+  if (!adj) return ''
+  if (adj.type === 'pay_ahead') return `${inr(adj.extra)} paid ahead on upcoming EMIs`
+  if (!adj.before || !adj.after) return ''
+  return adj.type === 'reduce_emi'
+    ? `${inr(adj.extra)} prepaid · EMI ${inr(adj.before.emi)} → ${inr(adj.after.emi)} (${adj.after.count} left)`
+    : `${inr(adj.extra)} prepaid · ${adj.before.count} → ${adj.after.count} EMIs, now ending ${day(adj.after.endDate)}`
+}
+
+/** Plain-text status for an instalment (statement, print). */
+export const instalmentStatusText = (s: Pick<Instalment, 'status' | 'overdue'>) => {
+  if (s.status === 'paid') return 'Paid'
+  if (s.status === 'cancelled') return 'Cancelled'
+  if (s.status === 'superseded') return 'Replaced'
+  if (s.status === 'partial') return s.overdue ? 'Part-paid · overdue' : 'Part-paid'
+  return s.overdue ? 'Overdue' : 'Due'
+}

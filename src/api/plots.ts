@@ -292,25 +292,58 @@ export const updateClient = (id: string, body: ClientInput) =>
 export type PaymentPlan = 'one_time' | 'emi'
 export type BookingStatus = 'active' | 'completed' | 'cancelled'
 export type InstalmentKind = 'full' | 'down' | 'emi'
-export type InstalmentStatus = 'due' | 'paid' | 'cancelled'
+export type InstalmentStatus = 'due' | 'partial' | 'paid' | 'superseded' | 'cancelled'
+export type PaymentAdjustment = 'reduce_emi' | 'reduce_tenure' | 'pay_ahead'
 
 export interface Instalment {
   _id: string
   booking: string
   kind: InstalmentKind
   seq: number
+  revision: number
   dueDate: string
   dueAmount: number
+  paidAmount: number
+  /** dueAmount − paidAmount */
+  remaining: number
   status: InstalmentStatus
   overdue?: boolean
-  paidAmount: number
-  paidOn: string | null
+  lastPaidOn: string | null
+}
+
+export interface ScheduleSnapshot {
+  count: number
+  emi: number
+  endDate: string
+}
+export interface ReceiptAllocation {
+  instalment: string | null
+  seq: number | null
+  kind: InstalmentKind | 'prepayment'
+  amount: number
+}
+export interface ReceiptAdjustment {
+  type: PaymentAdjustment
+  extra: number
+  before: ScheduleSnapshot | null
+  after: ScheduleSnapshot | null
+}
+
+/** One payment recorded on a booking — and its receipt. */
+export interface PlotReceipt {
+  _id: string
+  booking: string
+  receiptNo: string
+  amount: number
+  paidOn: string
   mode: string | null
   reference: string
   notes: string
   ratingPct: number
   commissionBase: number
-  receiptNo: string | null
+  allocations: ReceiptAllocation[]
+  adjustment: ReceiptAdjustment | null
+  balanceAfter: number
   receivedByCode: string | null
 }
 
@@ -327,8 +360,10 @@ export interface Booking {
   plan: PaymentPlan
   price: number
   downPayment: number
+  /** Live schedule — change when a prepayment reshapes it. */
   tenureMonths: number
   emiAmount: number
+  revision: number
   bookedOn: string
   status: BookingStatus
   paidTotal: number
@@ -340,7 +375,10 @@ export interface BookingDetail extends Booking {
   plot: Plot & { block: Ref }
   client: Client
   schedule: Instalment[]
+  receipts: PlotReceipt[]
   balance: number
+  /** Owed on instalments due today or earlier. */
+  dueNow: number
   nextDue: Instalment | null
 }
 
@@ -380,45 +418,87 @@ export const cancelBooking = (
   body: { reason: string; refundAmount: number; refundMode: string; refundReference: string },
 ) => apiRequest<ApiSingleResponse<{ reversed: number }> & { message: string }>(`/plot-sales/bookings/${id}/cancel`, { method: 'POST', body })
 
-export interface ReceiveInput {
+export interface PaymentPreview {
+  balance: number
+  dueNow: number
+  extra: number
+  needsChoice: boolean
+  completes: boolean
+  balanceAfter: number
+  adjustment: ReceiptAdjustment | null
+  allocations: ReceiptAllocation[]
+  newSchedule: { seq: number; dueDate: string; dueAmount: number }[]
+}
+export interface PaymentInput {
   amount: number
   paidOn: string
   mode: string
   reference: string
   notes: string
   ratingPct: number
+  adjustment: PaymentAdjustment | null
 }
-export const receivePayment = (id: string, body: ReceiveInput) =>
-  apiRequest<ApiSingleResponse<Instalment> & { message: string }>(`/plot-sales/payments/${id}/receive`, {
+export const previewPayment = (bookingId: string, params: Params) =>
+  apiRequest<ApiSingleResponse<PaymentPreview>>(`/plot-sales/bookings/${bookingId}/payment-preview`, { params })
+export const recordPayment = (bookingId: string, body: PaymentInput) =>
+  apiRequest<ApiSingleResponse<PlotReceipt> & { message: string }>(`/plot-sales/bookings/${bookingId}/payments`, {
     method: 'POST',
     body,
   })
 
-export interface PaymentRow extends Omit<Instalment, 'booking'> {
+interface SaleRefs {
   booking: { _id: string; code: string; plan: PaymentPlan; status: BookingStatus }
   plot: Ref
   project: Ref
   client: { _id: string; code: string; fullName: string; mobile: string }
   associate: { _id: string; memberCode: string; fullName: string }
 }
+export type PaymentRow = Omit<PlotReceipt, 'booking'> & SaleRefs
+export type DueRow = Omit<Instalment, 'booking'> & SaleRefs
 export interface PaymentList extends Paged<PaymentRow> {
-  summary: { paid: number; due: number }
+  summary: { paid: number }
 }
-export interface DueList extends Paged<PaymentRow> {
+export interface DueList extends Paged<DueRow> {
   summary: { due: number; overdue: number; overdueCount: number }
 }
 export const fetchPayments = (params: Params = {}) => apiRequest<PaymentList>('/plot-sales/payments', { params })
 export const fetchDues = (params: Params = {}) => apiRequest<DueList>('/plot-sales/payments/dues', { params })
 
-export interface Receipt extends Omit<PaymentRow, 'project' | 'client' | 'plot' | 'booking'> {
-  booking: { _id: string; code: string; plan: PaymentPlan; price: number; paidTotal: number; tenureMonths: number; bookedOn: string; status: BookingStatus }
+export interface Receipt extends Omit<PlotReceipt, 'booking'> {
+  booking: {
+    _id: string
+    code: string
+    plan: PaymentPlan
+    price: number
+    paidTotal: number
+    tenureMonths: number
+    emiAmount: number
+    bookedOn: string
+    status: BookingStatus
+  }
   plot: { code: string; name: string; size: number; facing: string; block: { name: string } }
   project: { code: string; name: string; location: Project['location']; company: Company }
   client: Client
-  totalInstalments: number
+  /** Balance right after this payment. */
   balance: number
 }
 export const fetchReceipt = (id: string) => apiRequest<ApiSingleResponse<Receipt>>(`/plot-sales/payments/${id}/receipt`)
+
+export interface BookingStatement extends Omit<BookingDetail, 'project' | 'balance' | 'dueNow' | 'nextDue'> {
+  project: { _id: string; code: string; name: string; location: Project['location']; company: Company }
+  summary: {
+    price: number
+    paid: number
+    balance: number
+    emiAmount: number
+    remainingEmis: number
+    nextDue: { dueDate: string; amount: number } | null
+    overdue: number
+    overdueCount: number
+  }
+  generatedAt: string
+}
+export const fetchStatement = (id: string) => apiRequest<ApiSingleResponse<BookingStatement>>(`/plot-sales/bookings/${id}/statement`)
 
 /** Payment history as CSV, with the same filters as the screen. */
 export async function downloadPaymentsCsv(params: Params = {}): Promise<void> {

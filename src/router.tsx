@@ -42,6 +42,7 @@ import { BookingDetailPage } from '@/features/plots/sales/BookingDetailPage'
 import { PaymentsPage } from '@/features/plots/sales/PaymentsPage'
 import { DuesPage } from '@/features/plots/sales/DuesPage'
 import { ReceiptPage } from '@/features/plots/sales/ReceiptPage'
+import { StatementPage } from '@/features/plots/sales/StatementPage'
 import { PlotCommissionPage } from '@/features/plots/commission/PlotCommissionPage'
 import { PlotPayoutsPage, PlotPayoutDetailPage } from '@/features/plots/commission/PlotPayoutsPage'
 import { PlotTreePage } from '@/features/plots/commission/PlotTreePage'
@@ -113,6 +114,7 @@ export const router = createBrowserRouter([
                   { path: 'plot-sales/sell', element: <SellPlotPage /> },
                   { path: 'plot-sales/bookings', element: <BookingsPage /> },
                   { path: 'plot-sales/bookings/:id', element: <BookingDetailPage /> },
+                  { path: 'plot-sales/bookings/:id/statement', element: <StatementPage /> },
                   { path: 'plot-sales/payments', element: <PaymentsPage /> },
                   { path: 'plot-sales/dues', element: <DuesPage /> },
                   { path: 'plot-sales/receipts/:id', element: <ReceiptPage /> },

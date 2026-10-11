@@ -9,14 +9,14 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { DataTable, PageHeader, Pager, Stat, Td, Th } from '../PlotUi'
-import { KIND_LABEL, day, inr, rowClass } from '../format'
+import { adjustmentNote, allocationLabel, day, inr, rowClass } from '../format'
 import { useProjectOptions } from '../hooks'
 
 /** Plot Sales → Payments: every receipt issued, with CSV export. */
 export function PaymentsPage() {
   const projects = useProjectOptions()
   const [project, setProject] = useState('')
-  const [kind, setKind] = useState<'' | InstalmentKind>('')
+  const [kind, setKind] = useState<'' | InstalmentKind | 'prepayment'>('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [search, setSearch] = useState('')
@@ -85,11 +85,12 @@ export function PaymentsPage() {
             </option>
           ))}
         </Select>
-        <Select value={kind} onChange={(e) => setKind(e.target.value as '' | InstalmentKind)} containerClassName="w-full sm:w-44" aria-label="Type">
+        <Select value={kind} onChange={(e) => setKind(e.target.value as '' | InstalmentKind | 'prepayment')} containerClassName="w-full sm:w-44" aria-label="Type">
           <option value="">All types</option>
           <option value="full">Full payment</option>
           <option value="down">Down payment</option>
           <option value="emi">EMI</option>
+          <option value="prepayment">Prepayment</option>
         </Select>
         <Input type="date" aria-label="From" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full sm:w-40" />
         <Input type="date" aria-label="To" value={to} onChange={(e) => setTo(e.target.value)} className="w-full sm:w-40" />
@@ -111,7 +112,7 @@ export function PaymentsPage() {
                 <Th>Paid on</Th>
                 <Th>Booking</Th>
                 <Th>Client</Th>
-                <Th>Type</Th>
+                <Th>Applied to</Th>
                 <Th>Credited to</Th>
                 <Th right>Amount</Th>
                 <Th>Mode</Th>
@@ -138,10 +139,13 @@ export function PaymentsPage() {
                   <span className="text-text">{p.client?.fullName}</span>
                   <span className="block text-xs text-text-subtle">{p.client?.mobile}</span>
                 </Td>
-                <Td className="text-text-muted">{p.kind === 'emi' ? `EMI ${p.seq}` : KIND_LABEL[p.kind]}</Td>
+                <Td className="text-text-muted">
+                  {p.allocations.map(allocationLabel).join(', ')}
+                  {p.adjustment && <span className="block text-xs text-text-subtle">{adjustmentNote(p.adjustment)}</span>}
+                </Td>
                 <Td className="font-mono text-xs text-text-muted">{p.associate?.memberCode}</Td>
                 <Td right className="font-medium text-text">
-                  {inr(p.paidAmount)}
+                  {inr(p.amount)}
                   {p.ratingPct !== 100 && <span className="block text-xs text-text-subtle">rating {p.ratingPct}%</span>}
                 </Td>
                 <Td className="text-text-muted">

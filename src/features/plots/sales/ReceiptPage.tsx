@@ -4,7 +4,7 @@ import { fetchReceipt } from '@/api/plots'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { businessName } from '@/lib/business'
-import { PLAN_LABEL, day, inr, instalmentLabel } from '../format'
+import { PLAN_LABEL, adjustmentNote, day, inr, instalmentLabel } from '../format'
 
 /**
  * A plot payment receipt — printable, same paper layout as invoices: only
@@ -85,32 +85,33 @@ export function ReceiptPage() {
           <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-text-subtle">
             <tr>
               <th className="py-2 font-semibold">Description</th>
-              <th className="py-2 font-semibold">Due date</th>
               <th className="py-2 text-right font-semibold">Amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-border">
-              <td className="py-3">
-                {instalmentLabel(r.kind, r.seq, tenure)} — plot {r.plot.name}
-              </td>
-              <td className="py-3 text-text-muted">{day(r.dueDate)}</td>
-              <td className="py-3 text-right font-medium tabular-nums">{inr(r.paidAmount)}</td>
-            </tr>
+            {r.allocations.map((a, i) => (
+              <tr key={i} className="border-b border-border">
+                <td className="py-3">
+                  {a.kind === 'prepayment' ? 'Prepayment (towards principal)' : instalmentLabel(a.kind, a.seq ?? 0, tenure)} — plot {r.plot.name}
+                </td>
+                <td className="py-3 text-right font-medium tabular-nums">{inr(a.amount)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
+        {r.adjustment && adjustmentNote(r.adjustment) && <p className="mt-3 text-sm text-text-muted">{adjustmentNote(r.adjustment)}</p>}
 
         <div className="mt-4 ml-auto w-full max-w-xs text-sm">
-          <Row label="Received" value={inr(r.paidAmount)} strong />
+          <Row label="Received" value={inr(r.amount)} strong />
           <Row label="Plot price" value={inr(r.booking.price)} />
-          <Row label="Paid to date" value={inr(r.booking.paidTotal)} />
-          <Row label="Balance" value={inr(r.balance)} />
+          <Row label="Balance after this payment" value={inr(r.balance)} />
         </div>
 
         <section className="mt-6 grid gap-4 border-t border-border pt-6 text-sm sm:grid-cols-2">
           <dl className="space-y-1 text-text-muted">
             <p>Mode: {r.mode ?? 'Not recorded'}</p>
             {r.reference && <p>Reference: {r.reference}</p>}
+            {r.notes && <p>Notes: {r.notes}</p>}
             <p>Received on: {day(r.paidOn)}</p>
           </dl>
           <div className="text-right text-text-muted">

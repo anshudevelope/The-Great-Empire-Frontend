@@ -32,7 +32,7 @@ export function DuesPage() {
 
   return (
     <div>
-      <PageHeader title="Dues" description="Instalments due on or before a date, oldest first. Overdue ones are flagged." />
+      <PageHeader title="Dues" description="Instalments due on or before a date, oldest first — what is still owed on each. Overdue ones are flagged." />
 
       {data && (
         <div className="mb-5 grid gap-4 sm:grid-cols-3">
@@ -105,7 +105,11 @@ export function DuesPage() {
               <tr key={p._id} className={rowClass}>
                 <Td>
                   <span className="text-text">{day(p.dueDate)}</span>
-                  <span className="mt-1 block">{p.overdue ? <Badge tone="danger">overdue</Badge> : <Badge tone="warning">due</Badge>}</span>
+                  <span className="mt-1 block">
+                    <Badge tone={p.overdue ? 'danger' : 'warning'}>
+                      {`${p.status === 'partial' ? 'part-paid' : 'due'}${p.overdue ? ' · overdue' : ''}`}
+                    </Badge>
+                  </span>
                 </Td>
                 <Td>
                   <span className="font-mono text-xs text-text">{p.booking?.code}</span>
@@ -122,7 +126,8 @@ export function DuesPage() {
                 <Td className="text-text-muted">{p.kind === 'emi' ? `EMI ${p.seq}` : KIND_LABEL[p.kind]}</Td>
                 <Td className="font-mono text-xs text-text-muted">{p.associate?.memberCode}</Td>
                 <Td right className="font-medium text-text">
-                  {inr(p.dueAmount)}
+                  {inr(p.remaining)}
+                  {p.status === 'partial' && <span className="block text-xs text-text-subtle">of {inr(p.dueAmount)}</span>}
                 </Td>
                 <Td right>
                   <Link to={`/admin/plot-sales/bookings/${p.booking?._id}`}>

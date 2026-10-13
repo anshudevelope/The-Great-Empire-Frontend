@@ -1,12 +1,35 @@
-import { useQuery } from '@tanstack/react-query'
-import { fetchCompanies, fetchPlotConfig, fetchProjects, fetchBlocks } from '@/api/plots'
+import { queryOptions, useQuery } from '@tanstack/react-query'
+import { fetchCompanies, fetchPlotConfig, fetchPlotNodeSummary, fetchProjects, fetchBlocks } from '@/api/plots'
 
 // Lookups many plot screens share. Cached under stable keys so moving between
 // screens doesn't refetch them.
 
+/**
+ * One associate's plot position, for the tree hover card. Shared between the
+ * hook and the hover-time prefetch so both land in the same cache entry.
+ */
+export const plotNodeSummaryQuery = (associateId: string) =>
+  queryOptions({
+    queryKey: ['plot-commission', 'node', associateId],
+    queryFn: () => fetchPlotNodeSummary(associateId),
+    staleTime: 60_000,
+    select: (r) => r.data,
+  })
+
+export const plotConfigQuery = queryOptions({
+  queryKey: ['plot-config'],
+  queryFn: fetchPlotConfig,
+  staleTime: 5 * 60_000,
+  select: (r) => r.data,
+})
+
+export function usePlotNodeSummary(associateId: string, enabled: boolean) {
+  return useQuery({ ...plotNodeSummaryQuery(associateId), enabled })
+}
+
 /** `enabled` lets shared screens (the tree) skip it outside the T2 console, where the API refuses it. */
 export function usePlotConfig(enabled = true) {
-  return useQuery({ queryKey: ['plot-config'], queryFn: fetchPlotConfig, staleTime: 5 * 60_000, select: (r) => r.data, enabled })
+  return useQuery({ ...plotConfigQuery, enabled })
 }
 
 /** Every company, for selects. */

@@ -5,12 +5,12 @@ import { PlotIcon, UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
 import type { AssociateStatus, AssociateTreeNode, LegBusiness } from '@/types/associate'
 import { formatDate } from '@/lib/datetime'
-import { useQuery } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useActiveBusiness } from '@/store/businessStore'
 import { useAuthScope } from '@/store/authScope'
 import { BUSINESSES } from '@/lib/business'
-import { fetchPlotNodeSummary } from '@/api/plots'
-import { usePlotConfig } from '@/features/plots/hooks'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { plotConfigQuery, plotNodeSummaryQuery, usePlotConfig, usePlotNodeSummary } from '@/features/plots/hooks'
 
 const pctLabel = (fraction?: number) => (fraction === undefined ? '' : `${+(fraction * 100).toFixed(2)}%`)
 
@@ -104,8 +104,8 @@ const amount = (value: number) =>
   value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 type BusinessRow =
-  | { label: string; carry: false; left: LegBusiness; right: LegBusiness }
-  | { label: string; carry: true; left: number; right: number }
+  | { label: string; carry: false; left: LegBusiness | null; right: LegBusiness | null }
+  | { label: string; carry: true; left: number | null; right: number | null }
 
 /** The three figures shown under each leg. "Act. Amt" is the rated amount; "Bus. Amt" the full amount paid. */
 const LEG_COLUMNS = ['Member', 'Act. Amt', 'Bus. Amt'] as const
@@ -145,34 +145,41 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
 
   // T2 console only: the plot business, from the plot module's own endpoint
   // (separate pool, separate ledger). The member portal never asks for it.
+  //
+  // The plot section is always laid out when it applies, and its figures fill in
+  // as they arrive. Adding rows after the fact made the card grow, relabel its
+  // "Total Earning" and jump to a new spot — and until then it read as "no plots".
   const scope = useAuthScope()
   const showPlots = tierII && scope === 'admin'
-  const plotQuery = useQuery({
-    queryKey: ['plot-commission', 'node', node._id],
-    queryFn: () => fetchPlotNodeSummary(node._id),
-    enabled: showPlots,
-    staleTime: 60_000,
-  })
+  const plotQuery = usePlotNodeSummary(node._id, showPlots)
   const plotConfig = usePlotConfig(showPlots)
-  const plots = showPlots ? plotQuery.data?.data : undefined
-  if (plots) {
+  const plots = showPlots ? plotQuery.data : undefined
+  const plotState: 'off' | 'loading' | 'error' | 'ready' = !showPlots
+    ? 'off'
+    : plots
+      ? 'ready'
+      : plotQuery.isError
+        ? 'error'
+        : 'loading'
+  if (showPlots) {
     rows.push(
       {
         label: 'Plots',
         carry: false,
-        left: { count: plots.sales.left, amount: plots.volume.left, rated: plots.ratedVolume.left },
-        right: { count: plots.sales.right, amount: plots.volume.right, rated: plots.ratedVolume.right },
+        left: plots ? { count: plots.sales.left, amount: plots.volume.left, rated: plots.ratedVolume.left } : null,
+        right: plots ? { count: plots.sales.right, amount: plots.volume.right, rated: plots.ratedVolume.right } : null,
       },
-      { label: 'Plots (Carry)', carry: true, left: plots.carry.left, right: plots.carry.right },
+      { label: 'Plots (Carry)', carry: true, left: plots?.carry.left ?? null, right: plots?.carry.right ?? null },
     )
   }
   const plotTotal = plots ? plots.earned.direct + plots.earned.matching : 0
 
-  const legCells = (leg: LegBusiness) => [
-    String(leg.count),
-    amount(leg.rated ?? 0),
-    amount(leg.amount),
-  ]
+  /** A figure that hasn't arrived: a skeleton while loading, a dash if it never will. */
+  const pending = (className?: string) =>
+    plotState === 'loading' ? <Skeleton className={cn('h-lh w-10', className)} /> : '—'
+
+  const legCells = (leg: LegBusiness | null) =>
+    leg ? [String(leg.count), amount(leg.rated ?? 0), amount(leg.amount)] : [pending('ml-auto w-4'), pending('ml-auto'), pending('ml-auto')]
 
   // Which leg the next pairing is waiting on. Only meaningful while one side
   // holds carry and the other does not — once both hold volume the engine has
@@ -186,13 +193,13 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
   // scrolled, so anything that lands off-screen is simply lost.
   const cardRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
-  // Measured again when the plot rows arrive — they make the card taller, and
-  // placing it with the old height could push its bottom off-screen.
-  const plotsLoaded = !!plots
+  // Measured again when the plot figures settle. The skeleton is sized like the
+  // real rows so the height should not change; this only guards the case where
+  // a long figure widens the card or the error note wraps.
   useLayoutEffect(() => {
     const el = cardRef.current
-    if (el) setSize({ w: el.offsetWidth, h: el.offsetHeight })
-  }, [plotsLoaded])
+    if (el) setSize((prev) => (prev?.w === el.offsetWidth && prev.h === el.offsetHeight ? prev : { w: el.offsetWidth, h: el.offsetHeight }))
+  }, [plotState])
 
   // Rendered in a portal with fixed positioning. The tree canvas scrolls, so
   // any absolutely-positioned tooltip inside it gets clipped by that overflow —
@@ -303,12 +310,15 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
               <td className={cn('px-2 py-1 text-text-muted', row.carry && 'italic')}>{row.label}</td>
               {row.carry ? (
                 <>
-                  <td colSpan={3} className="border-l border-border px-1.5 py-1 text-center tabular-nums text-text">
-                    {amount(row.left)}
-                  </td>
-                  <td colSpan={3} className="border-l border-border px-1.5 py-1 text-center tabular-nums text-text">
-                    {amount(row.right)}
-                  </td>
+                  {[row.left, row.right].map((value, side) => (
+                    <td
+                      key={side}
+                      colSpan={3}
+                      className="border-l border-border px-1.5 py-1 text-center tabular-nums text-text"
+                    >
+                      {value === null ? pending('mx-auto w-14') : amount(value)}
+                    </td>
+                  ))}
                 </>
               ) : (
                 [row.left, row.right].flatMap((leg, side) =>
@@ -346,32 +356,44 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
           <p className="tabular-nums font-medium text-text">₹{amount(node.income?.matching ?? 0)}</p>
         </div>
         <div className="border-l border-border bg-success-bg/60 px-2 py-1.5">
-          <p className="text-text-subtle">{plots ? 'Registration Earning' : 'Total Earning'}</p>
+          <p className="text-text-subtle">{showPlots ? 'Registration Earning' : 'Total Earning'}</p>
           <p className="tabular-nums font-semibold text-success">₹{amount(node.income?.total ?? 0)}</p>
         </div>
       </div>
 
-      {plots && (
-        <>
+      {showPlots && (
+        <div aria-busy={plotState === 'loading'}>
           <div className="grid grid-cols-3 border-t border-border text-[10px]">
             <div className="px-2 py-1.5">
-              <p className="text-text-subtle">Plot Direct ({pctLabel(plotConfig.data?.commission.direct)})</p>
-              <p className="tabular-nums font-medium text-text">₹{amount(plots.earned.direct)}</p>
+              <p className="text-text-subtle">Plot Direct{plotConfig.data ? ` (${pctLabel(plotConfig.data.commission.direct)})` : ''}</p>
+              <p className="tabular-nums font-medium text-text">
+                {plots ? `₹${amount(plots.earned.direct)}` : pending('w-14')}
+              </p>
             </div>
             <div className="border-l border-border px-2 py-1.5">
-              <p className="text-text-subtle">Plot Matching ({pctLabel(plotConfig.data?.commission.matching)})</p>
-              <p className="tabular-nums font-medium text-text">₹{amount(plots.earned.matching)}</p>
+              <p className="text-text-subtle">Plot Matching{plotConfig.data ? ` (${pctLabel(plotConfig.data.commission.matching)})` : ''}</p>
+              <p className="tabular-nums font-medium text-text">
+                {plots ? `₹${amount(plots.earned.matching)}` : pending('w-14')}
+              </p>
             </div>
             <div className="border-l border-border bg-success-bg/60 px-2 py-1.5">
               <p className="text-text-subtle">Plot Earning</p>
-              <p className="tabular-nums font-semibold text-success">₹{amount(plotTotal)}</p>
+              <p className="tabular-nums font-semibold text-success">
+                {plots ? `₹${amount(plotTotal)}` : pending('w-14')}
+              </p>
             </div>
           </div>
           <div className="flex items-center justify-between border-t border-border bg-success-bg px-2 py-1.5 text-[10px]">
             <span className="font-medium text-text">Total Earning</span>
-            <span className="tabular-nums font-semibold text-success">₹{amount((node.income?.total ?? 0) + plotTotal)}</span>
+            {plotState === 'error' ? (
+              <span className="text-danger">Plot data unavailable</span>
+            ) : plots ? (
+              <span className="tabular-nums font-semibold text-success">₹{amount((node.income?.total ?? 0) + plotTotal)}</span>
+            ) : (
+              <Skeleton className="h-lh w-20" />
+            )}
           </div>
-        </>
+        </div>
       )}
 
       <div className="bg-linear-to-r from-blue-700 to-blue-900 px-3 py-1.5 text-[10px] text-white">
@@ -398,10 +420,20 @@ function NodeCard({
   // The rect is measured on enter rather than tracked continuously — the tree
   // doesn't move while a node is hovered, and re-measuring on scroll would be
   // needless work.
-  const showTooltip = () => setAnchor(wrapperRef.current?.getBoundingClientRect() ?? null)
   const business = useActiveBusiness()
   const scope = useAuthScope()
   const plotTree = business === 't2' && scope === 'admin'
+  const queryClient = useQueryClient()
+  // Start the plot request on pointer-enter so it is in flight (or cached) by
+  // the time the card paints. prefetchQuery respects staleTime and dedupes with
+  // the tooltip's own query.
+  const showTooltip = () => {
+    setAnchor(wrapperRef.current?.getBoundingClientRect() ?? null)
+    if (plotTree) {
+      void queryClient.prefetchQuery(plotNodeSummaryQuery(node._id))
+      void queryClient.prefetchQuery(plotConfigQuery)
+    }
+  }
 
   return (
     <div

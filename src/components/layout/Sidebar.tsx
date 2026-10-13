@@ -91,6 +91,7 @@ const T2_NAV_ITEMS: NavItem[] = [
       { label: 'Bookings', to: '/admin/plot-sales/bookings' },
       { label: 'Clients', to: '/admin/plot-sales/clients' },
       { label: 'Payments', to: '/admin/plot-sales/payments' },
+      { label: 'EMIs', to: '/admin/plot-sales/emis' },
       { label: 'Dues', to: '/admin/plot-sales/dues' },
     ],
   },

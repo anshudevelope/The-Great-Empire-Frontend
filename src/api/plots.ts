@@ -464,6 +464,17 @@ export interface DueList extends Paged<DueRow> {
 export const fetchPayments = (params: Params = {}) => apiRequest<PaymentList>('/plot-sales/payments', { params })
 export const fetchDues = (params: Params = {}) => apiRequest<DueList>('/plot-sales/payments/dues', { params })
 
+/** Where an EMI stands today. */
+export type EmiView = 'pending' | 'overdue' | 'upcoming' | 'paid' | 'all'
+export type EmiRow = Omit<DueRow, 'booking'> & {
+  booking: SaleRefs['booking'] & { tenureMonths?: number }
+}
+export interface EmiList extends Paged<EmiRow> {
+  /** Counts and rupee totals for every view, over the same filters as the list. */
+  summary: { counts: Record<EmiView, number>; amounts: Record<Exclude<EmiView, 'all'>, number> }
+}
+export const fetchEmis = (params: Params = {}) => apiRequest<EmiList>('/plot-sales/payments/emis', { params })
+
 export interface Receipt extends Omit<PlotReceipt, 'booking'> {
   booking: {
     _id: string

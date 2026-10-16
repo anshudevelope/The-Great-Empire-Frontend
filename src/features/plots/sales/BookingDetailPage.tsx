@@ -118,6 +118,19 @@ export function BookingDetailPage() {
         <Section title="Sale">
           <Info label="Credited to" value={`${b.associate.memberCode} · ${b.associate.fullName}`} />
           <Info label="Placed in" value={b.leg ? `${b.associate.memberCode}'s ${b.leg.toLowerCase()} leg` : 'Upline only'} />
+          {b.discount > 0 && (
+            <Info label="Discount" value={`${inr(b.discount)} off ${inr(b.listPrice ?? b.price + b.discount)}`} />
+          )}
+          <Info
+            label="Commission"
+            value={
+              b.allotment.reached
+                ? b.allotment.pct > 0
+                  ? `Earning — ${b.allotment.pct}% allotment reached`
+                  : 'Earning on every payment'
+                : `Held until ${inr(b.allotment.amount)} paid (${b.allotment.pct}% allotment)`
+            }
+          />
           <Info
             label="Plan"
             value={b.plan === 'emi' ? `EMI · ${inr(b.downPayment)} down · ${inr(b.emiAmount)} × ${emisLeft} left` : PLAN_LABEL[b.plan]}
@@ -126,6 +139,14 @@ export function BookingDetailPage() {
           {b.notes && <Info label="Notes" value={b.notes} />}
         </Section>
       </div>
+
+      {active && !b.allotment.reached && (
+        <p className="rounded-card border border-warning/40 bg-warning-bg/50 px-5 py-3 text-sm text-text-muted">
+          Commission on this booking is held until {inr(b.allotment.amount)} ({b.allotment.pct}% allotment) has been paid —{' '}
+          <strong className="text-text">{inr(Math.max(0, b.allotment.amount - b.paidTotal))}</strong> to go. The payment that reaches it releases
+          commission on every payment so far.
+        </p>
+      )}
 
       {b.status === 'cancelled' && (
         <div className="rounded-card border border-danger-border bg-danger-bg px-5 py-4 text-sm text-text">

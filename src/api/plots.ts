@@ -358,7 +358,11 @@ export interface Booking {
   /** Placed in the associate's own leg; null = upline only. */
   leg: 'Left' | 'Right' | null
   plan: PaymentPlan
+  /** What the client pays: list price less discount. */
   price: number
+  /** The plot's price at sale; null on bookings made before discounts. */
+  listPrice: number | null
+  discount: number
   downPayment: number
   /** Live schedule — change when a prepayment reshapes it. */
   tenureMonths: number
@@ -380,9 +384,13 @@ export interface BookingDetail extends Booking {
   /** Owed on instalments due today or earlier. */
   dueNow: number
   nextDue: Instalment | null
+  /** Commission is held until `amount` (pct of price) has been paid. */
+  allotment: { pct: number; amount: number; reached: boolean }
 }
 
 export interface SchedulePreview {
+  listPrice: number
+  discount: number
   price: number
   plan: PaymentPlan
   downPayment: number
@@ -397,6 +405,8 @@ export interface SellInput {
   client: string
   associate: string
   plan: PaymentPlan
+  /** ₹ off the plot's price for this client. */
+  discount?: number
   downPayment?: number
   tenureMonths?: number
   bookedOn: string
@@ -495,7 +505,7 @@ export interface Receipt extends Omit<PlotReceipt, 'booking'> {
 }
 export const fetchReceipt = (id: string) => apiRequest<ApiSingleResponse<Receipt>>(`/plot-sales/payments/${id}/receipt`)
 
-export interface BookingStatement extends Omit<BookingDetail, 'project' | 'balance' | 'dueNow' | 'nextDue'> {
+export interface BookingStatement extends Omit<BookingDetail, 'project' | 'balance' | 'dueNow' | 'nextDue' | 'allotment'> {
   project: { _id: string; code: string; name: string; location: Project['location']; company: Company }
   summary: {
     price: number
@@ -512,10 +522,16 @@ export interface BookingStatement extends Omit<BookingDetail, 'project' | 'balan
 export const fetchStatement = (id: string) => apiRequest<ApiSingleResponse<BookingStatement>>(`/plot-sales/bookings/${id}/statement`)
 
 /** Payment history as CSV, with the same filters as the screen. */
-export async function downloadPaymentsCsv(params: Params = {}): Promise<void> {
+export const downloadPaymentsCsv = (params: Params = {}) =>
+  downloadCsv('/plot-sales/payments', `plot-payments-${new Date().toISOString().slice(0, 10)}.csv`, { ...params, format: 'csv' })
+
+/**
+ * Fetch a CSV endpoint and save it. Goes through fetch rather than a plain
+ * link because the endpoint needs an Authorization header.
+ */
+async function downloadCsv(path: string, filename: string, params: Params = {}): Promise<void> {
   const token = activeAuthStore().getState().token
-  const url = new URL(`${BASE_URL.replace(/\/$/, '')}/plot-sales/payments`)
-  url.searchParams.set('format', 'csv')
+  const url = new URL(`${BASE_URL.replace(/\/$/, '')}${path}`)
   for (const [key, value] of Object.entries(params)) if (value) url.searchParams.set(key, value)
 
   const response = await fetch(url.toString(), {
@@ -526,7 +542,7 @@ export async function downloadPaymentsCsv(params: Params = {}): Promise<void> {
   const objectUrl = URL.createObjectURL(await response.blob())
   const anchor = document.createElement('a')
   anchor.href = objectUrl
-  anchor.download = `plot-payments-${new Date().toISOString().slice(0, 10)}.csv`
+  anchor.download = filename
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
@@ -675,3 +691,6 @@ export const cancelPlotPayout = (id: string, reason: string) =>
   })
 export const discardPlotPayout = (id: string) =>
   apiRequest<ApiMessageResponse>(`/plot-commission/payouts/${id}`, { method: 'DELETE' })
+/** The payout sheet as CSV — UTF-8 with a BOM, so Excel opens it directly. */
+export const downloadPlotPayoutCsv = (id: string, payoutNo: string) =>
+  downloadCsv(`/plot-commission/payouts/${id}/export`, `${payoutNo}-plot-payout.csv`)

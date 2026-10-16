@@ -85,6 +85,14 @@ export function SellPlotPage() {
   const emiEnabled = config.data?.payment.emi.enabled ?? false
   const oneTimeEnabled = config.data?.payment.oneTime.enabled ?? true
   const [plan, setPlan] = useState<PaymentPlan>('one_time')
+  // ₹ off the plot's price. The admin can type either the discount or the
+  // price they are selling at; the other follows.
+  const [discount, setDiscount] = useState('')
+  const listPrice = plot?.totalPrice ?? 0
+  const discountAmount = Number(discount) || 0
+  const salePriceText = discount === '' ? '' : String(Math.round((listPrice - discountAmount) * 100) / 100)
+  const setSalePrice = (value: string) =>
+    setDiscount(value === '' ? '' : String(Math.round((listPrice - Number(value)) * 100) / 100))
   const [downPayment, setDownPayment] = useState('')
   const [tenure, setTenure] = useState('')
   const [bookedOn, setBookedOn] = useState(todayIso())
@@ -95,6 +103,7 @@ export function SellPlotPage() {
   const previewParams = useDebounced({
     plot: plotId,
     plan: activePlan,
+    discount: discount || '0',
     downPayment: downPayment || '0',
     tenureMonths: activePlan === 'emi' ? tenureMonths : undefined,
     bookedOn,
@@ -125,6 +134,7 @@ export function SellPlotPage() {
         associate: associate!._id,
         leg: leg || null,
         plan: activePlan,
+        discount: discountAmount,
         downPayment: activePlan === 'emi' ? Number(downPayment) || 0 : undefined,
         tenureMonths: activePlan === 'emi' ? Number(tenureMonths) : undefined,
         bookedOn,
@@ -180,7 +190,14 @@ export function SellPlotPage() {
             <div className="flex items-center gap-3">
               <Badge tone={PLOT_STATUS_TONE[plot.status]}>{plot.status}</Badge>
               <span className="text-lg font-semibold text-text">{inr(plot.totalPrice)}</span>
-              <Button size="sm" variant="secondary" onClick={() => setPlotId('')}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setPlotId('')
+                  setDiscount('')
+                }}
+              >
                 Change
               </Button>
             </div>
@@ -263,6 +280,23 @@ export function SellPlotPage() {
               {emiEnabled && <option value="emi">{PLAN_LABEL.emi}</option>}
             </Select>
           </FormField>
+          <FormField
+            label="Discount (₹)"
+            htmlFor="sp-discount"
+            hint={plot ? `Off the plot price of ${inr(listPrice)}.` : 'Off the plot price.'}
+          >
+            <Input id="sp-discount" inputMode="decimal" placeholder="0" value={discount} onChange={(e) => setDiscount(e.target.value)} disabled={!plot} />
+          </FormField>
+          <FormField label="Sale price (₹)" htmlFor="sp-sale-price" hint="What the client pays. Commission is on this amount.">
+            <Input
+              id="sp-sale-price"
+              inputMode="decimal"
+              placeholder={plot ? String(listPrice) : ''}
+              value={salePriceText}
+              onChange={(e) => setSalePrice(e.target.value)}
+              disabled={!plot}
+            />
+          </FormField>
           {activePlan === 'emi' && (
             <>
               <FormField label="Down payment (₹)" htmlFor="sp-down" hint="Any amount, including 0.">
@@ -299,6 +333,7 @@ export function SellPlotPage() {
                 tenure={preview.data.data.tenureMonths}
                 emiAmount={preview.data.data.emiAmount}
                 price={preview.data.data.price}
+                discount={preview.data.data.discount}
               />
             ) : null}
           </div>
@@ -374,11 +409,13 @@ function SchedulePreview({
   tenure,
   emiAmount,
   price,
+  discount,
 }: {
   rows: { kind: 'full' | 'down' | 'emi'; seq: number; dueDate: string; dueAmount: number }[]
   tenure: number
   emiAmount: number
   price: number
+  discount: number
 }) {
   const [open, setOpen] = useState(false)
   const shown = open ? rows : rows.slice(0, 4)
@@ -387,6 +424,7 @@ function SchedulePreview({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg px-4 py-2 text-sm">
         <span className="font-medium text-text">
           {rows.length} instalment{rows.length === 1 ? '' : 's'} · total {inr(price)}
+          {discount > 0 && <span className="font-normal text-text-muted"> (after {inr(discount)} discount)</span>}
         </span>
         {emiAmount > 0 && <span className="text-text-muted">EMI {inr(emiAmount)} / month</span>}
       </div>

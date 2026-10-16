@@ -180,7 +180,7 @@ function ProjectForm({ project }: { project: Project | null }) {
             <FormField label="Possession date" htmlFor="pj-possession">
               <Input id="pj-possession" type="date" value={form.possessionDate} onChange={(e) => patch('possessionDate', e.target.value)} />
             </FormField>
-            <FormField label="Allotment %" htmlFor="pj-allot" hint="Share of the price paid before a plot counts as allotted.">
+            <FormField label="Allotment %" htmlFor="pj-allot" hint="Share of the sale price the client must pay before the sale earns any commission. Applies to new sales.">
               <Input id="pj-allot" inputMode="decimal" value={form.allotmentPct} onChange={(e) => patch('allotmentPct', e.target.value)} />
             </FormField>
             <FormField label="Status" htmlFor="pj-status">

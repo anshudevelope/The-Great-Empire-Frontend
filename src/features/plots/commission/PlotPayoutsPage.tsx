@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import {
   cancelPlotPayout,
   discardPlotPayout,
+  downloadPlotPayoutCsv,
   fetchPlotPayout,
   fetchPlotPayoutNext,
   fetchPlotPayouts,
@@ -251,6 +252,12 @@ export function PlotPayoutDetailPage() {
             <Link to="/admin/plot-commission/payouts">
               <Button variant="secondary">All payouts</Button>
             </Link>
+            <Button
+              variant="secondary"
+              onClick={() => downloadPlotPayoutCsv(p._id, p.payoutNo).catch(() => toast.error('Download failed.'))}
+            >
+              Download (Excel)
+            </Button>
             {p.status === 'draft' && (
               <>
                 <Button variant="secondary" onClick={() => setConfirm('discard')}>

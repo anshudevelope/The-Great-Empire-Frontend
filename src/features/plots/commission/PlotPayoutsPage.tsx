@@ -253,7 +253,7 @@ export function PlotPayoutDetailPage() {
               <Button variant="secondary">All payouts</Button>
             </Link>
             <Button
-              variant="secondary"
+              variant="solidSuccess"
               onClick={() => downloadPlotPayoutCsv(p._id, p.payoutNo).catch(() => toast.error('Download failed.'))}
             >
               Download (Excel)

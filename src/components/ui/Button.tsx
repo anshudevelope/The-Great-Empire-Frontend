@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { Spinner } from './Spinner'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'info' | 'inverse'
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'solidSuccess' | 'success' | 'warning' | 'info' | 'inverse'
 type ButtonSize = 'sm' | 'md'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,6 +18,8 @@ const variantClasses: Record<ButtonVariant, string> = {
   secondary: 'bg-surface text-text border border-border-strong hover:bg-neutral-hover disabled:text-text-subtle',
   ghost: 'bg-transparent text-text-muted hover:bg-neutral-hover hover:text-text',
   danger: 'bg-danger text-white shadow-xs hover:brightness-95 disabled:opacity-60',
+  // Solid green, e.g. spreadsheet downloads.
+  solidSuccess: 'bg-success text-white shadow-xs hover:brightness-95 disabled:opacity-60',
   // Semantic outline variants so an action's color matches what it does
   // (e.g. Approve/Reject/Edit on the associate detail page), same tones as Badge/IconButton.
   success: 'border border-success-border bg-success-bg text-success hover:brightness-95',

@@ -143,14 +143,14 @@ function NodeTooltip({ node, anchor }: { node: AssociateTreeNode; anchor: DOMRec
     },
   ]
 
-  // T2 console only: the plot business, from the plot module's own endpoint
-  // (separate pool, separate ledger). The member portal never asks for it.
+  // T2 only: the plot business, from the plot module's own endpoint (separate
+  // pool, separate ledger). Admin and member portal alike — the API limits a
+  // member to their own downline, as for the rest of the tree.
   //
   // The plot section is always laid out when it applies, and its figures fill in
   // as they arrive. Adding rows after the fact made the card grow, relabel its
   // "Total Earning" and jump to a new spot — and until then it read as "no plots".
-  const scope = useAuthScope()
-  const showPlots = tierII && scope === 'admin'
+  const showPlots = tierII
   const plotQuery = usePlotNodeSummary(node._id, showPlots)
   const plotConfig = usePlotConfig(showPlots)
   const plots = showPlots ? plotQuery.data : undefined
@@ -422,7 +422,7 @@ function NodeCard({
   // needless work.
   const business = useActiveBusiness()
   const scope = useAuthScope()
-  const plotTree = business === 't2' && scope === 'admin'
+  const plotTree = business === 't2'
   const queryClient = useQueryClient()
   // Start the plot request on pointer-enter so it is in flight (or cached) by
   // the time the card paints. prefetchQuery respects staleTime and dedupes with
@@ -493,10 +493,10 @@ function NodeCard({
         </button>
       )}
 
-      {/* T2 console only: this member's plot tree (own legs and plot sales). */}
+      {/* T2 only: this member's plot tree (own legs and plot sales). */}
       {plotTree && (
         <Link
-          to={`/admin/plot-commission/tree/${node._id}`}
+          to={scope === 'admin' ? `/admin/plot-commission/tree/${node._id}` : `/portal/plot-tree/${node._id}`}
           aria-label={`Open ${node.fullName}'s plot tree`}
           title="View this member's plot tree"
           className={cn(

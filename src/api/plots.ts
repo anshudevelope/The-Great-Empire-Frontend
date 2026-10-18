@@ -4,7 +4,8 @@ import { businessHeaders } from '@/store/businessStore'
 import type { ApiMessageResponse, ApiSingleResponse } from '@/types/api'
 
 // T2 property management + plot sales + plot commission. Every endpoint is
-// T2-only on the API and, bar fetchMyPlotSummary, admin-only.
+// T2-only on the API and admin-only, bar fetchMyPlotSummary, fetchPlotConfig and
+// fetchPlotNodeSummary (a member may read their own downline's).
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
 

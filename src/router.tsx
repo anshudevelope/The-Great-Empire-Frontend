@@ -157,6 +157,8 @@ export const router = createBrowserRouter([
           { path: 'rewards', element: <RewardsIndex /> },
           { path: 'rewards/tier-1', element: <RewardsTierOnePage /> },
           { path: 'rewards/tier-2', element: <RewardsTierTwoPage /> },
+          // T2 only — the API refuses it elsewhere; opened from a node in My Tree.
+          { path: 'plot-tree/:id', element: <PlotTreePage /> },
         ],
       },
     ],

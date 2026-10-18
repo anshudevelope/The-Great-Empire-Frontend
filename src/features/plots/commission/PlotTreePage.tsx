@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Spinner } from '@/components/ui/Spinner'
 import { PlotIcon, UserCircleIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
+import { useAuthScope } from '@/store/authScope'
 import { PageHeader } from '../PlotUi'
 import { PLAN_LABEL, day, inr } from '../format'
 
@@ -38,9 +39,14 @@ const SALE_DOT: Record<BookingStatus, string> = {
  * top, their own Left and Right legs below, and under each leg a node per live
  * plot sale counted in it — their own sales placed there, and sales by anyone
  * in the downline under it. Nodes stay small; details show on hover.
+ *
+ * Shared by the admin console and the member portal (a member's own downline
+ * only — the API enforces it). Bookings open only in the admin console.
  */
 export function PlotTreePage() {
   const { id = '' } = useParams<{ id: string }>()
+  const admin = useAuthScope() === 'admin'
+  const associateTree = admin ? `/admin/associates/tree/${id}` : '/portal/tree'
   const { data, isLoading, isError } = useQuery({
     queryKey: ['plot-commission', 'tree', id],
     queryFn: () => fetchPlotTree(id),
@@ -64,11 +70,11 @@ export function PlotTreePage() {
     <div>
       <PageHeader
         title="Plot tree"
-        back={`/admin/associates/tree/${associate._id}`}
+        back={associateTree}
         description={`${associate.fullName} (${associate.memberCode}) — plot sales in their own left and right legs. Hover a node for details.`}
         actions={
-          <Link to={`/admin/associates/tree/${associate._id}`}>
-            <Button variant="secondary">Associate tree</Button>
+          <Link to={associateTree}>
+            <Button variant="secondary">{admin ? 'Associate tree' : 'My tree'}</Button>
           </Link>
         }
       />
@@ -79,8 +85,8 @@ export function PlotTreePage() {
             <li>
               <MemberNode member={associate} summary={summary} />
               <ul>
-                <LegBranch side="Left" group="A" leg={tree.left} summary={summary} />
-                <LegBranch side="Right" group="B" leg={tree.right} summary={summary} />
+                <LegBranch side="Left" group="A" leg={tree.left} summary={summary} admin={admin} />
+                <LegBranch side="Right" group="B" leg={tree.right} summary={summary} admin={admin} />
               </ul>
             </li>
           </ul>
@@ -125,11 +131,13 @@ function LegBranch({
   group,
   leg,
   summary,
+  admin,
 }: {
   side: 'Left' | 'Right'
   group: string
   leg: PlotTreeLeg
   summary: PlotNodeSummary
+  admin: boolean
 }) {
   const key = side === 'Left' ? 'left' : 'right'
   const sales = summary.sales[key]
@@ -164,7 +172,7 @@ function LegBranch({
         ) : (
           leg.bookings.map((sale) => (
             <li key={sale._id}>
-              <SaleNode sale={sale} />
+              <SaleNode sale={sale} admin={admin} />
             </li>
           ))
         )}
@@ -173,9 +181,16 @@ function LegBranch({
   )
 }
 
-function SaleNode({ sale }: { sale: PlotTreeSale }) {
+function SaleNode({ sale, admin }: { sale: PlotTreeSale; admin: boolean }) {
   const navigate = useNavigate()
   const paidPct = sale.price > 0 ? Math.min(100, (sale.paidTotal / sale.price) * 100) : 0
+  const node = (
+    <NodeShell label={sale.plot?.name ?? 'Plot'} sub={sale.code} note={sale.own ? 'Own sale' : `via ${sale.seller.memberCode}`}>
+      <Circle ring={SALE_RING[sale.status]} dot={SALE_DOT[sale.status]}>
+        <PlotIcon className="h-5 w-5 text-blue-500" />
+      </Circle>
+    </NodeShell>
+  )
   return (
     <Hover
       card={
@@ -200,18 +215,18 @@ function SaleNode({ sale }: { sale: PlotTreeSale }) {
         </HoverCard>
       }
     >
-      <button
-        type="button"
-        onClick={() => navigate(`/admin/plot-sales/bookings/${sale._id}`)}
-        title="Click to open the booking"
-        className="cursor-pointer rounded-control transition-all hover:-translate-y-0.5"
-      >
-        <NodeShell label={sale.plot?.name ?? 'Plot'} sub={sale.code} note={sale.own ? 'Own sale' : `via ${sale.seller.memberCode}`}>
-          <Circle ring={SALE_RING[sale.status]} dot={SALE_DOT[sale.status]}>
-            <PlotIcon className="h-5 w-5 text-blue-500" />
-          </Circle>
-        </NodeShell>
-      </button>
+      {admin ? (
+        <button
+          type="button"
+          onClick={() => navigate(`/admin/plot-sales/bookings/${sale._id}`)}
+          title="Click to open the booking"
+          className="cursor-pointer rounded-control transition-all hover:-translate-y-0.5"
+        >
+          {node}
+        </button>
+      ) : (
+        node
+      )}
     </Hover>
   )
 }

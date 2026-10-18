@@ -2,10 +2,12 @@ import { apiRequest } from './fetchClient'
 import { activeAuthStore } from '@/store/authStore'
 import { businessHeaders } from '@/store/businessStore'
 import type { ApiMessageResponse, ApiSingleResponse } from '@/types/api'
+import type { MyPayoutsResponse } from './payouts'
 
 // T2 property management + plot sales + plot commission. Every endpoint is
-// T2-only on the API and admin-only, bar fetchMyPlotSummary, fetchPlotConfig and
-// fetchPlotNodeSummary (a member may read their own downline's).
+// T2-only on the API and admin-only, bar fetchMyPlotSummary, fetchMyPlotLedger, fetchMyPlotPayouts,
+// fetchPlotConfig, and fetchPlotNodeSummary / fetchPlotTree (a member may read
+// their own downline's).
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
 
@@ -631,11 +633,47 @@ export interface PlotTree {
 export const fetchPlotTree = (associateId: string) =>
   apiRequest<ApiSingleResponse<PlotTree>>(`/plot-commission/tree/${associateId}`)
 
-/** The logged-in member's own lifetime commissionable plot business per leg. The one member endpoint here. */
+/** One business's income totals — same shape as the registration summary's. */
+export interface PlotIncomeTotals {
+  directIncome: number
+  matchingIncome: number
+  reversals: number
+  totalIncome: number
+}
+
+/** The logged-in member's own plot position: reward volume, income, carry. */
 export interface MyPlotSummary {
+  /** Lifetime commissionable business per leg (Tier II rewards). */
   ratedVolume: { left: number; right: number }
+  /** Unpaid — this period. */
+  current: PlotIncomeTotals
+  lifetime: PlotIncomeTotals
+  carry: { left: number; right: number; weakerLeg: 'Left' | 'Right' | null }
 }
 export const fetchMyPlotSummary = () => apiRequest<ApiSingleResponse<MyPlotSummary>>('/plot-commission/me/summary')
+
+export interface MyPlotLedgerRow {
+  _id: string
+  type: 'direct' | 'matching' | 'reversal'
+  amount: number
+  /** The associate the sale is credited to. */
+  sourceAssociateCode: string
+  bookingCode: string
+  basis: { rate: number; base: number; legSide: 'Left' | 'Right' | null }
+  /** null while unpaid; set to the plot payout that paid it. */
+  payout: string | null
+  note: string
+  createdAt: string
+}
+/** The caller's own line on every finalized plot payout — same row shape as /payouts/me. */
+export const fetchMyPlotPayouts = () => apiRequest<MyPayoutsResponse>('/plot-commission/me/payouts')
+
+/** The caller's own plot ledger; `period: 'current'` limits it to unpaid rows. */
+export const fetchMyPlotLedger = (params: { period?: 'current' | 'all'; type?: string; page?: string; limit?: string } = {}) =>
+  apiRequest<{ success: true; data: MyPlotLedgerRow[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
+    '/plot-commission/me',
+    { params: params as Record<string, string | undefined> },
+  )
 
 export const fetchPlotLedger =(params: Params = {}) => apiRequest<CommissionLedger>('/plot-commission/ledger', { params })
 export const fetchPlotSummary = (params: Params = {}) =>

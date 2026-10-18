@@ -10,7 +10,8 @@ interface ModalProps {
   onClose: () => void
   title?: string
   children: ReactNode
-  size?: 'sm' | 'md' | 'lg'
+  /** `xl` is for landscape two-column dialogs (e.g. the payout breakdown). */
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   /**
    * Let a dialog taller than the screen scroll down to its buttons. Opt-in so
    * existing (T1) dialogs keep their original layout untouched; the T2 plot
@@ -19,7 +20,7 @@ interface ModalProps {
   scrollable?: boolean
 }
 
-const sizeClasses = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
+const sizeClasses = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-3xl' }
 
 export function Modal({ open, onClose, title, children, size = 'md', scrollable = false }: ModalProps) {
   useEffect(() => {

@@ -122,6 +122,9 @@ export interface MyPayoutRow {
   periodEnd: string | null
   paidOn: string | null
   secondaryChargeLabel: string
+  /** Fractions, as frozen on that closing; null on rows from an older API. */
+  adminChargePct: number | null
+  secondaryChargePct: number | null
   direct: number
   matching: number
   reversals: number

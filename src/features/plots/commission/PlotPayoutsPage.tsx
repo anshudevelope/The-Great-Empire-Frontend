@@ -23,7 +23,9 @@ import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { Textarea } from '@/components/ui/Textarea'
-import { DataTable, PageHeader, Pager, Stat, Td, Th } from '../PlotUi'
+import { DataTable, PageHeader, Pager, Td, Th } from '../PlotUi'
+import { Stat, money } from '@/features/payouts/payoutBits'
+import { cn } from '@/lib/cn'
 import { day, inr, localIsoDay, pct, rowClass, todayIso } from '../format'
 import { usePlotConfig } from '../hooks'
 
@@ -195,6 +197,7 @@ export function PlotPayoutDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: ['plot-payout', id], queryFn: () => fetchPlotPayout(id) })
+  const rates = usePlotConfig().data?.commission
   const [confirm, setConfirm] = useState<'finalize' | 'discard' | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const [reason, setReason] = useState('')
@@ -241,6 +244,8 @@ export function PlotPayoutDetailPage() {
   }
   const p = data?.data
   if (!p) return <p className="text-sm text-danger">Payout not found.</p>
+  const lines = p.lines ?? []
+  const hasReversals = lines.some((l) => l.reversals !== 0)
 
   return (
     <div className="flex flex-col gap-5 pb-10">
@@ -275,11 +280,14 @@ export function PlotPayoutDetailPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Status" value={p.status} />
-        <Stat label="Gross" value={inr(p.totals.gross)} />
-        <Stat label="Deductions" value={inr(p.totals.adminCharge + p.totals.tds)} />
-        <Stat label="Net payable" value={inr(p.totals.netPayable)} tone="good" />
+      {/* Cards and table laid out as the registration payout page, so the two read the same. */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat label="Members" value={String(p.totals.members)} />
+        <Stat label="Gross" value={money(p.totals.gross)} />
+        <Stat label={`Admin ${pct(p.rates.adminChargePct)}`} value={`−${money(p.totals.adminCharge)}`} />
+        <Stat label={`TDS ${pct(p.rates.tdsPct)}`} value={`−${money(p.totals.tds)}`} />
+        <Stat label="Net paid" value={money(p.totals.netPayable)} tone="good" />
+        <Stat label="Status" value={p.status.charAt(0).toUpperCase() + p.status.slice(1)} />
       </div>
       {p.status === 'cancelled' && (
         <p className="rounded-card border border-border bg-neutral-hover px-4 py-3 text-sm text-text-muted">
@@ -287,45 +295,46 @@ export function PlotPayoutDetailPage() {
         </p>
       )}
 
-      <DataTable
-        minWidth={980}
-        head={
-          <tr>
-            <Th>Associate</Th>
-            <Th right>Direct</Th>
-            <Th right>Matching</Th>
-            <Th right>Reversals</Th>
-            <Th right>Gross</Th>
-            <Th right>Admin charge</Th>
-            <Th right>TDS</Th>
-            <Th right>Net payable</Th>
-          </tr>
-        }
-      >
-        {(p.lines ?? []).map((l) => (
-          <tr key={l.member} className={rowClass}>
-            <Td>
-              <span className="font-mono text-xs text-text">{l.memberCode}</span>
-              <span className="block text-xs text-text-subtle">{l.fullName}</span>
-            </Td>
-            <Td right>{inr(l.direct)}</Td>
-            <Td right>{inr(l.matching)}</Td>
-            <Td right className={l.reversals < 0 ? 'text-danger' : 'text-text-muted'}>
-              {inr(l.reversals)}
-            </Td>
-            <Td right>{inr(l.total)}</Td>
-            <Td right className="text-text-muted">
-              {inr(l.adminCharge)}
-            </Td>
-            <Td right className="text-text-muted">
-              {inr(l.tds)}
-            </Td>
-            <Td right className="font-semibold text-text">
-              {inr(l.netPayable)}
-            </Td>
-          </tr>
-        ))}
-      </DataTable>
+      <div className="overflow-x-auto rounded-card bg-surface">
+        <table className="w-full min-w-[980px] text-sm">
+          <thead className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-subtle">
+            <tr>
+              <th className="px-3 py-3 font-semibold">Sno.</th>
+              <th className="px-3 py-3 font-semibold">Member</th>
+              <th className="px-3 py-3 text-right font-semibold">Direct{rates ? ` (${pct(rates.direct)})` : ''}</th>
+              <th className="px-3 py-3 text-right font-semibold">Matching{rates ? ` (${pct(rates.matching)})` : ''}</th>
+              {/* Registration lines have no such column; shown only when a line was actually reduced. */}
+              {hasReversals && <th className="px-3 py-3 text-right font-semibold">Reversals</th>}
+              <th className="px-3 py-3 text-right font-semibold">Total</th>
+              <th className="px-3 py-3 text-right font-semibold">Admin</th>
+              <th className="px-3 py-3 text-right font-semibold">TDS</th>
+              <th className="px-3 py-3 text-right font-semibold">Net payable</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map((l, index) => (
+              <tr key={l.member} className="border-b border-border last:border-0 hover:bg-neutral-hover/60">
+                <td className="px-3 py-2.5 text-text-subtle">{index + 1}</td>
+                <td className="px-3 py-2.5">
+                  <span className="font-mono text-xs font-medium text-text">{l.memberCode}</span>
+                  <span className="block text-xs text-text-subtle">{l.fullName}</span>
+                </td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-text-muted">{money(l.direct)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-text-muted">{money(l.matching)}</td>
+                {hasReversals && (
+                  <td className={cn('px-3 py-2.5 text-right tabular-nums', l.reversals < 0 ? 'text-danger' : 'text-text-muted')}>
+                    {money(l.reversals)}
+                  </td>
+                )}
+                <td className="px-3 py-2.5 text-right font-medium tabular-nums text-text">{money(l.total)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-text-subtle">−{money(l.adminCharge)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-text-subtle">−{money(l.tds)}</td>
+                <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-success">{money(l.netPayable)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <ConfirmModal
         open={confirm === 'finalize'}

@@ -4,7 +4,7 @@ import { businessHeaders } from '@/store/businessStore'
 import type { ApiMessageResponse, ApiSingleResponse } from '@/types/api'
 
 // T2 property management + plot sales + plot commission. Every endpoint is
-// admin-only and T2-only on the API.
+// T2-only on the API and, bar fetchMyPlotSummary, admin-only.
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:5000/api'
 
@@ -629,6 +629,12 @@ export interface PlotTree {
 }
 export const fetchPlotTree = (associateId: string) =>
   apiRequest<ApiSingleResponse<PlotTree>>(`/plot-commission/tree/${associateId}`)
+
+/** The logged-in member's own lifetime commissionable plot business per leg. The one member endpoint here. */
+export interface MyPlotSummary {
+  ratedVolume: { left: number; right: number }
+}
+export const fetchMyPlotSummary = () => apiRequest<ApiSingleResponse<MyPlotSummary>>('/plot-commission/me/summary')
 
 export const fetchPlotLedger =(params: Params = {}) => apiRequest<CommissionLedger>('/plot-commission/ledger', { params })
 export const fetchPlotSummary = (params: Params = {}) =>

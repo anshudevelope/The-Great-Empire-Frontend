@@ -5,6 +5,7 @@ import { useActiveBusiness } from '@/store/businessStore'
 import { Spinner } from '@/components/ui/Spinner'
 import { CheckIcon } from '@/components/icons/icons'
 import { cn } from '@/lib/cn'
+import { inr } from './rewardFormat'
 
 /**
  * The Tier I (Insurance) reward plan, as issued by the company: each stage
@@ -54,15 +55,6 @@ const STAGES: Stage[] = [
 
 const ALL_MILESTONES = STAGES.flatMap((stage) => stage.options.map((m) => ({ ...m, stage: stage.label })))
 
-/** Indian short form: ₹2.5 Lakh, ₹1.75 Cr. */
-function inr(value: number): string {
-  if (value >= 10_000_000) return `₹${trim(value / 10_000_000)} Cr`
-  if (value >= 100_000) return `₹${trim(value / 100_000)} Lakh`
-  return `₹${value.toLocaleString('en-IN')}`
-}
-
-const trim = (n: number) => String(Number(n.toFixed(2)))
-
 export function RewardsTierOnePage() {
   const business = useActiveBusiness()
   const { data, isLoading, isError } = useQuery({
@@ -70,7 +62,7 @@ export function RewardsTierOnePage() {
     queryFn: fetchMyCommissionSummary,
   })
 
-  // The Insurance reward ladder; Plots members have no plan here yet.
+  // The Insurance reward ladder; Plots members have their own (tier-2).
   if (business !== 't1') return <Navigate to="/portal/dashboard" replace />
 
   if (isLoading) {
@@ -127,7 +119,7 @@ export function RewardsTierOnePage() {
   )
 }
 
-function Tile({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: boolean }) {
+export function Tile({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent?: boolean }) {
   return (
     <div className="rounded-card bg-surface p-5">
       <p className="text-xs text-text-subtle">{label}</p>

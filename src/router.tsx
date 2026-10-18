@@ -27,6 +27,7 @@ import { PlaceMembersPage } from '@/features/portal/PlaceMembersPage'
 import { PortalTreePage } from '@/features/portal/PortalTreePage'
 import { DirectsPage } from '@/features/portal/DirectsPage'
 import { RewardsTierOnePage } from '@/features/portal/RewardsTierOnePage'
+import { RewardsIndex, RewardsTierTwoPage } from '@/features/portal/RewardsTierTwoPage'
 import { BusinessSelectPage } from '@/features/business/BusinessSelectPage'
 import { RequireBusiness } from '@/features/business/RequireBusiness'
 import { RequireT2 } from '@/features/plots/PlotUi'
@@ -153,8 +154,9 @@ export const router = createBrowserRouter([
           { path: 'income', element: <MyIncomePage /> },
           { path: 'payouts', element: <MyPayoutsPage /> },
           { path: 'downline', element: <DownlineReportPage /> },
-          { path: 'rewards', element: <Navigate to="tier-1" replace /> },
+          { path: 'rewards', element: <RewardsIndex /> },
           { path: 'rewards/tier-1', element: <RewardsTierOnePage /> },
+          { path: 'rewards/tier-2', element: <RewardsTierTwoPage /> },
         ],
       },
     ],

@@ -29,6 +29,8 @@ interface NavLeaf {
   label: string
   to: string
   badge?: BadgeKey
+  /** Shown only while working in this business; omitted means both. */
+  business?: 't1' | 't2'
 }
 
 interface NavGroup {
@@ -80,15 +82,25 @@ const NAV: NavEntry[] = [
   {
     label: 'Rewards',
     icon: RewardsIcon,
-    // One entry per tier as each tier's plan is added.
-    items: [{ label: 'Tier I (Insurance)', to: '/portal/rewards/tier-1' }],
+    // One plan per tier; a member sees the one for the business they are in.
+    items: [
+      { label: 'Tier I (Insurance)', to: '/portal/rewards/tier-1', business: 't1' },
+      { label: 'Tier II (Plots)', to: '/portal/rewards/tier-2', business: 't2' },
+    ],
   },
 ]
 
-// The reward ladder is the Insurance plan; Plots has none yet.
-const T1_ONLY = new Set(['Rewards'])
-
 const isGroup = (entry: NavEntry): entry is NavGroup => 'items' in entry
+
+/** Drops leaves meant for the other business, and any group left empty by it. */
+function navFor(business: string | null): NavEntry[] {
+  const shown = (leaf: NavLeaf) => !leaf.business || leaf.business === business
+  return NAV.flatMap<NavEntry>((entry) => {
+    if (!isGroup(entry)) return shown(entry) ? [entry] : []
+    const items = entry.items.filter(shown)
+    return items.length ? [{ ...entry, items }] : []
+  })
+}
 
 /**
  * Same treatment as the admin sidebar's NavIconTile: no tile behind the glyph,
@@ -123,7 +135,7 @@ export function PortalSidebarNav({ counts }: { counts: Record<BadgeKey, number> 
   // Hovering peeks a group open; leaving closes it again unless it was clicked open.
   const [hovered, setHovered] = useState<string | null>(null)
   const business = useActiveBusiness()
-  const nav = business === 't1' ? NAV : NAV.filter((entry) => !T1_ONLY.has(entry.label))
+  const nav = navFor(business)
 
   return (
     <nav className="scrollbar-chrome flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">

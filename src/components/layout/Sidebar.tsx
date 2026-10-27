@@ -16,6 +16,7 @@ import {
   LogoutIcon,
   PayoutIcon,
   ReportIcon,
+  RewardsIcon,
   UsersIcon,
   XIcon,
 } from '@/components/icons/icons'
@@ -62,6 +63,14 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: 'All Payouts', to: '/admin/payouts' },
       { label: 'Create Payout', to: '/admin/payouts/generate' },
+    ],
+  },
+  {
+    label: 'Rewards',
+    icon: RewardsIcon,
+    children: [
+      { label: 'Reward Structure', to: '/admin/rewards/structure' },
+      { label: 'Reward Claims', to: '/admin/rewards' },
     ],
   },
   {

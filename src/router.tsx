@@ -48,6 +48,8 @@ import { StatementPage } from '@/features/plots/sales/StatementPage'
 import { PlotCommissionPage } from '@/features/plots/commission/PlotCommissionPage'
 import { PlotPayoutsPage, PlotPayoutDetailPage } from '@/features/plots/commission/PlotPayoutsPage'
 import { PlotTreePage } from '@/features/plots/commission/PlotTreePage'
+import { RewardClaimsPage } from '@/features/rewards/RewardClaimsPage'
+import { RewardStructurePage } from '@/features/rewards/RewardStructurePage'
 
 // Every route sits under AuthScopeProvider, which reads the path and decides
 // which of the two sessions this page belongs to. Nothing outside it may read
@@ -98,6 +100,8 @@ export const router = createBrowserRouter([
               { path: 'payouts/generate', element: <PayoutGeneratePage /> },
               { path: 'payouts/:id', element: <PayoutDetailPage /> },
               { path: 'reports/downline', element: <DownlineReportPage /> },
+              { path: 'rewards', element: <RewardClaimsPage /> },
+              { path: 'rewards/structure', element: <RewardStructurePage /> },
 
               // T2 only — property management, plot sales, plot commission.
               {

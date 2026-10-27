@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
+  approveBooking,
   cancelBooking,
   fetchBooking,
   previewPayment,
@@ -15,6 +16,7 @@ import { ApiRequestError } from '@/api/fetchClient'
 import { PAYMENT_MODES } from '@/types/referral'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { FormField } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
@@ -41,12 +43,23 @@ const errorText = (error: unknown) => (error instanceof ApiRequestError ? error.
 
 const ADJUSTMENTS: PaymentAdjustment[] = ['reduce_emi', 'reduce_tenure', 'pay_ahead']
 
-/** One booking: who, what, the schedule and every payment; receive a payment, print the statement, or cancel. */
+/** One booking: who, what, the schedule and every payment; approve a pending cheque, receive a payment, print the statement, or cancel. */
 export function BookingDetailPage() {
   const { id = '' } = useParams<{ id: string }>()
   const { data, isLoading } = useQuery({ queryKey: ['plot-booking', id], queryFn: () => fetchBooking(id) })
   const [receiving, setReceiving] = useState(false)
+  const [approving, setApproving] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const refresh = useRefreshBooking(id)
+  const approve = useMutation({
+    mutationFn: () => approveBooking(id),
+    onSuccess: (res) => {
+      toast.success(res.message)
+      refresh()
+      setApproving(false)
+    },
+    onError: (error) => toast.error(errorText(error)),
+  })
   const [showReplaced, setShowReplaced] = useState(false)
 
   if (isLoading) {
@@ -60,6 +73,8 @@ export function BookingDetailPage() {
   if (!b) return <p className="text-sm text-danger">Booking not found.</p>
 
   const active = b.status === 'active'
+  const pending = b.status === 'pending'
+  const cheque = b.pendingPayment
   const overdue = b.schedule.filter((s) => s.overdue)
   const replaced = b.schedule.filter((s) => s.status === 'superseded')
   const rows = showReplaced ? b.schedule : b.schedule.filter((s) => s.status !== 'superseded')
@@ -77,6 +92,11 @@ export function BookingDetailPage() {
               <Button variant="secondary">Statement</Button>
             </Link>
             {active && <Button onClick={() => setReceiving(true)}>Receive payment</Button>}
+            {pending && (
+              <Button variant="solidSuccess" onClick={() => setApproving(true)}>
+                Approve booking
+              </Button>
+            )}
             {b.status !== 'cancelled' && (
               <Button variant="danger" onClick={() => setCancelling(true)}>
                 Cancel booking
@@ -124,11 +144,13 @@ export function BookingDetailPage() {
           <Info
             label="Commission"
             value={
-              b.allotment.reached
-                ? b.allotment.pct > 0
-                  ? `Earning — ${b.allotment.pct}% allotment reached`
-                  : 'Earning on every payment'
-                : `Held until ${inr(b.allotment.amount)} paid (${b.allotment.pct}% allotment)`
+              pending
+                ? 'Starts once the booking is approved'
+                : b.allotment.reached
+                  ? b.allotment.pct > 0
+                    ? `Earning — ${b.allotment.pct}% allotment reached`
+                    : 'Earning on every payment'
+                  : `Held until ${inr(b.allotment.amount)} paid (${b.allotment.pct}% allotment)`
             }
           />
           <Info
@@ -139,6 +161,22 @@ export function BookingDetailPage() {
           {b.notes && <Info label="Notes" value={b.notes} />}
         </Section>
       </div>
+
+      {pending && (
+        <div className="rounded-card border border-warning/40 bg-warning-bg/50 px-5 py-4 text-sm text-text">
+          <p className="font-semibold">Pending — waiting for the cheque to clear</p>
+          {cheque && (
+            <p className="mt-1 text-text-muted">
+              {cheque.mode} of <strong className="text-text">{inr(cheque.amount)}</strong> dated {day(cheque.paidOn)}
+              {cheque.reference ? ` (no. ${cheque.reference})` : ''}.
+            </p>
+          )}
+          <p className="mt-1 text-text-muted">
+            The plot is held for this client. Nothing counts as paid and no commission is earned until you approve. If the cheque bounces, cancel the
+            booking to put the plot back on sale.
+          </p>
+        </div>
+      )}
 
       {active && !b.allotment.reached && (
         <p className="rounded-card border border-warning/40 bg-warning-bg/50 px-5 py-3 text-sm text-text-muted">
@@ -152,11 +190,15 @@ export function BookingDetailPage() {
         <div className="rounded-card border border-danger-border bg-danger-bg px-5 py-4 text-sm text-text">
           <p className="font-semibold text-danger">Cancelled {day(b.cancel.at)}</p>
           <p className="mt-1">{b.cancel.reason}</p>
-          <p className="mt-1 text-text-muted">
-            Refunded {inr(b.cancel.refundAmount)}
-            {b.cancel.refundMode ? ` by ${b.cancel.refundMode}` : ''}
-            {b.cancel.refundReference ? ` (${b.cancel.refundReference})` : ''}. All commission from this booking was reversed.
-          </p>
+          {cheque && !b.approval?.at ? (
+            <p className="mt-1 text-text-muted">Cancelled while pending — the {cheque.mode.toLowerCase()} was never counted as paid.</p>
+          ) : (
+            <p className="mt-1 text-text-muted">
+              Refunded {inr(b.cancel.refundAmount)}
+              {b.cancel.refundMode ? ` by ${b.cancel.refundMode}` : ''}
+              {b.cancel.refundReference ? ` (${b.cancel.refundReference})` : ''}. All commission from this booking was reversed.
+            </p>
+          )}
         </div>
       )}
 
@@ -244,6 +286,19 @@ export function BookingDetailPage() {
       </Section>
 
       {receiving && <ReceiveModal booking={b} onClose={() => setReceiving(false)} />}
+      <ConfirmModal
+        open={approving}
+        title={`Approve ${b.code}?`}
+        description={
+          cheque
+            ? `Confirm the ${cheque.mode.toLowerCase()} of ${inr(cheque.amount)} has cleared. It is recorded as the first payment with a receipt, and commission runs as usual.`
+            : 'The booking becomes active and commission runs as usual.'
+        }
+        confirmLabel="Approve"
+        isLoading={approve.isPending}
+        onConfirm={() => approve.mutate()}
+        onClose={() => setApproving(false)}
+      />
       {cancelling && <CancelModal booking={b} onClose={() => setCancelling(false)} />}
     </div>
   )
@@ -449,6 +504,8 @@ function ReceiveModal({ booking, onClose }: { booking: BookingDetail; onClose: (
 
 function CancelModal({ booking, onClose }: { booking: BookingDetail; onClose: () => void }) {
   const refresh = useRefreshBooking(booking._id)
+  // A pending booking has had nothing paid, so there is nothing to refund or reverse.
+  const pending = booking.status === 'pending'
   const [reason, setReason] = useState('')
   const [refund, setRefund] = useState('')
   const [refundMode, setRefundMode] = useState('')
@@ -475,28 +532,47 @@ function CancelModal({ booking, onClose }: { booking: BookingDetail; onClose: ()
         }}
       >
         <div className="rounded-control border border-danger-border bg-danger-bg px-4 py-3 text-sm text-text sm:col-span-2">
-          The plot goes back on sale, unpaid instalments are closed, and <strong>all commission this booking earned is reversed</strong> — including amounts
-          already paid out, which come off the next plot payout. {inr(booking.paidTotal)} has been paid so far.
+          {pending ? (
+            <>
+              The plot goes back on sale and the schedule is closed. The cheque was never counted, so there is no refund and no commission to reverse.
+            </>
+          ) : (
+            <>
+              The plot goes back on sale, unpaid instalments are closed, and <strong>all commission this booking earned is reversed</strong> — including
+              amounts already paid out, which come off the next plot payout. {inr(booking.paidTotal)} has been paid so far.
+            </>
+          )}
         </div>
         <FormField label="Reason" htmlFor="cn-reason" required className="sm:col-span-2">
-          <Textarea id="cn-reason" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} required />
+          <Textarea
+            id="cn-reason"
+            rows={2}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={pending ? 'e.g. Cheque bounced' : undefined}
+            required
+          />
         </FormField>
-        <FormField label="Refund given (₹)" htmlFor="cn-refund" hint={`0 to ${inr(booking.paidTotal)}`}>
-          <Input id="cn-refund" inputMode="decimal" value={refund} onChange={(e) => setRefund(e.target.value)} />
-        </FormField>
-        <FormField label="Refund mode" htmlFor="cn-mode">
-          <Select id="cn-mode" value={refundMode} onChange={(e) => setRefundMode(e.target.value)}>
-            <option value="">—</option>
-            {PAYMENT_MODES.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        <FormField label="Refund reference" htmlFor="cn-ref" className="sm:col-span-2">
-          <Input id="cn-ref" value={refundReference} onChange={(e) => setRefundReference(e.target.value)} />
-        </FormField>
+        {!pending && (
+          <>
+            <FormField label="Refund given (₹)" htmlFor="cn-refund" hint={`0 to ${inr(booking.paidTotal)}`}>
+              <Input id="cn-refund" inputMode="decimal" value={refund} onChange={(e) => setRefund(e.target.value)} />
+            </FormField>
+            <FormField label="Refund mode" htmlFor="cn-mode">
+              <Select id="cn-mode" value={refundMode} onChange={(e) => setRefundMode(e.target.value)}>
+                <option value="">—</option>
+                {PAYMENT_MODES.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField label="Refund reference" htmlFor="cn-ref" className="sm:col-span-2">
+              <Input id="cn-ref" value={refundReference} onChange={(e) => setRefundReference(e.target.value)} />
+            </FormField>
+          </>
+        )}
         <div className="flex justify-end gap-2 sm:col-span-2">
           <Button variant="secondary" onClick={onClose}>
             Keep booking

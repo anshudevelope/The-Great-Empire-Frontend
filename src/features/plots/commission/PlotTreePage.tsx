@@ -23,12 +23,15 @@ const EDGE = 8 // minimum gap between a hover card and the viewport edge
 const GAP = 8 // gap between a hover card and its node
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(n, max))
 
+// Pending sales are left out of the tree by the API; listed for completeness.
 const SALE_RING: Record<BookingStatus, string> = {
+  pending: 'ring-warning',
   active: 'ring-blue-500',
   completed: 'ring-success',
   cancelled: 'ring-text-subtle',
 }
 const SALE_DOT: Record<BookingStatus, string> = {
+  pending: 'bg-warning',
   active: 'bg-info',
   completed: 'bg-success',
   cancelled: 'bg-text-subtle',

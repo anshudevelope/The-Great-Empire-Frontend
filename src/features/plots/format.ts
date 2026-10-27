@@ -56,6 +56,7 @@ type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral'
 export const PLOT_STATUS_TONE: Record<PlotStatus, Tone> = { available: 'success', hold: 'warning', booked: 'info' }
 
 export const BOOKING_STATUS_TONE: Record<BookingStatus, Tone> = {
+  pending: 'warning',
   active: 'info',
   completed: 'success',
   cancelled: 'neutral',

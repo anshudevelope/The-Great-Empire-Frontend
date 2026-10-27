@@ -348,7 +348,15 @@ export function SellPlotPage() {
         </label>
         {collectNow && (
           <FieldGrid columns={3}>
-            <FormField label="Mode" htmlFor="sp-mode">
+            <FormField
+              label="Mode"
+              htmlFor="sp-mode"
+              hint={
+                config.data?.pendingPaymentModes.includes(mode)
+                  ? 'The booking stays pending until you approve it once the cheque clears.'
+                  : undefined
+              }
+            >
               <Select id="sp-mode" value={mode} onChange={(e) => setMode(e.target.value)}>
                 {PAYMENT_MODES.map((m) => (
                   <option key={m} value={m}>

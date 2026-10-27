@@ -42,6 +42,8 @@ export interface PlotConfig {
   selfLeg: { enabled: boolean }
   payout: { adminChargePct: number; tdsPct: number }
   rating: { enabled: boolean; defaultPct: number }
+  /** Modes that, collected at sale, keep the booking pending until approved. */
+  pendingPaymentModes: string[]
   payment: {
     oneTime: { enabled: boolean }
     emi: { enabled: boolean; tenures: number[]; interest: { enabled: boolean; annualPct: number } }
@@ -293,7 +295,8 @@ export const updateClient = (id: string, body: ClientInput) =>
 // Bookings & payments
 // ---------------------------------------------------------------------------
 export type PaymentPlan = 'one_time' | 'emi'
-export type BookingStatus = 'active' | 'completed' | 'cancelled'
+/** pending: sold with a cheque that hasn't cleared — waits for the admin to approve or cancel. */
+export type BookingStatus = 'pending' | 'active' | 'completed' | 'cancelled'
 export type InstalmentKind = 'full' | 'down' | 'emi'
 export type InstalmentStatus = 'due' | 'partial' | 'paid' | 'superseded' | 'cancelled'
 export type PaymentAdjustment = 'reduce_emi' | 'reduce_tenure' | 'pay_ahead'
@@ -375,6 +378,9 @@ export interface Booking {
   status: BookingStatus
   paidTotal: number
   notes: string
+  /** The cheque held while pending; received as the first payment on approval. */
+  pendingPayment: { amount: number; paidOn: string; mode: string; reference: string; ratingPct: number } | null
+  approval?: { at: string | null }
   cancel: { at: string | null; reason: string; refundAmount: number; refundMode: string; refundReference: string }
   createdAt: string
 }
@@ -426,6 +432,10 @@ export const createBooking = (body: SellInput) =>
   )
 export const fetchBookings = (params: Params = {}) => apiRequest<Paged<Booking>>('/plot-sales/bookings', { params })
 export const fetchBooking = (id: string) => apiRequest<ApiSingleResponse<BookingDetail>>(`/plot-sales/bookings/${id}`)
+export const approveBooking = (id: string) =>
+  apiRequest<ApiSingleResponse<{ receiptPaymentId: string | null }> & { message: string }>(`/plot-sales/bookings/${id}/approve`, {
+    method: 'POST',
+  })
 export const cancelBooking = (
   id: string,
   body: { reason: string; refundAmount: number; refundMode: string; refundReference: string },

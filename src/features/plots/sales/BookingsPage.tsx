@@ -57,6 +57,7 @@ export function BookingsPage() {
         />
         <Select value={status} onChange={(e) => setStatus(e.target.value as '' | BookingStatus)} containerClassName="w-full sm:w-44" aria-label="Status">
           <option value="">All statuses</option>
+          <option value="pending">Pending (cheque)</option>
           <option value="active">Active</option>
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
